@@ -1,31 +1,27 @@
 library(rlang)
 library(dplyr)
-library(Seurat)
-library(tidyseurat)
 library(plotthis)
 library(biopipen.utils)
 
-log <- get_logger()
-reporter <- get_reporter()
-
-srtfile <- {{ in.srtobj | r }}
-outdir <- {{ out.outdir | r }}
-joboutdir <- {{ job.outdir | r }}
-
-ncores <- {{ envs.ncores | int }}
-mutaters <- {{ envs.mutaters | r }}
-group_by <- {{ envs.group_by | default: envs["group-by"] | default: None | r }}
-ident_1 <- {{ envs.ident_1 | default: envs["ident-1"] | default: None | r }}
-ident_2 <- {{ envs.ident_2 | default: envs["ident-2"] | default: None | r }}
+sobjfile <- {{in.sobjfile | r}}
+outdir <- {{out.outdir | r}}
+joboutdir <- {{job.outdir | r}}
+each <- {{envs.each | r}}
+subset <- {{envs.subset | r}}
+mutaters <- {{envs.mutaters | r}}
+aggregate_by <- {{envs.aggregate_by | r}}
+layer <- {{envs.layer | r}}
+assay <- {{envs.assay | r}}
+error <- {{ envs.error | r }}
+group_by <- {{envs.group_by | default: envs[["group-by"]] | default: None | r}}
+ident_1 <- {{envs.ident_1 | default: envs[["ident-1"]] | default: None | r}}
+ident_2 <- {{envs.ident_2 | default: envs[["ident-2"]] | default: None | r}}
 each <- {{ envs.each | r }}
 dbs <- {{ envs.dbs | r }}
 sigmarkers <- {{ envs.sigmarkers | r }}
 enrich_style <- {{ envs.enrich_style | r }}
-assay <- {{ envs.assay | r }}
-error <- {{ envs.error | r }}
-subset <- {{ envs.subset | r }}
-cache <- {{ envs.cache | r }}
-rest <- {{ envs.rest | r: todot="-" }}
+paired_by <- {{envs.paired_by | default: envs[["paired-by"]] | default: None | r}}
+tool <- {{envs.tool | r}}
 allmarker_plots_defaults <- {{ envs.allmarker_plots_defaults | r }}
 allmarker_plots <- {{ envs.allmarker_plots | r }}
 allenrich_plots_defaults <- {{ envs.allenrich_plots_defaults | r }}
@@ -36,27 +32,19 @@ enrich_plots_defaults <- {{ envs.enrich_plots_defaults | r }}
 enrich_plots <- {{ envs.enrich_plots | r }}
 overlaps_defaults <- {{ envs.overlaps_defaults | r }}
 overlaps <- {{ envs.overlaps | r }}
-cases <- {{ envs.cases | r: todot="-", skip=1 }}
+cases <- {{envs.cases | r}}
 
-if (isTRUE(cache)) { cache <- joboutdir }
+aggregate_by <- unique(c(aggregate_by, group_by, paired_by, each))
 
-set.seed(8525)
-if (ncores > 1) {
-    options(future.globals.maxSize = 80000 * 1024^2)
-    plan(strategy = "multicore", workers = ncores)
-}
+log <- get_logger()
+reporter <- get_reporter()
 
-log$info("Reading Seurat object ...")
-srtobj <- read_obj(srtfile)
-if (!"Identity" %in% colnames(srtobj@meta.data)) {
-    srtobj@meta.data$Identity <- Idents(srtobj)
-}
-
+log$info("Loading Seurat object ...")
+srtobj <- read_obj(sobjfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
-    log$info("Mutating meta data ...")
-    srtobj@meta.data <- srtobj@meta.data %>%
-        mutate(!!!lapply(mutaters, parse_expr))
+    log$info("Mutating metadata columns ...")
+    srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
 }
 
 allmarker_plots <- lapply(allmarker_plots, function(x) {
@@ -76,16 +64,20 @@ overlaps <- lapply(overlaps, function(x) {
 })
 
 defaults <- list(
+    each = each,
+    error = error,
+    subset = subset,
+    aggregate_by = aggregate_by,
+    layer = layer,
+    assay = assay %||% DefaultAssay(srtobj),
     group_by = group_by,
     ident_1 = ident_1,
     ident_2 = ident_2,
     dbs = dbs,
     sigmarkers = sigmarkers,
     enrich_style = enrich_style,
-    assay = assay %||% DefaultAssay(srtobj),
-    each = each,
-    error = error,
-    subset = subset,
+    paired_by = paired_by,
+    tool = tool,
     allmarker_plots_defaults = allmarker_plots_defaults,
     allmarker_plots = allmarker_plots,
     allenrich_plots_defaults = allenrich_plots_defaults,
@@ -95,41 +87,18 @@ defaults <- list(
     enrich_plots_defaults = enrich_plots_defaults,
     enrich_plots = enrich_plots,
     overlaps_defaults = overlaps_defaults,
-    overlaps = overlaps,
-    cache = cache,
-    rest = rest
+    overlaps = overlaps
 )
 
-log$info("Expanding cases ...")
-
-post_casing <- function(name, case) {
+expand_each <- function(name, case) {
     outcases <- list()
 
-    case$group_by <- case$group_by %||% "Identity"
-
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
-        # single cases, no need to expand
-        if (length(case$ident_1) > 0 && length(case$overlaps) > 0) {
-            stop("Cannot perform 'overlaps' with a single comparison (ident-1 is set) in case '", name, "'")
-        }
-        if (length(case$ident_1) > 0 && length(case$allmarker_plots) > 0) {
-            stop("Cannot perform 'allmarker_plots' with a single comparison (ident-1 is set) in case '", name, "'")
-        }
-        if (length(case$ident_1) > 0 && length(case$allenrich_plots) > 0) {
-            stop("Cannot perform 'allenrich_plots' with a single comparison (ident-1 is set) in case '", name, "'")
+        if (length(case$allmarker_plots) > 0 || length(allenrich_plots) > 0 || length(overlaps) > 0) {
+            stop("Cannot perform allmarker_plots, allenrich_plots, or overlaps without 'each' defined.")
         }
 
-        case$allmarker_plots <- lapply(
-            case$allmarker_plots,
-            function(x) { list_update(case$allmarker_plots_defaults, x) }
-        )
-        case$allmarker_plots_defaults <- NULL
-
-        case$allenrich_plots <- lapply(
-            case$allenrich_plots,
-            function(x) { list_update(case$allenrich_plots_defaults, x) }
-        )
-        case$allenrich_plots_defaults <- NULL
+        case$aggregate_by <- unique(c(case$aggregate_by, case$group_by, case$paired_by))
 
         case$marker_plots <- lapply(
             case$marker_plots,
@@ -150,7 +119,7 @@ post_casing <- function(name, case) {
         case$overlaps_defaults <- NULL
 
         outcases[[name]] <- case
-    } else {  # !no_each
+    } else {
         eachs <- if (!is.null(case$subset)) {
             srtobj@meta.data %>%
                 filter(!!parse_expr(case$subset)) %>%
@@ -159,21 +128,23 @@ post_casing <- function(name, case) {
             srtobj@meta.data %>%
                 pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
         }
-        if (length(case$overlaps) > 0 && is.null(case$ident_1)) {
-            stop("Cannot perform 'overlaps' analysis with 'each' and without 'ident_1' in case '", name, "'")
-        }
 
-        if (length(cases) == 0 && name == "Marker Discovery") {
+        if (length(cases) == 0 && name == "DEG Analysis") {
             name <- case$each
         }
 
+        case$aggregate_by <- unique(c(case$aggregate_by, case$group_by, case$paired_by, case$each))
+
         for (each in eachs) {
-            newname <- paste0(name, " - ", each)
+            newname <- paste0(case$each, "::", each)
             newcase <- case
 
             newcase$original_case <- name
             newcase$each_name <- case$each
             newcase$each <- each
+
+            newcase$alleach_plots_defaults <- NULL
+            newcase$alleach_plots <- NULL
             newcase$original_subset <- case$subset
 
             if (!is.null(case$subset)) {
@@ -232,7 +203,7 @@ post_casing <- function(name, case) {
     }
     outcases
 }
-cases <- expand_cases(cases, defaults, post_casing, default_case = "Marker Discovery")
+cases <- expand_cases(cases, defaults, expand_each, default_case = "DEG Analysis")
 
 log$info("Running cases ...")
 
@@ -242,27 +213,27 @@ process_markers <- function(markers, info, case) {
     #     mutate(gene = as.character(gene)) %>%
     #     arrange(p_val_adj, desc(abs(avg_log2FC)))
     markers$gene <- as.character(markers$gene)
-    markers <- markers[order(markers$p_val_adj, -abs(markers$avg_log2FC)), ]
+    markers <- markers[order(markers$p_val_adj, -abs(markers$log2FC)), ]
 
     # Save markers
-    write.table(markers, file.path(info$prefix, "markers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+    write.table(markers, file.path(info$prefix, "degs.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
     sigmarkers <- markers %>% filter(!!parse_expr(case$sigmarkers))
-    write.table(sigmarkers, file.path(info$prefix, "sigmarkers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+    write.table(sigmarkers, file.path(info$prefix, "sigdegs.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
     reporter$add2(
         list(
             name = "Table",
             contents = list(
                 list(kind = "descr", content = paste0(
-                    "Showing top 100 markers ordered by p_val_adj ascendingly, then abs(avg_log2FC) descendingly. ",
+                    "Showing top 100 DEGs ordered by p_val_adj ascendingly, then abs(log2FC) descendingly. ",
                     "Use 'Download the entire data' button to download all significant markers by '",
                     html_escape(case$sigmarkers), "'."
                 )),
-                list(kind = "table", src = file.path(info$prefix, "sigmarkers.tsv"), data = list(nrows = 100))
+                list(kind = "table", src = file.path(info$prefix, "sigdegs.tsv"), data = list(nrows = 100))
             )
         ),
         hs = c(info$section, info$name),
-        hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
+        hs2 = ifelse(is.null(case$ident), "DEGs", paste0("DEGs (", case$ident, ")")),
         ui = "tabs"
     )
 
@@ -270,14 +241,14 @@ process_markers <- function(markers, info, case) {
         plotargs <- case$marker_plots[[plotname]]
         plotargs$degs <- markers
         rownames(plotargs$degs) <- make.unique(markers$gene)
-        plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
-        do_call(VizDEGs, plotargs)
+        plotargs$outprefix <- file.path(info$prefix, paste0("degs.", slugify(plotname)))
+        do_call(VizBulkDEGs, plotargs)
         reporter$add2(
             list(
                 name = plotname,
                 contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
             hs = c(info$section, info$name),
-            hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
+            hs2 = ifelse(is.null(case$ident), "DEGs", paste0("DEGs (", case$ident, ")")),
             ui = "tabs"
         )
     }
@@ -313,9 +284,9 @@ process_markers <- function(markers, info, case) {
 
     if (length(significant_markers) < 5) {
         if (case$error) {
-            stop("Error: Not enough significant markers with '", case$sigmarkers, "' in case '", info$name, "' found (< 5) for enrichment analysis.")
+            stop("Error: Not enough significant DEGs with '", case$sigmarkers, "' in case '", info$name, "' found (< 5) for enrichment analysis.")
         } else {
-            message <- paste0("Not enough significant markers with '", case$sigmarkers, "' found (< 5) for enrichment analysis.")
+            message <- paste0("Not enough significant DEGs with '", case$sigmarkers, "' found (< 5) for enrichment analysis.")
             log$warn("  ! Error: {message}")
             reporter$add2(
                 list(
@@ -390,14 +361,14 @@ process_markers <- function(markers, info, case) {
 }
 
 process_allmarkers <- function(markers, plotcases, casename, groupname) {
-    name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
+    name <- paste0(casename, "::", paste0(groupname, " (All DEGs)"))
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(plotcases)) {
         plotargs <- plotcases[[plotname]]
         plotargs$degs <- markers
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
-        do_call(VizDEGs, plotargs)
+        do_call(VizBulkDEGs, plotargs)
         reporter$add2(
             list(
                 name = plotname,
@@ -512,13 +483,15 @@ run_case <- function(name) {
     case <- extract_vars(
         case,
         "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
-        "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style", "original_subset",
+        "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style",
+        "aggregate_by", "subset", "layer", "assay", "group_by", "ident_1", "ident_2", "original_subset",
+        "paired_by", "tool", "error",
         allow_nonexisting = TRUE
     )
 
     if (!is.null(markers) || !is.null(enriches)) {
         if (!is.null(markers)) {  # It is the overlap/allmarker case
-            log$info("- Summarizing markers in subcases (by each: {each}) ...")
+            log$info("- Summarizing DEGs in subcases (by each: {each}) ...")
             # handle the overlaps / allmarkers analysis here
             if (!is.data.frame(markers)) {
                 each_levels <- names(markers)
@@ -536,13 +509,18 @@ run_case <- function(name) {
             # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, diff_pct, <each>
 
             if (length(allmarker_plots) > 0) {
-                log$info("- Visualizing all markers together ...")
-                if (is.null(original_subset)) {
-                    attr(markers, "object") <- srtobj
-                } else {
-                    attr(markers, "object") <- filter(srtobj, !!parse_expr(original_subset))
-                }
+                log$info("- Visualizing all DEGs together ...")
+                exprs <- AggregateExpressionPseudobulk(
+                    srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
+                    subset = original_subset, log = log
+                )
+                attr(markers, "object") <- AggregateExpressionPseudobulk(
+                    srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
+                    subset = original_subset, log = log
+                )
+                attr(markers, "meta") <- attr(exprs, "meta")
                 attr(markers, "group_by") <- each
+                attr(markers, "paired_by") <- paired_by
                 attr(markers, "ident_1") <- NULL
                 attr(markers, "ident_2") <- NULL
                 process_allmarkers(markers, allmarker_plots, name, each)
@@ -580,64 +558,30 @@ run_case <- function(name) {
         return(invisible())
     }
 
-    case$object <- srtobj
-    markers <- do_call(RunSeuratDEAnalysis, case)
-    case$object <- NULL
-    gc()
+    exprs <- AggregateExpressionPseudobulk(
+        srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
+        subset = subset, log = log
+    )
+    markers <- RunDEGAnalysis(
+        exprs, group_by = group_by, ident_1 = ident_1, ident_2 = ident_2,
+        paired_by = paired_by, tool = tool, log = log
+    )
 
-    if (is.null(case$ident_1)) {
-        all_idents <- unique(as.character(markers[[case$group_by]]))
-        enriches <- list()
-        for (ident in all_idents) {
-            log$info("- {case$group_by}: {ident} ...")
-            ident_markers <- markers[markers[[case$group_by]] == ident, , drop = TRUE]
-            casename <- paste0(name, "::", paste0(case$group_by, ": ", ident))
-            info <- case_info(casename, outdir, create = TRUE)
+    info <- case_info(name, outdir, create = TRUE)
+    enrich <- process_markers(markers, info = info, case = list(
+        dbs = dbs,
+        sigmarkers = sigmarkers,
+        enrich_style = enrich_style,
+        marker_plots = marker_plots,
+        enrich_plots = enrich_plots,
+        error = error,
+        ident = if (is.null(case$ident_2)) case$ident_1 else paste0(case$ident_1, " vs ", case$ident_2)
+    ))
 
-            attr(ident_markers, "ident_1") <- ident
-            enrich <- process_markers(ident_markers, info = info, case = list(
-                dbs = dbs,
-                sigmarkers = sigmarkers,
-                enrich_style = enrich_style,
-                marker_plots = marker_plots,
-                enrich_plots = enrich_plots,
-                error = case$error,
-                ident = NULL
-            ))
-            enriches[[ident]] <- enrich
-        }
-
-        if (length(allmarker_plots) > 0) {
-            log$info("- Visualizing all markers together ...")
-            process_allmarkers(markers, allmarker_plots, name, case$group_by)
-        }
-
-        if (length(overlaps) > 0) {
-            log$info("- Visualizing overlaps between subcases ...")
-            process_overlaps(markers, overlaps, name, case$group_by)
-        }
-
-        if (length(allenrich_plots) > 0) {
-            log$info("- Visualizing all enrichments together ...")
-            process_allenriches(enriches, allenrich_plots, name, case$group_by)
-        }
-    } else {
-        info <- case_info(name, outdir, create = TRUE)
-        enrich <- process_markers(markers, info = info, case = list(
-            dbs = dbs,
-            sigmarkers = sigmarkers,
-            enrich_style = enrich_style,
-            marker_plots = marker_plots,
-            enrich_plots = enrich_plots,
-            error = case$error,
-            ident = if (is.null(case$ident_2)) case$ident_1 else paste0(case$ident_1, " vs ", case$ident_2)
-        ))
-
-        if (!is.null(original_case) && !is.null(cases[[original_case]])) {
-            markers[[each_name]] <- each
-            cases[[original_case]]$markers[[each]] <<- markers
-            cases[[original_case]]$enriches[[each]] <<- enrich
-        }
+    if (!is.null(original_case) && !is.null(cases[[original_case]])) {
+        markers[[each_name]] <- each
+        cases[[original_case]]$markers[[each]] <<- markers
+        cases[[original_case]]$enriches[[each]] <<- enrich
     }
 
     invisible()

@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.34.2
+
+- feat(scrna): add PseudoBulkDEG process for differential gene expression analysis
+- fix(test.Seurat): update pipeline function to set starts for PrepareSeurat
+- chore(scrna.ScFGSEA): rename allpathway_plots to alleach_plots
+- chore(scrna/tcr): update parameter naming for consistency
+- chore(scrna.TopExpressingGenes): use common report template
+- chore(test): update pipeline function to remove report enabling
+- test(scrna): merge tests for Seurat processes to avoid repeatedly load pbmc3k dataset
+- test(scrna): move map2ref tests out of tests/scrna/Seurat for being tested locally only
+- test(scrna): add set.seed to PrepareSeurat script
+- ci(docker): update Dockerfiles to use dynamic REF_NAME argument
+- ci: update build condition and add caching for test intermediates
+
 ## 0.34.1
 
 - fix(tcr.ClonalStats): update envs assignment to handle todot parameter

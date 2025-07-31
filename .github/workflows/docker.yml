@@ -26,6 +26,7 @@ jobs:
           tags: biopipen/base:${{ github.ref_name }}
 
   docker-test:
+    needs: docker-base
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,8 +46,10 @@ jobs:
           context: .
           file: docker/test/Dockerfile
           tags: biopipen/test:${{ github.ref_name }}
+          build-args: REF_NAME=${{ github.ref_name }}
 
   docker-cnvkit-pipeline:
+    needs: docker-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,8 +69,10 @@ jobs:
           context: .
           file: docker/cnvkit_pipeline/Dockerfile
           tags: biopipen/cnvkit-pipeline:${{ github.ref_name }}
+          build-args: REF_NAME=${{ github.ref_name }}
 
   docker-cellranger-pipeline:
+    needs: docker-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,3 +92,4 @@ jobs:
           context: .
           file: docker/cellranger_pipeline/Dockerfile
           tags: biopipen/cellranger-pipeline:${{ github.ref_name }}
+          build-args: REF_NAME=${{ github.ref_name }}

@@ -1756,10 +1756,10 @@ class ScRepCombiningExpression(Proc):
             a custom variable in the data.
         chain: indicate if both or a specific chain should be used
             e.g. "both", "TRA", "TRG", "IGH", "IGL".
-        group-by: The column label in the combined clones in which clone frequency will
+        group_by: The column label in the combined clones in which clone frequency will
             be calculated. NULL or "none" will keep the format of input.data.
         proportion (flag): Whether to proportion (TRUE) or total frequency (FALSE) of
-            the clone based on the group.by variable.
+            the clone based on the group_by variable.
         filterNA (flag): Method to subset Seurat/SCE object of barcodes without clone
             information
         cloneSize (type=json): The bins for the grouping based on proportion or
@@ -1767,7 +1767,7 @@ class ScRepCombiningExpression(Proc):
             If proportion is FALSE and the cloneSizes are not set high enough based on
             frequency, the upper limit of cloneSizes will be automatically updated.
         addLabel (flag): This will add a label to the frequency header, allowing the
-            user to try multiple group.by variables or recalculate frequencies after
+            user to try multiple group_by variables or recalculate frequencies after
             subsetting the data.
     """
     input = "screpfile:file,srtobj:file"
@@ -1776,7 +1776,7 @@ class ScRepCombiningExpression(Proc):
     envs = {
         "cloneCall": "aa",
         "chain": "both",
-        "group-by": "Sample",
+        "group_by": "Sample",
         "proportion": True,
         "filterNA": False,
         "cloneSize": {

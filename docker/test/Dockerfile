@@ -1,4 +1,6 @@
-FROM biopipen/base:dev
+ARG REF_NAME=dev
+
+FROM biopipen/base:${REF_NAME}
 
 # in case we have update dependencies
 COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml

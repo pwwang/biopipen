@@ -7,12 +7,16 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: "! startsWith(github.ref, 'refs/tags')"
+    if: github.ref == 'refs/heads/dev'
     defaults:
       run:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: chetan/git-restore-mtime-action@v2
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
@@ -80,7 +84,7 @@ jobs:
           path: tests/data
           key: reference-${{ hashFiles('tests/data/prep_data.py') }}-${{ env.CACHE_NUMBER }}
         env:
-          CACHE_NUMBER: 2
+          CACHE_NUMBER: 1
 
       - name: Prepare reference data
         if: steps.restore-reference.outputs.cache-hit != 'true'
@@ -95,9 +99,37 @@ jobs:
           path: tests/data
           key: ${{ steps.restore-reference.outputs.cache-primary-key }}
 
+      - name: Restore test intermediate files
+        id: restore-test-intermediate
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/biopipen-tests-1
+          key: test-intermediates-${{ env.CACHE_NUMBER }}
+        env:
+          CACHE_NUMBER: 1
+          ACTIONS_CACHE_SERVICE_V2: true
+
       - name: Run tests
         run: |
           make --keep-going all VERBOSE=true
+
+      - name: Delete old test intermediate cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        if: steps.restore-test-intermediate.outputs.cache-hit
+        # Using `--repo` makes it so that this step doesn't require checking out the
+        # repo first.
+        run: gh cache delete --repo ${{ github.repository }} ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
+
+      - name: Save test intermediate files
+        id: save-test-intermediate
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/biopipen-tests-1
+          key: ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
+        env:
+          ACTIONS_CACHE_SERVICE_V2: true
 
   deploy:
     runs-on: ubuntu-latest

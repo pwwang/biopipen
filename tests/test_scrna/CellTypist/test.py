@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from biopipen.ns.scrna import CellTypeAnnotation, AnnData2Seurat, Seurat2AnnData
+from biopipen.ns.scrna import (
+    CellTypeAnnotation,
+    AnnData2Seurat as AnnData2Seurat_,
+    Seurat2AnnData as Seurat2AnnData_,
+)
 from biopipen.ns.web import Download
 from biopipen.core.testing import get_pipeline
 
@@ -14,7 +18,7 @@ class DownloadDemoData(Download):
     envs = {"tool": "aria2c"}
 
 
-class AnnData2Seurat(AnnData2Seurat):
+class AnnData2Seurat(AnnData2Seurat_):
     requires = DownloadDemoData
 
 
@@ -45,7 +49,7 @@ class CellTypeAnnotationSeurat(CellTypeAnnotation):
     }
 
 
-class Seurat2AnnData(Seurat2AnnData):
+class Seurat2AnnData(Seurat2AnnData_):
     requires = CellTypeAnnotationSeurat
 
 

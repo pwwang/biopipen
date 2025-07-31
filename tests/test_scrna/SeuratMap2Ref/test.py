@@ -63,7 +63,7 @@ class SeuratClusterStats(SeuratClusterStats_):
     envs = {
         "stats": {
             "Number of cells in each cluster by Sample": {
-                "group-by": "seurat_clusters",
+                "group_by": "seurat_clusters",
             }
         }
     }
@@ -74,7 +74,7 @@ class SeuratClusterStats2(SeuratClusterStats_):
     envs = {
         "stats": {
             "Number of cells in each cluster by Sample": {
-                "group-by": "seurat_clusters",
+                "group_by": "seurat_clusters",
             }
         }
     }

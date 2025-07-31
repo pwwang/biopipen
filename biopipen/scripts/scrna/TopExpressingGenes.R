@@ -9,7 +9,7 @@ outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
 mutaters <- {{ envs.mutaters | r }}
 ident <- {{ envs.ident | r }}
-group.by <- {{ envs["group-by"] | r }}  # nolint
+group_by <- {{ envs.group_by | default: envs["group-by"] | default: None | r }}  # nolint
 each <- {{ envs.each | r }}
 dbs <- {{ envs.dbs | r }}
 n <- {{ envs.n | r }}
@@ -41,7 +41,7 @@ enrich_plots <- lapply(enrich_plots, function(x) {
 })
 defaults <- list(
     ident = ident,
-    group.by = group.by,
+    group_by = group_by,
     each = each,
     dbs = dbs,
     n = n,
@@ -171,17 +171,17 @@ run_case <- function(name) {
     } else {
         subobj <- srtobj
     }
-    case$group.by <- case$group.by %||% "Identity"
+    case$group_by <- case$group_by %||% "Identity"
     if (is.null(case$ident)) {
-        case$ident <- as.character(unique(subobj@meta.data[[case$group.by]]))
+        case$ident <- as.character(unique(subobj@meta.data[[case$group_by]]))
     }
     avgexpr <- AverageExpression(
         subobj,
-        group.by = case$group.by,
+        group_by = case$group_by,
         assays = assay
     )[[assay]]
     # https://github.com/satijalab/seurat/issues/7893
-    colnames(avgexpr) <- as.character(unique(subobj@meta.data[[case$group.by]]))
+    colnames(avgexpr) <- as.character(unique(subobj@meta.data[[case$group_by]]))
     avgexpr <- avgexpr[, case$ident, drop = FALSE]
 
     for (idt in case$ident) {
