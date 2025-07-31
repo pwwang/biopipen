@@ -110,7 +110,6 @@ jobs:
 
       - name: Save test intermediate files
         id: save-test-intermediate
-        if: steps.restore-test-intermediate.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: /tmp/biopipen-tests-1
