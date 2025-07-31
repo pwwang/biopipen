@@ -7,7 +7,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: "! startsWith(github.ref, 'refs/tags')"
+    if: github.ref == 'refs/heads/dev'
     defaults:
       run:
         shell: bash -l {0}
@@ -95,9 +95,26 @@ jobs:
           path: tests/data
           key: ${{ steps.restore-reference.outputs.cache-primary-key }}
 
+      - name: Restore test intermediate files
+        id: restore-test-intermediate
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/biopipen-tests-1
+          key: test-intermediates-${{ env.CACHE_NUMBER }}
+        env:
+          CACHE_NUMBER: 1
+
       - name: Run tests
         run: |
           make --keep-going all VERBOSE=true
+
+      - name: Save test intermediate files
+        id: save-test-intermediate
+        if: steps.restore-test-intermediate.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/biopipen-tests-1
+          key: ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
 
   deploy:
     runs-on: ubuntu-latest
