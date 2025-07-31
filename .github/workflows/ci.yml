@@ -103,6 +103,7 @@ jobs:
           key: test-intermediates-${{ env.CACHE_NUMBER }}
         env:
           CACHE_NUMBER: 1
+          ACTIONS_CACHE_SERVICE_V2: true
 
       - name: Run tests
         run: |
@@ -114,6 +115,8 @@ jobs:
         with:
           path: /tmp/biopipen-tests-1
           key: ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
+        env:
+          ACTIONS_CACHE_SERVICE_V2: true
 
   deploy:
     runs-on: ubuntu-latest
