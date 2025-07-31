@@ -109,8 +109,17 @@ jobs:
         run: |
           make --keep-going all VERBOSE=true
 
+      - name: Delete old test intermediate cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        if: steps.restore-test-intermediate.outputs.cache-hit
+        # Using `--repo` makes it so that this step doesn't require checking out the
+        # repo first.
+        run: gh cache delete --repo ${{ github.repository }} ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
+
       - name: Save test intermediate files
         id: save-test-intermediate
+        if: always()
         uses: actions/cache/save@v4
         with:
           path: /tmp/biopipen-tests-1
