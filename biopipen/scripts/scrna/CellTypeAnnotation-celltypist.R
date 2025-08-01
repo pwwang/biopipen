@@ -43,7 +43,7 @@ if (!endsWith(sobjfile, ".h5ad")) {
         # find the default ident name in meta.data
         for (col in colnames(sobj@meta.data)) {
             if (!is.factor(sobj@meta.data[[col]])) { next }
-            if (isTRUE(all.equal(Idents(sobj), sobj@meta.data[[col]]))) {
+            if (isTRUE(all.equal(unname(Idents(sobj)), sobj@meta.data[[col]]))) {
                 celltypist_args$over_clustering <- col
                 break
             }
