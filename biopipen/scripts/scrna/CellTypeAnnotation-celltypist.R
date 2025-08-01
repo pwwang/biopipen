@@ -26,15 +26,8 @@ if (is.null(celltypist_args$model)) {
 }
 dir.create(file.path(outdir, "data", "models"), recursive = TRUE, showWarnings = FALSE)
 modelfile <- file.path(outdir, "data", "models", basename(celltypist_args$model))
-if (!file.exists(modelfile)) {
-    file.symlink(celltypist_args$model, modelfile)
-} else {
-    real_modelfile <- normalizePath(Sys.readlink(modelfile))
-    if (real_modelfile != normalizePath(celltypist_args$model)) {
-        file.remove(modelfile)
-        file.symlink(celltypist_args$model, modelfile)
-    }
-}
+suppressWarnings(file.remove(modelfile))
+file.symlink(normalizePath(celltypist_args$model), modelfile)
 
 sobj <- NULL
 if (!endsWith(sobjfile, ".h5ad")) {
