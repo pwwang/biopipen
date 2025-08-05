@@ -34,13 +34,13 @@ The cells are grouped at 2 dimensions: `subset_by`, usually the clinic groups th
 
 <UnorderedList>
 <ListItem>
-    <a href="../MetabolicPathwayActivity/index.html">MetabolicPathwayActivity</a>
+    <a href="?proc=MetabolicPathwayActivity" class="listitem">MetabolicPathwayActivity</a>
     <Tile>
     <p>Investigating the metabolic pathways of the cells in different subsets and groups.</p>
     </Tile>
 </ListItem>
 <ListItem>
-    MetabolicPathwayHeterogeneity (this page)
+    <span class="listitem">MetabolicPathwayHeterogeneity (this page)</span>
     <Tile>
     <p>Showing metabolic pathways enriched in genes with highest contribution to the metabolic heterogeneities</p>
     <p>
@@ -54,7 +54,7 @@ The cells are grouped at 2 dimensions: `subset_by`, usually the clinic groups th
     </Tile>
 </ListItem>
 <ListItem>
-    <a href="../MetabolicFeatures/index.html">MetabolicFeatures</a>
+    <a href="?proc=MetabolicFeatures" class="listitem">MetabolicFeatures</a>
     <Tile>
     <p>Gene set enrichment analysis against the metabolic pathways for comparisons by different groups in different subsets.</p>
     </Tile>
@@ -70,3 +70,12 @@ The cells are grouped at 2 dimensions: `subset_by`, usually the clinic groups th
 {%- endmacro -%}
 
 {{ report_jobs(jobs, head_job, report_job) }}
+
+<style>
+.listitem {
+    font-size: large;
+    font-weight: bold;
+    margin: 1rem 0 0.5rem 0;
+    display: inline-block;
+}
+</style>
