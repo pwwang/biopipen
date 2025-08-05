@@ -663,10 +663,12 @@ class SeuratClusterStats(Proc):
         "stats": {
             "Number of cells in each cluster (Bar Chart)": {
                 "plot_type": "bar",
+                "x_text_angle": 90,
             },
             "Number of cells in each cluster by Sample (Bar Chart)": {
                 "plot_type": "bar",
                 "group_by": "Sample",
+                "x_text_angle": 90,
             },
         },
         "ngenes_defaults": {
@@ -698,7 +700,6 @@ class SeuratClusterStats(Proc):
         "dimplots": {
             "Dimensional reduction plot": {
                 "label": True,
-                "label_insitu": True,
             },
         },
     }
