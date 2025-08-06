@@ -531,6 +531,8 @@ class SeuratClusterStats(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
+            You can also use the clone selectors to select the TCR clones/clusters.
+            See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         cache (type=auto): Whether to cache the plots.
             Currently only plots for features are supported, since creating the those
             plots can be time consuming.
@@ -1026,7 +1028,9 @@ class MarkersFinder(Proc):
         ncores (type=int): Number of cores to use for parallel computing for some `Seurat` procedures.
             * Used in `future::plan(strategy = "multicore", workers = <ncores>)` to parallelize some Seurat procedures.
             * See also: <https://satijalab.org/seurat/articles/future_vignette.html>
-        mutaters (type=json): The mutaters to mutate the metadata
+        mutaters (type=json): The mutaters to mutate the metadata.
+            You can also use the clone selectors to select the TCR clones/clusters.
+            See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         group_by: The column name in metadata to group the cells.
             If only `group_by` is specified, and `ident-1` and `ident-2` are
             not specified, markers will be found for all groups in this column
@@ -1238,7 +1242,9 @@ class TopExpressingGenes(Proc):
         outdir: The output directory for the tables and plots
 
     Envs:
-        mutaters (type=json): The mutaters to mutate the metadata
+        mutaters (type=json): The mutaters to mutate the metadata.
+            You can also use the clone selectors to select the TCR clones/clusters.
+            See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         ident: The group of cells to find the top expressing genes.
             The cells will be selected by the `group_by` column with this
             `ident` value in metadata.
@@ -1607,6 +1613,8 @@ class ScFGSEA(Proc):
             Passed to `nproc` of `fgseaMultilevel()`.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+            You can also use the clone selectors to select the TCR clones/clusters.
+            See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
 
         group_by: The column name in metadata to group the cells.
         ident_1: The first group of cells to compare
@@ -2700,6 +2708,8 @@ class PseudoBulkDEG(Proc):
             seurat object. Keys are the new column names and values are the
             expressions to mutate the columns. These new columns can be
             used to define your cases.
+            You can also use the clone selectors to select the TCR clones/clusters.
+            See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         each: The column name in metadata to separate the cells into different cases.
             When specified, the case will be expanded to multiple cases for
             each value in the column.
