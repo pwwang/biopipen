@@ -9,12 +9,18 @@ do_one_stats <- function(name) {
     log$info("- Case: {name}")
 
     case <- list_update(stats_defaults, stats[[name]])
-    extract_vars(case, "devpars", "more_formats", "save_code", "save_data", "subset")
+    case <- extract_vars(case, "devpars", "more_formats", "save_code", "save_data", "subset")
 
     if (!is.null(subset)) {
         case$object <- srtobj %>% filter(!!parse_expr(subset))
     } else {
         case$object <- srtobj
+    }
+    groupings <- unique(c(case$group_by, case$rows_by, case$columns_by, case$pie_group_by, GetIdentityColumn(case$object)))
+    if (length(groupings) > 0) {
+        for (g in groupings) {
+            case$object <- filter(case$object, !is.na(!!sym(g)))
+        }
     }
 
     info <- case_info(name, odir, is_dir = FALSE, create = TRUE)
