@@ -315,8 +315,8 @@ do_subset <- function(
             plotargs$keep_empty <- TRUE
 
             p <- do_call(plotfn, plotargs)
-            devpars$width <- devpars$width %||% (attr(p, "width") * devpars$res) %||% 1000
-            devpars$height <- devpars$height %||% (attr(p, "height") * devpars$res) %||% 1000
+            devpars$width <- devpars$width %||% (attr(p, "width") * 2 * devpars$res) %||% 1000
+            devpars$height <- devpars$height %||% (attr(p, "height") * 2 * devpars$res) %||% 1000
         } else {  # heatmap
             minval <- min(dat)
             maxval <- max(dat)
