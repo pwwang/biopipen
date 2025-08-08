@@ -26,6 +26,22 @@ if (
     if (length(clustrees) == 0) {
         log$warn("- no case found, skipping ...")
     } else {
+        reporter$add(
+            list(
+                kind = "descr",
+                content = 'The clustree plots displays clustering results from the Seurat object across different
+                resolutions of the clustering algorithm
+                (<a target="_blank" href="https://satijalab.org/seurat/reference/findclusters">Seurat::FindClusters</a>).
+                Each node represents a cluster, with the resolution levels labeled along the vertical (y) axis.
+                The size of each node reflects the number of cells in that cluster. Edges connect clusters between
+                adjacent resolutions and indicate how cells transition between clusters as resolution increases.
+                The thickness of the edges corresponds to the proportion of shared cells (in_prop) between clusters,
+                where darker lines signify a higher overlap (up to 100%). The color of the edges indicates the actual
+                number of cells that transitioned between clusters.'
+            ),
+            h1 = "Clustree plots"
+        )
+
         reports <- list()
         for (name in names(clustrees)) {
             if (is.null(clustrees[[name]]$prefix)) {

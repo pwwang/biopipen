@@ -566,6 +566,7 @@ class SeuratClusterStats(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
+            - descr: The description of the plot, showing in the report.
             - more_formats (type=list): The formats to save the plots other than `png`.
             - save_code (flag): Whether to save the code to reproduce the plot.
             - save_data (flag): Whether to save the data used to generate the plot.
@@ -657,6 +658,7 @@ class SeuratClusterStats(Proc):
         "clustrees": {},
         "stats_defaults": {
             "subset": None,
+            "descr": None,
             "devpars": {"res": 100},
             "more_formats": [],
             "save_code": False,
