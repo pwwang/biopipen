@@ -1749,6 +1749,11 @@ class ScRepCombiningExpression(Proc):
 
     Output:
         outfile: The `Seurat` object with the TCR/BCR data combined
+            In addition to the meta columns added by
+            `scRepertoire::combineExpression()`, a new column `TCR_Presence` will be
+            added to the metadata. It indicates whether the cell has a TCR/BCR
+            sequence or not. The value is `TRUE` if the cell has a TCR/BCR sequence,
+            and `FALSE` otherwise.
 
     Envs:
         cloneCall: How to call the clone - VDJC gene (gene), CDR3 nucleotide (nt),

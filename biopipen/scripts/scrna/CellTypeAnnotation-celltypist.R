@@ -26,15 +26,8 @@ if (is.null(celltypist_args$model)) {
 }
 dir.create(file.path(outdir, "data", "models"), recursive = TRUE, showWarnings = FALSE)
 modelfile <- file.path(outdir, "data", "models", basename(celltypist_args$model))
-if (!file.exists(modelfile)) {
-    file.symlink(celltypist_args$model, modelfile)
-} else {
-    real_modelfile <- normalizePath(Sys.readlink(modelfile))
-    if (real_modelfile != normalizePath(celltypist_args$model)) {
-        file.remove(modelfile)
-        file.symlink(celltypist_args$model, modelfile)
-    }
-}
+suppressWarnings(file.remove(modelfile))
+file.symlink(normalizePath(celltypist_args$model), modelfile)
 
 sobj <- NULL
 if (!endsWith(sobjfile, ".h5ad")) {
@@ -43,7 +36,7 @@ if (!endsWith(sobjfile, ".h5ad")) {
         # find the default ident name in meta.data
         for (col in colnames(sobj@meta.data)) {
             if (!is.factor(sobj@meta.data[[col]])) { next }
-            if (isTRUE(all.equal(Idents(sobj), sobj@meta.data[[col]]))) {
+            if (isTRUE(all.equal(unname(Idents(sobj)), sobj@meta.data[[col]]))) {
                 celltypist_args$over_clustering <- col
                 break
             }

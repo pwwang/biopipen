@@ -29,6 +29,8 @@ if __name__ == "__main__":
         raise ValueError(
             f"Over clustering column '{over_clustering}' not found in AnnData object."
         )
+    if 'neighbors' in adata.uns and 'params' in adata.uns['neighbors']:
+        adata.uns['neighbors']['params'].setdefault('n_neighbors', 15)
 
     annotated = celltypist.annotate(
         adata,

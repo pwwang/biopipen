@@ -41,7 +41,7 @@ jobs:
           key: conda-${{ hashFiles('tests/conda/env_*.yml') }}-${{ env.CACHE_NUMBER }}
         env:
           TAR_OPTIONS: "--no-same-owner --no-same-permissions"
-          CACHE_NUMBER: 1
+          CACHE_NUMBER: 2
 
       - name: Create conda environments (if not cached)
         if: steps.restore-conda.outputs.cache-hit != 'true'
@@ -116,7 +116,7 @@ jobs:
       - name: Delete old test intermediate cache
         env:
           GH_TOKEN: ${{ github.token }}
-        if: steps.restore-test-intermediate.outputs.cache-hit
+        # if: steps.restore-test-intermediate.outputs.cache-hit
         # Using `--repo` makes it so that this step doesn't require checking out the
         # repo first.
         run: gh cache delete --repo ${{ github.repository }} ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}

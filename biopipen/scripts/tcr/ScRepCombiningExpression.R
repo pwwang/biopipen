@@ -34,6 +34,7 @@ obj <- combineExpression(
     cloneSize = unlist(cloneSize),
     addLabel = addLabel
 )
+obj$TCR_Presence <- !is.na(obj$CTaa)
 
 log$info("Saving combined object ...")
 save_obj(obj, outfile)

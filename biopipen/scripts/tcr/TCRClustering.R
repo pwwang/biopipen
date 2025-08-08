@@ -130,11 +130,10 @@ output.clusters_df.to_csv(clustcr_dir + "/clusters.txt", sep="\t", index=False)
     clustcr_file
 }
 
-clean_clustcr_output = function(clustcr_outfile, clustcr_input) {
+clean_clustcr_output = function(clustcr_outfile) {
     clustcr_out = read.delim2(clustcr_outfile, header=TRUE, row.names = NULL)
     colnames(clustcr_out) = c("CDR3.aa", "TCR_Cluster")
-    in_cdr3 = read.delim2(clustcr_input, header=TRUE, row.names = NULL)
-    out = left_join(in_cdr3, distinct(clustcr_out), by=c("CDR3.aa")) %>%
+    out = left_join(cdr3aa_df, distinct(clustcr_out), by=c(cdr3seq4clustering = "CDR3.aa")) %>%
         mutate(
             TCR_Cluster = if_else(
                 is.na(TCR_Cluster),
@@ -170,7 +169,7 @@ run_clustcr = function() {
         quit(status=rc)
     }
     clustcr_outfile = file.path(clustcr_dir, "clusters.txt")
-    clean_clustcr_output(clustcr_outfile, clustcr_input)
+    clean_clustcr_output(clustcr_outfile)
 }
 
 prepare_giana = function() {
@@ -193,21 +192,8 @@ prepare_giana = function() {
 }
 
 prepare_input = function() {
-    # prepare input file for GIANA
-    cdr3 = c()
-    # cdr3col = if (!on_multi) "cdr3" else "CDR3.aa"
-    cdr3col = "CDR3.aa"
-    for (sample in names(seqdata)) {
-        sdata = seqdata[[sample]]
-        if (on_multi) {
-            sdata[[cdr3col]] = sub(";", "", sdata[[cdr3col]])
-        } else if ("chain" %in% colnames(sdata)) {
-            sdata = sdata %>% separate_rows(chain, cdr3col, sep = ";") %>%
-                filter(chain == "TRB")
-        }
-        cdr3 = union(cdr3, unique(sdata[[cdr3col]]))
-    }
-    cdr3 = unique(cdr3)
+    cdr3aa_df$cdr3seq4clustering <<- gsub("[^A-Z]", "", cdr3aa_df$CDR3.aa)  # Remove non-amino acid characters
+    cdr3 <- unique(cdr3aa_df$cdr3seq4clustering)
 
     # cdr3 = distinct(cdr3, aminoAcid, vMaxResolved)
 
@@ -220,15 +206,14 @@ prepare_input = function() {
     cdr3file
 }
 
-clean_giana_output = function(giana_outfile, giana_infile) {
+clean_giana_output = function(giana_outfile) {
     # generate an output file with columns:
     # CDR3.aa, TCR_Cluster, V.name, Sample
     # If sequence doesn't exist in the input file,
     # Then a unique cluster id is assigned to it.
     giana_out = read.delim2(giana_outfile, header=FALSE, comment.char = "#", row.names = NULL)[, 1:2, drop=FALSE]
     colnames(giana_out) = c("CDR3.aa", "TCR_Cluster")
-    in_cdr3 = read.delim2(giana_infile, header=TRUE, row.names = NULL)
-    out = left_join(in_cdr3, distinct(giana_out), by=c("CDR3.aa")) %>%
+    out = left_join(cdr3aa_df, distinct(giana_out), by=c(cdr3seq4clustering = "CDR3.aa")) %>%
         mutate(
             TCR_Cluster = if_else(
                 is.na(TCR_Cluster),
@@ -283,10 +268,11 @@ run_giana = function() {
         quit(status=rc)
     }
     giana_outfile = file.path(giana_outdir, "cdr3--RotationEncodingBL62.txt")
-    clean_giana_output(giana_outfile, giana_input)
+    clean_giana_output(giana_outfile)
 }
 
 attach_to_obj = function(obj, out) {
+    out <- as.data.frame(out)
     rownames(out) <- out$Barcode
     if (is_seurat) {
         # Attach results to Seurat object

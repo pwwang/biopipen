@@ -36,9 +36,6 @@ from sklearn.manifold import MDS
 import faiss
 from query import *
 try:
-    from Bio.SubsMat.MatrixInfo import blosum62
-    print(blosum62)
-except ModuleNotFoundError:
     from Bio.Align import substitution_matrices
     blosum62 = substitution_matrices.load("BLOSUM62")
     _tmp = {}
@@ -46,7 +43,8 @@ except ModuleNotFoundError:
         for ab2 in blosum62.alphabet:
             _tmp[(ab1, ab2)] = int(blosum62[(ab1, ab2)])
     blosum62 = _tmp
-    print(blosum62)
+except ModuleNotFoundError:
+    from Bio.SubsMat.MatrixInfo import blosum62
 
 AAstring = "ACDEFGHIKLMNPQRSTVWY"
 AAstringList = list(AAstring)

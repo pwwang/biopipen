@@ -118,8 +118,13 @@ load_contig <- function(input, sample, fmt) {
     fmt <- dirfmt[[2]]
     if (is.null(dir)) { return(NULL) }
     x <- loadContigs(dir, format = fmt %||% "10X")
-    x[[1]]$sample <- NULL
-    x[[1]]
+    x <- x[[1]]
+    x$sample <- NULL
+    if (identical(fmt %||% "10X", "10X") && colnames(x)[1] == "X") {
+        x$X <- NULL
+    }
+
+    x
 }
 
 

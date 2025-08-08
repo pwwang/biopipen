@@ -39,9 +39,11 @@ log$info("Preparing TCR input file ...")
 # If immfile endswith .rds, then it is an immunarch object
 tcrdata <- sobj@meta.data %>%
     rownames_to_column("contig_id") %>%
+    select(contig_id, CTaa, CTgene, sample = Sample) %>%
     filter(!is.na(CTaa) & !is.na(CTgene)) %>%
-    separate(CTaa, into = c(NA, "cdr3"), sep = "_", remove = FALSE) %>%
-    separate(CTgene, into = c(NA, "vjgene"), sep = "_", remove = FALSE) %>%
+    separate(CTaa, into = c(NA, "cdr3"), sep = "_", remove = TRUE) %>%
+    filter(!is.na(cdr3) & cdr3 != "NA" & cdr3 != "nan") %>%
+    separate(CTgene, into = c(NA, "vjgene"), sep = "_", remove = TRUE) %>%
     separate(vjgene, into = c("v_gene", NA, "j_gene", NA), sep = "\\.", remove = TRUE) %>%
     mutate(v_gene = sub("-\\d+$", "", v_gene), j_gene = sub("-\\d+$", "", j_gene))
 

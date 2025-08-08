@@ -165,7 +165,7 @@ class MetabolicFeatures(Proc):
             `1`, `2` and `3` in the `group_by` column, we could have
             `comparisons = ["1", "2"]`, which will compare the group `1` with groups
             `2` and `3`, and the group `2` with groups `1` and `3`. We could also
-            have `comparisons = ["1,2", "1,3"]`, which will compare the group `1` with
+            have `comparisons = ["1:2", "1:3"]`, which will compare the group `1` with
             group `2` and group `1` with group `3`.
         fgsea_args (type=json): Other arguments for the `fgsea::fgsea()` function.
             For example, `{"minSize": 15, "maxSize": 500}`.

@@ -64,11 +64,11 @@ do_one_features <- function(name) {
     log$info("- Case: {name}")
 
     case <- list_update(features_defaults, features[[name]])
-    case$descr <- case$descr %||% ""
     case <- extract_vars(
         case,
         "devpars", "more_formats", "save_code", "save_data", "order_by",
-        "subset", "features", "descr")
+        "subset", "features", "descr",
+        allow_nonexisting = TRUE)
 
     if (!is.null(subset)) {
         case$object <- srtobj %>% filter(!!parse_expr(subset))
@@ -77,6 +77,7 @@ do_one_features <- function(name) {
     }
 
     if (exists("order_by") && !is.null(order_by)) {
+        case$ident <- case$ident %||% GetIdentityColumn(case$object)
         if (length(order_by) < 2) {
             clusters <- case$object@meta.data %>%
                 group_by(!!sym(case$ident)) %>%
@@ -126,12 +127,34 @@ do_one_features <- function(name) {
         caching$save(info$prefix)
     }
     # add reports
-    if (!is.null(descr) && nchar(descr) > 0) {
-        reporter$add2(
-            list(kind = "descr", content = descr),
-            hs = c(info$section, info$name)
+    default_descr <- glue(
+        "The plot shows the distribution or pattern of the specified features ({paste(case$features %||% features, collapse = ', ')}) ",
+        "across cells",
+        "{if (!is.null(case$ident)) glue(', identified by \"{case$ident}\"') else ''}",
+        "{if (!is.null(case$group_by)) glue(', grouped by \"{case$group_by}\"') else ''}",
+        "{if (!is.null(case$split_by)) glue(', and split by \"{case$split_by}\"') else ''}. ",
+        "The plot type is '{case$plot_type}', ",
+        "{if (case$plot_type == 'dim') 'displaying the features on a dimensional reduction embedding' ",
+        " else if (case$plot_type == 'heatmap') 'arranged as a heatmap by rows_name and other grouping variables' ",
+        " else if (case$plot_type %in% c('violin', 'box', 'ridge')) 'showing the distribution of feature values by the grouping variables' ",
+        " else if (case$plot_type == 'cor') 'showing the correlation between features' ",
+        " else 'showing aggregated feature values by the grouping variables'}. ",
+        "{if (!is.null(case$facet_by)) glue('Plots are further faceted by \"{case$facet_by}\". ') else ''}",
+        "{if (case$plot_type == 'dim') glue('The reduction used is \"{if (!is.null(case$reduction)) case$reduction else DefaultDimReduc(case$object)}\"') else ''}",
+        "{if (case$plot_type == 'dim' && !is.null(case$graph)) glue(', with graph \"{case$graph}\" drawn to show cell neighbor edges') else ''}",
+        "{if (case$plot_type == 'dim' && !is.null(case$bg_cutoff) && case$bg_cutoff > 0) glue(', and a background cutoff of {case$bg_cutoff}') else ''}",
+        "{if (case$plot_type == 'dim') glue(', using dimensions {paste(case$dims %||% 1:2, collapse = \",\")}') else ''}"
+    )
+    if (!is.null(case$comparisons)) {
+        default_descr <- paste0(
+            default_descr,
+            "Statistical comparisons were performed between groups using '{case$pairwise_method %||% 'wilcox.test'}' method."
         )
     }
+    reporter$add2(
+        list(kind = "descr", content = descr %||% default_descr),
+        hs = c(info$section, info$name)
+    )
 
     if (save_data) {
         reporter$add2(

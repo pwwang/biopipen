@@ -98,7 +98,13 @@ do_comparison <- function(object, caseinfo, subset_by, subset_val, group_by, gro
     }
 
     classes <- as.character(object@meta.data[[group_by]])
-    classes[classes != group1] <- "_REST"
+    if (!group1 %in% classes) {
+        stop("Group '", group1, "' not found in '", group_by, "' column of the Seurat object.")
+    }
+    if (!is.null(group2) && !group2 %in% classes) {
+        stop("Group '", group2, "' not found in '", group_by, "' column of the Seurat object.")
+    }
+    classes[classes != group1] <- "Other"
     if (any(table(classes) < 5)) {
         msg <- paste0(
             "  ! skipped. Group has less than 5 cells: ",
@@ -266,8 +272,8 @@ do_subset <- function(object, caseinfo, subset_by, subset_val, group_by, compari
             rbind, lapply(
                 as.character(comparisons),
                 function(comparison) {
-                    if (grepl(",", comparison)) {
-                        group1 <- trimws(unlist(strsplit(comparison, ",")))
+                    if (grepl(":", comparison)) {
+                        group1 <- trimws(unlist(strsplit(comparison, ":")))
                         group2 <- group1[2]
                         group1 <- group1[1]
                     } else {
