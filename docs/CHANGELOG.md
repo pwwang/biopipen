@@ -1,5 +1,28 @@
 # Change Log
 
+## 0.34.3
+
+- BREAKING(scrna.MetabolicFeatures): use `:` instead of `,` to separate groups for comparisons
+- feat(tcr.ScRepCombiningExpression): add TCR presence indicator to combined expression object
+- fix(scrna.CellTypeAnnotation): fix identification of default ident if rds or qs is given as input for celltypist
+- fix(scrna.CellTypeAnnotation): ensure n_neighbors is set in neighbors params
+- fix(scrna.SeuratClusterStats): correct typo in group_by variable name
+- fix(tcr.ScRepLoading): fix an issue where barcode is not the first column when loaded for 10X data
+- fix(tcr.TCRClustering): fix input collection for clustering
+- fix(tcr.TESSA): refine TCR input preparation
+- fix(scrna.SeuratClusterStats): exclude NA entities in groupings
+- chore(scrna.CellTypeAnnotation): fix dead links for model files for celltypist
+- chore: remove SCP-plot.R
+- chore(ci): comment out cache deletion condition
+- chore(scrna_metabolic_landscape): enlarge font size for list items in introduction of report templates
+- chore(scrna.SeuratClusterStats): adjust plot settings for better visualization
+- chore(tcr.TCRClustering): swap importing BLOSUM62 matrix from newer and older version of biopython for GIANA
+- chore(scrna_metabolic_landscape): adjust plot dimensions
+- chore(scrna.SeuratClusterStats): enhance descriptions of plots
+- chore(deps): update versions for copier, pipen-report, and pipen-verbose
+- docs(scrna): update mutater documentation to include clone selectors
+- ci: update cache number for conda environments to force updates
+
 ## 0.34.2
 
 - feat(scrna): add PseudoBulkDEG process for differential gene expression analysis
