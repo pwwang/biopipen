@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.4
+
+- chore(scrna): update error flag in MarkersFinder and PseudoBulkDEG classes
+- chore(deps): bump pipen to 0.17.11
+
 ## 0.34.3
 
 - BREAKING(scrna.MetabolicFeatures): use `:` instead of `,` to separate groups for comparisons
