@@ -47,7 +47,7 @@ do_one_stats <- function(name) {
     if (!is.null(case$comparisons)) {
         default_descr <- paste0(
             default_descr,
-            "Statistical comparisons were performed between groups using '{case$pairwise_method %||% 'wilcox.test'}' method."
+            glue("Statistical comparisons were performed between groups using \"{case$pairwise_method %||% 'wilcox.test'}\" method.")
         )
     }
     if (save_data) {
