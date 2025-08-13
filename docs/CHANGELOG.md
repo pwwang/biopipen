@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.5
+
+- fix(scrna.SeuratClusterstats): update string formatting for statistical comparison descriptions
+- ci: revert CACHE_NUMBER to 1 for conda to force install biopipen.utils.R v0.2.9
+
 ## 0.34.4
 
 - chore(scrna): update error flag in MarkersFinder and PseudoBulkDEG classes
