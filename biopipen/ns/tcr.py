@@ -1682,6 +1682,10 @@ class ScRepLoading(Proc):
         type (choice): The type of the data to load.
             - TCR: T cell receptor data
             - BCR: B cell receptor data
+            - auto: Automatically detect the type from the metadata.
+                If `auto` is selected, the type will be determined by the presence of
+                `TCRData` or `BCRData` columns in the metadata. If both columns are
+                present, `TCR` will be selected by default.
         combineTCR (type=json): The extra arguments for `scRepertoire::combineTCR`
             function.
             See also <https://www.borch.dev/uploads/screpertoire/reference/combinetcr>
@@ -1721,13 +1725,12 @@ class ScRepLoading(Proc):
     output = "outfile:file:{{in.metafile | stem}}.scRep.qs"
     lang = config.lang.rscript
     envs = {
-        "type": "TCR",  # or BCR
+        "type": "auto",  # or TCR/BCR
         "combineTCR": {"samples": True},
         "combineBCR": {"samples": True},
         "exclude": ["BCRData", "TCRData", "RNAData"],
         "format": None,
         "tmpdir": config.path.tmpdir,
-
     }
     script = "file://../scripts/tcr/ScRepLoading.R"
 
@@ -1750,7 +1753,7 @@ class ScRepCombiningExpression(Proc):
     Output:
         outfile: The `Seurat` object with the TCR/BCR data combined
             In addition to the meta columns added by
-            `scRepertoire::combineExpression()`, a new column `TCR_Presence` will be
+            `scRepertoire::combineExpression()`, a new column `VDJ_Presence` will be
             added to the metadata. It indicates whether the cell has a TCR/BCR
             sequence or not. The value is `TRUE` if the cell has a TCR/BCR sequence,
             and `FALSE` otherwise.
