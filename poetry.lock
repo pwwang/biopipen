@@ -1063,14 +1063,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-args"
-version = "0.17.3"
+version = "0.17.4"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_args-0.17.3-py3-none-any.whl", hash = "sha256:e80685fb3029e988796b8683b4085c659589d177bdd589543f7c7ef54bfa2c50"},
-    {file = "pipen_args-0.17.3.tar.gz", hash = "sha256:3e3cb3fe49c110b802eab7283757e89fcfe9eac9bc37dfcf06fcb489ddb4d132"},
+    {file = "pipen_args-0.17.4-py3-none-any.whl", hash = "sha256:f4b0fbdd434aee05902542e8547168c7a98e25a043f13eab60826d48416bc527"},
+    {file = "pipen_args-0.17.4.tar.gz", hash = "sha256:1f392fe6355e7c0e820527bf3dbbe0a675d55cb1e35da92d3b1a7b3488ceb219"},
 ]
 
 [package.dependencies]
@@ -1783,14 +1783,14 @@ files = [
 
 [[package]]
 name = "simplug"
-version = "0.5.1"
+version = "0.5.3"
 description = "A simple plugin system for python with async hooks supported"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "simplug-0.5.1-py3-none-any.whl", hash = "sha256:1414a9ac40bfc04cf0316a107d1e518817af3c2699d2714f0e610bc758d4f184"},
-    {file = "simplug-0.5.1.tar.gz", hash = "sha256:48e12adfdb8e53ce9912928e5c00f531aa373032dd535b6e38a95bd6663552bf"},
+    {file = "simplug-0.5.3-py3-none-any.whl", hash = "sha256:317be39b810ca6e2426eafb2db0930ea077ad883a78cc55a1c7ad3285129f09c"},
+    {file = "simplug-0.5.3.tar.gz", hash = "sha256:d5262b01c00aeae4712a448dbb0f8c37dca6d03cda62aadd9a4925c766bac85e"},
 ]
 
 [package.dependencies]
