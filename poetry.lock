@@ -1026,14 +1026,14 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.17.12"
+version = "0.17.13"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen-0.17.12-py3-none-any.whl", hash = "sha256:df324637980ea550eae8718b85d07045e0da12bcb973d2670cc00748f9a7c5d7"},
-    {file = "pipen-0.17.12.tar.gz", hash = "sha256:6efb95980fc286198efbc3249b825666390306aa3601287121e7048452a298c3"},
+    {file = "pipen-0.17.13-py3-none-any.whl", hash = "sha256:6ba4e11d34db18d6b115aed8c71bb4858f6342bf497418400540623c4f94764f"},
+    {file = "pipen-0.17.13.tar.gz", hash = "sha256:335803a538f3e3877b3c6beba93390fdb26f73f38f6690552ffa9a730a742d1c"},
 ]
 
 [package.dependencies]
@@ -1165,14 +1165,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-poplog"
-version = "0.3.3"
+version = "0.3.4"
 description = "Populate logs from jobs to running log of the pipeline"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_poplog-0.3.3-py3-none-any.whl", hash = "sha256:cbc405f69fa28dfaa7a90a3f3aea2863edff91edfeac211e03d1d19cee1a5799"},
-    {file = "pipen_poplog-0.3.3.tar.gz", hash = "sha256:ffccc0e88cc7c63f83a5a6f17a7f3789f361db527193a9ad67b6307ca614f76d"},
+    {file = "pipen_poplog-0.3.4-py3-none-any.whl", hash = "sha256:33cd5632c8680f48a654a2b236dbaf8a9da1e35d34162ccb4b3dfe3896e28dca"},
+    {file = "pipen_poplog-0.3.4.tar.gz", hash = "sha256:3e66c7d59ecc2ff24d278d7f2a5bae60594c0498506ab8a80fdd5f841f0972f0"},
 ]
 
 [package.dependencies]
