@@ -3,7 +3,9 @@ FROM mambaorg/micromamba:2.3.0
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
 # Install dependencies
-RUN micromamba install -y -n base python=3.10 nodejs=20 git poetry && \
+# nodejs is for report building (pipen-report)
+# procps-ng is for `free` command for memory info by pipen-runinfo
+RUN micromamba install -y -n base python=3.10 nodejs=20 git poetry procps-ng && \
     micromamba clean --all --yes
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
