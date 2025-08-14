@@ -21,6 +21,18 @@ log <- get_logger()
 
 log$info("Loading metadata ...")
 metadata <- read.table(metafile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE)
+if (type == "AUTO") {
+    if ("TCRData" %in% colnames(metadata) && "BCRData" %in% colnames(metadata)) {
+        log$warn("Both TCRData and BCRData columns found in metadata. Defaulting to TCR.")
+        type <- "TCR"
+    } else if ("TCRData" %in% colnames(metadata)) {
+        type <- "TCR"
+    } else if ("BCRData" %in% colnames(metadata)) {
+        type <- "BCR"
+    } else {
+        stop("Error: Neither TCRData nor BCRData column found in metadata.")
+    }
+}
 
 data_column <- ifelse(type == "TCR", "TCRData", "BCRData")
 combine_fn <- ifelse(type == "TCR", combineTCR, combineBCR)

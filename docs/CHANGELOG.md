@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.34.6
+
+- chore(scrna.CellTypeAnnotation): print the command for celltypist
+- feat(tcr.ScRepLoading): enhance to auto-detect data type
+- chore(tcr.ScRepCombiningExpression): rename TCR_presence to VDJ_presence in metadata of output Seurat object
+- chore(deps): update xqute to version 0.10.4
+- chore(docker): add procps-ng for free command for pipen-runinfo
+- chore(deps): update pipen version to 0.17.12
+- chore(deps): bump pipen-poplog to 0.3.4
+- chore(deps): update simplug to version 0.5.1
+- chore(deps): bump pipen-args to 0.17.4 to void overriding the default plugin options
+
 ## 0.34.5
 
 - fix(scrna.SeuratClusterstats): update string formatting for statistical comparison descriptions
