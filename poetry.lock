@@ -1150,14 +1150,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-log2file"
-version = "0.10.0"
+version = "0.10.1"
 description = "Add verbosal information in logs for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_log2file-0.10.0-py3-none-any.whl", hash = "sha256:39eaa222d7ead6ac67ee4871dc009bb31f399650b7ddf77070ba6515a08bccb3"},
-    {file = "pipen_log2file-0.10.0.tar.gz", hash = "sha256:522ba7e9c054a63edbe5f4befc073ba7026c0930a3587dbafa82a8980ffa5caa"},
+    {file = "pipen_log2file-0.10.1-py3-none-any.whl", hash = "sha256:08527bc98b352631aa6c9cda1874e9de660dbceb17c78cac73ae1960faec60fe"},
+    {file = "pipen_log2file-0.10.1.tar.gz", hash = "sha256:c965493ff23a99177e23bcaa07fdab9637973ea5ef65bdc9f57d8cf664684485"},
 ]
 
 [package.dependencies]
@@ -1165,14 +1165,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-poplog"
-version = "0.3.4"
+version = "0.3.5"
 description = "Populate logs from jobs to running log of the pipeline"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_poplog-0.3.4-py3-none-any.whl", hash = "sha256:33cd5632c8680f48a654a2b236dbaf8a9da1e35d34162ccb4b3dfe3896e28dca"},
-    {file = "pipen_poplog-0.3.4.tar.gz", hash = "sha256:3e66c7d59ecc2ff24d278d7f2a5bae60594c0498506ab8a80fdd5f841f0972f0"},
+    {file = "pipen_poplog-0.3.5-py3-none-any.whl", hash = "sha256:61481124b066ceaf1a3d64ed3b5fa0ad4b61268a882dadcbfd60cd27e2b0a471"},
+    {file = "pipen_poplog-0.3.5.tar.gz", hash = "sha256:ee53fb6f71f6239f68f4ba60ffd344f2c529638ead96a1d7938bf3c92ef685c0"},
 ]
 
 [package.dependencies]
