@@ -1783,14 +1783,14 @@ files = [
 
 [[package]]
 name = "simplug"
-version = "0.5.0"
+version = "0.5.1"
 description = "A simple plugin system for python with async hooks supported"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "simplug-0.5.0-py3-none-any.whl", hash = "sha256:5c33d4657c5a2f27ddcd5249cc90ef981b00ed4eb09c45e2d0a9ba3a6cb71063"},
-    {file = "simplug-0.5.0.tar.gz", hash = "sha256:f41f901fb0881a4b1ebf606acb802c0da2256554f75471d5a6c0d32eb6975670"},
+    {file = "simplug-0.5.1-py3-none-any.whl", hash = "sha256:1414a9ac40bfc04cf0316a107d1e518817af3c2699d2714f0e610bc758d4f184"},
+    {file = "simplug-0.5.1.tar.gz", hash = "sha256:48e12adfdb8e53ce9912928e5c00f531aa373032dd535b6e38a95bd6663552bf"},
 ]
 
 [package.dependencies]
