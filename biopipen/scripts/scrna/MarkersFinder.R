@@ -165,10 +165,12 @@ post_casing <- function(name, case) {
 
         if (length(cases) == 0 && name == "Marker Discovery") {
             name <- case$each
+        } else {
+            name <- paste0(name, " (", case$each, ")")
         }
 
         for (each in eachs) {
-            newname <- paste0(name, " - ", each)
+            newname <- paste0(name, "::", each)
             newcase <- case
 
             newcase$original_case <- name

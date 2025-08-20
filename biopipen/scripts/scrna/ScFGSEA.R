@@ -83,10 +83,12 @@ expand_each <- function(name, case) {
 
         if (length(cases) == 0 && name == "GSEA") {
             name <- case$each
+        } else {
+            name <- paste0(name, " (", case$each, ")")
         }
 
         for (each in eachs) {
-            newname <- paste0(case$each, "::", each)
+            newname <- paste0(name, "::", each)
             newcase <- case
 
             newcase$original_case <- paste0(name, " (all ", case$each,")")

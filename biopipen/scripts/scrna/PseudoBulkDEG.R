@@ -131,12 +131,14 @@ expand_each <- function(name, case) {
 
         if (length(cases) == 0 && name == "DEG Analysis") {
             name <- case$each
+        } else {
+            name <- paste0(name, " (", case$each, ")")
         }
 
         case$aggregate_by <- unique(c(case$aggregate_by, case$group_by, case$paired_by, case$each))
 
         for (each in eachs) {
-            newname <- paste0(case$each, "::", each)
+            newname <- paste0(name, "::", each)
             newcase <- case
 
             newcase$original_case <- name
