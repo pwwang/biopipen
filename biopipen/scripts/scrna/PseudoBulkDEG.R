@@ -214,7 +214,52 @@ process_markers <- function(markers, info, case) {
     # markers <- markers %>%
     #     mutate(gene = as.character(gene)) %>%
     #     arrange(p_val_adj, desc(abs(avg_log2FC)))
+
+    empty <- if (case$enrich_style == "enrichr") {
+        data.frame(
+            Database = character(0),
+            Term = character(0),
+            Overlap = character(0),
+            P.value = numeric(0),
+            Adjusted.P.value = numeric(0),
+            Odds.Ratio = numeric(0),
+            Combined.Score = numeric(0),
+            Genes = character(0),
+            Rank = numeric(0)
+        )
+    } else {  # clusterProfiler
+        data.frame(
+            ID = character(0),
+            Description = character(0),
+            GeneRatio = character(0),
+            BgRatio = character(0),
+            Count = integer(0),
+            pvalue = numeric(0),
+            p.adjust = numeric(0),
+            qvalue = numeric(0),
+            geneID = character(0),
+            Database = character(0)
+        )
+    }
+    if (is.null(markers) || nrow(markers) == 0) {
+        if (case$error) {
+            stop("Error: No markers found in case '", info$name, "'.")
+        } else {
+            log$warn("! Warning: No markers found in case '", info$name, "'.")
+            reporter$add2(
+                list(
+                    name = "Warning",
+                    contents = list(list(kind = "error", content = "No markers found.", kind_ = "warning"))),
+                hs = c(info$section, info$name),
+                hs2 = "DEG Analysis",
+                ui = "tabs"
+            )
+            return(empty)
+        }
+    }
     markers$gene <- as.character(markers$gene)
+    markers$p_val_adj <- as.numeric(markers$p_val_adj)
+    markers$log2FC <- as.numeric(markers$log2FC)
     markers <- markers[order(markers$p_val_adj, -abs(markers$log2FC)), ]
 
     # Save markers
@@ -289,7 +334,7 @@ process_markers <- function(markers, info, case) {
             stop("Error: Not enough significant DEGs with '", case$sigmarkers, "' in case '", info$name, "' found (< 5) for enrichment analysis.")
         } else {
             message <- paste0("Not enough significant DEGs with '", case$sigmarkers, "' found (< 5) for enrichment analysis.")
-            log$warn("  ! Error: {message}")
+            log$warn("! Error: {message}")
             reporter$add2(
                 list(
                     name = "Warning",
@@ -347,7 +392,7 @@ process_markers <- function(markers, info, case) {
             if (case$error) {
                 stop("Error: ", e$message)
             } else {
-                log$warn("  ! Error: {e$message}")
+                log$warn("! Error: {e$message}")
                 reporter$add2(
                     list(
                         name = "Warning",
@@ -480,6 +525,7 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
 
 run_case <- function(name) {
     case <- cases[[name]]
+    log$info("----------------------------------------")
     log$info("Case: {name} ...")
 
     case <- extract_vars(
@@ -560,16 +606,35 @@ run_case <- function(name) {
         return(invisible())
     }
 
+    info <- case_info(name, outdir, create = TRUE)
     exprs <- AggregateExpressionPseudobulk(
         srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
         subset = subset, log = log
     )
-    markers <- RunDEGAnalysis(
-        exprs, group_by = group_by, ident_1 = ident_1, ident_2 = ident_2,
-        paired_by = paired_by, tool = tool, log = log
+    markers <- tryCatch(
+        {
+            RunDEGAnalysis(
+                exprs, group_by = group_by, ident_1 = ident_1, ident_2 = ident_2,
+                paired_by = paired_by, tool = tool, log = log
+            )
+        }, error = function(e) {
+            if (error) {
+                stop("Error: ", e$message)
+            } else {
+                log$warn("! Error: {e$message}")
+                reporter$add2(
+                    list(
+                        name = "Warning",
+                        contents = list(list(kind = "error", content = e$message, kind_ = "warning"))),
+                    hs = c(info$section, info$name),
+                    hs2 = "DEG Analysis",
+                    ui = "tabs"
+                )
+                return(invisible())
+            }
+        }
     )
 
-    info <- case_info(name, outdir, create = TRUE)
     enrich <- process_markers(markers, info = info, case = list(
         dbs = dbs,
         sigmarkers = sigmarkers,
