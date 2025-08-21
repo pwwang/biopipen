@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.34.7
+
+- chore(deps): bump pipen-report to 0.23.8
+- fix(scrna): update naming convention in expand_each function
+- fix(scrna.PseudoBulkDEG): improve error handling
+- chore(deps): bump version to 0.17.14
+
 ## 0.34.6
 
 - chore(scrna.CellTypeAnnotation): print the command for celltypist
