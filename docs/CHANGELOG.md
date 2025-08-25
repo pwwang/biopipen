@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.34.8
+
+- fix(scrna.MarkersFinder): improve marker processing and enrichment checks when result has no markers/enrichments
+- feat(scrna.PseudoBulkDEG): add ncores and cache parameters
+- feat(scrna.MarkersFinder): enhance heatmap plotting options
+- fix(scrna.ScFGSEA): improve handling of cases with NA gene ranks
+- chore: update package versions
+
 ## 0.34.7
 
 - chore(deps): bump pipen-report to 0.23.8
