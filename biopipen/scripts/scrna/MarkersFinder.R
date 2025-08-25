@@ -401,6 +401,10 @@ process_allmarkers <- function(markers, plotcases, casename, groupname) {
         plotargs <- plotcases[[plotname]]
         plotargs$degs <- markers
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
+        if (identical(plotargs$plot_type, "heatmap")) {
+            plotargs$show_row_names = plotargs$show_row_names %||% TRUE
+            plotargs$show_column_names = plotargs$show_column_names %||% TRUE
+        }
         do_call(VizDEGs, plotargs)
         reporter$add2(
             list(
