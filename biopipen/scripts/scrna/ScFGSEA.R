@@ -82,13 +82,13 @@ expand_each <- function(name, case) {
         }
 
         if (length(cases) == 0 && name == "GSEA") {
-            name <- case$each
+            prefix <- case$each
         } else {
-            name <- paste0(name, " (", case$each, ")")
+            prefix <- paste0(name, " (", case$each, ")")
         }
 
         for (each in eachs) {
-            newname <- paste0(name, "::", each)
+            newname <- paste0(prefix, "::", each)
             newcase <- case
 
             newcase$original_case <- paste0(name, " (all ", case$each,")")
@@ -143,6 +143,11 @@ do_case <- function(name) {
     info <- case_info(name, outdir, create = TRUE)
 
     if (!is.null(case$gseas)) {
+
+        if (length(case$gseas) == 0) {
+            log$warn("  No GSEA results found for case {name}. Skipping.")
+            return(invisible(NULL))
+        }
 
         each_levels <- names(case$gseas)
         gseas <- do_call(rbind, lapply(each_levels, function(x) {
@@ -242,25 +247,16 @@ do_case <- function(name) {
         quote = FALSE
     )
     if (all(is.na(ranks))) {
-        if (length(allclasses) < 100) {
-            log$warn("  Ignoring this case because all gene ranks are NA and there are <100 cells.")
-            reporter$add2(
-                list(
-                    kind = "error",
-                    content = paste0("Not enough cells (n = ", length(allclasses), ") to run fgsea.")
-                ),
-                hs = c(info$section, info$name)
-            )
-            return(NULL)
-        } else {
-            stop(paste0(
-                "All gene ranks are NA (# cells = ",
-                length(allclasses),
-                "). ",
-                "It's probably due to high missing rate in the data. ",
-                "You may want to try a different `envs$method` for pre-ranking."
-            ))
-        }
+        log$warn("  All gene ranks are NA. It's probably due to high missing rate in the data.")
+        log$warn("  Case ignored, you may also try a different ranking method.")
+        reporter$add2(
+            list(
+                kind = "error",
+                content = "All gene ranks are NA. It's probably due to high missing rate in the data."
+            ),
+            hs = c(info$section, info$name)
+        )
+        return(invisible(NULL))
     }
 
     # run fgsea
