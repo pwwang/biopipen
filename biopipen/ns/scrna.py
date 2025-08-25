@@ -2706,6 +2706,7 @@ class PseudoBulkDEG(Proc):
             analysis.
 
     Envs:
+        ncores (type=int): Number of cores to use for parallelization.
         mutaters (type=json): Mutaters to mutate the metadata of the
             seurat object. Keys are the new column names and values are the
             expressions to mutate the columns. These new columns can be
@@ -2715,6 +2716,9 @@ class PseudoBulkDEG(Proc):
         each: The column name in metadata to separate the cells into different cases.
             When specified, the case will be expanded to multiple cases for
             each value in the column.
+        cache (type=auto): Where to cache the results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
         subset: An expression in string to subset the cells.
         aggregate_by: The column names in metadata to aggregate the cells.
         layer: The layer to pull and aggregate the data.
@@ -2844,7 +2848,9 @@ class PseudoBulkDEG(Proc):
     lang = config.lang.rscript
     script = "file://../scripts/scrna/PseudoBulkDEG.R"
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
+        "cache": config.path.tmpdir,
         "each": None,
         "subset": None,
         "aggregate_by": None,
