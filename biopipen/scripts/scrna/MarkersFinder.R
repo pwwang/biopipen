@@ -268,20 +268,22 @@ process_markers <- function(markers, info, case) {
         ui = "tabs"
     )
 
-    for (plotname in names(case$marker_plots)) {
-        plotargs <- case$marker_plots[[plotname]]
-        plotargs$degs <- markers
-        rownames(plotargs$degs) <- make.unique(markers$gene)
-        plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
-        do_call(VizDEGs, plotargs)
-        reporter$add2(
-            list(
-                name = plotname,
-                contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
-            hs = c(info$section, info$name),
-            hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
-            ui = "tabs"
-        )
+    if (nrow(markers) > 0) {
+        for (plotname in names(case$marker_plots)) {
+            plotargs <- case$marker_plots[[plotname]]
+            plotargs$degs <- markers
+            rownames(plotargs$degs) <- make.unique(markers$gene)
+            plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
+            do_call(VizDEGs, plotargs)
+            reporter$add2(
+                list(
+                    name = plotname,
+                    contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
+                hs = c(info$section, info$name),
+                hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
+                ui = "tabs"
+            )
+        }
     }
 
     # Do enrichment analysis
@@ -547,7 +549,9 @@ run_case <- function(name) {
                 attr(markers, "group_by") <- each
                 attr(markers, "ident_1") <- NULL
                 attr(markers, "ident_2") <- NULL
-                process_allmarkers(markers, allmarker_plots, name, each)
+                if (!is.null(markers) && nrow(markers) > 0) {
+                    process_allmarkers(markers, allmarker_plots, name, each)
+                }
             }
 
             if (length(overlaps) > 0) {
@@ -557,7 +561,7 @@ run_case <- function(name) {
 
         }
 
-        if (!is.null(enriches)) {
+        if (!is.null(enriches) && length(enriches) > 0) {
             log$info("- Summarizing enrichments in subcases (by each: {each}) ...")
             if (!is.data.frame(enriches)) {
                 each_levels <- names(enriches)
@@ -573,7 +577,7 @@ run_case <- function(name) {
                 enriches[[each]] <- factor(enriches[[each]], levels = each_levels)
             }
 
-            if (length(allenrich_plots) > 0) {
+            if (length(allenrich_plots) > 0 && !is.null(enriches) && nrow(enriches) > 0) {
                 log$info("- Visualizing all enrichments together ...")
                 process_allenriches(enriches, allenrich_plots, name, each)
             }
@@ -636,7 +640,9 @@ run_case <- function(name) {
         ))
 
         if (!is.null(original_case) && !is.null(cases[[original_case]])) {
-            markers[[each_name]] <- each
+            if (nrow(markers) > 0) {
+                markers[[each_name]] <- each
+            }
             cases[[original_case]]$markers[[each]] <<- markers
             cases[[original_case]]$enriches[[each]] <<- enrich
         }
