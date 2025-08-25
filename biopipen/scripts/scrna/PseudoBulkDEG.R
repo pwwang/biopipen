@@ -8,7 +8,9 @@ outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
 each <- {{envs.each | r}}
 subset <- {{envs.subset | r}}
+ncores <- {{envs.ncores | r}}
 mutaters <- {{envs.mutaters | r}}
+cache <- {{ envs.cache | r }}
 aggregate_by <- {{envs.aggregate_by | r}}
 layer <- {{envs.layer | r}}
 assay <- {{envs.assay | r}}
@@ -35,6 +37,7 @@ overlaps <- {{ envs.overlaps | r }}
 cases <- {{envs.cases | r}}
 
 aggregate_by <- unique(c(aggregate_by, group_by, paired_by, each))
+if (isTRUE(cache)) { cache <- joboutdir }
 
 log <- get_logger()
 reporter <- get_reporter()
@@ -74,10 +77,12 @@ defaults <- list(
     ident_1 = ident_1,
     ident_2 = ident_2,
     dbs = dbs,
+    ncores = ncores,
     sigmarkers = sigmarkers,
     enrich_style = enrich_style,
     paired_by = paired_by,
     tool = tool,
+    cache = cache,
     allmarker_plots_defaults = allmarker_plots_defaults,
     allmarker_plots = allmarker_plots,
     allenrich_plots_defaults = allenrich_plots_defaults,
@@ -181,6 +186,7 @@ expand_each <- function(name, case) {
         if (length(case$overlaps) > 0 || length(case$allmarker_plots) > 0 || length(case$allenrich_plots) > 0) {
             ovcase <- case
 
+            ovcase$allexprs <- list()
             ovcase$markers <- list()
             ovcase$allmarker_plots <- lapply(
                 ovcase$allmarker_plots,
@@ -533,18 +539,21 @@ run_case <- function(name) {
         "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
         "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style",
         "aggregate_by", "subset", "layer", "assay", "group_by", "ident_1", "ident_2", "original_subset",
-        "paired_by", "tool", "error",
+        "paired_by", "tool", "error", "ncores", "cache", "allexprs",
         allow_nonexisting = TRUE
     )
 
     if (!is.null(markers) || !is.null(enriches)) {
-        if (!is.null(markers)) {  # It is the overlap/allmarker case
-            log$info("- Summarizing DEGs in subcases (by each: {each}) ...")
+        if (!is.null(markers) && length(markers) > 0) {
+            log$info("Summarizing DEGs in subcases (by each: {each}) ...")
             # handle the overlaps / allmarkers analysis here
             if (!is.data.frame(markers)) {
                 each_levels <- names(markers)
                 markers <- do_call(rbind, lapply(each_levels, function(x) {
                     markers_df <- markers[[x]]
+                    if (is.null(markers_df) || nrow(markers_df) == 0) {
+                        return(NULL)
+                    }
                     if (nrow(markers_df) > 0) {
                         markers_df[[each]] <- x
                     } else {
@@ -556,17 +565,17 @@ run_case <- function(name) {
             }
             # gene, p_val, avg_log2FC, pct.1, pct.2, p_val_adj, diff_pct, <each>
 
+            if (!is.data.frame(allexprs)) {
+                meta <- do_call(rbind, lapply(allexprs, attr, "meta"))
+                allexprs <- do_call(cbind, allexprs)
+            } else {
+                meta <- attr(allexprs, "meta")
+            }
+
             if (length(allmarker_plots) > 0) {
-                log$info("- Visualizing all DEGs together ...")
-                exprs <- AggregateExpressionPseudobulk(
-                    srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
-                    subset = original_subset, log = log
-                )
-                attr(markers, "object") <- AggregateExpressionPseudobulk(
-                    srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
-                    subset = original_subset, log = log
-                )
-                attr(markers, "meta") <- attr(exprs, "meta")
+                log$info("Visualizing all DEGs together ...")
+                attr(markers, "object") <- allexprs
+                attr(markers, "meta") <- meta
                 attr(markers, "group_by") <- each
                 attr(markers, "paired_by") <- paired_by
                 attr(markers, "ident_1") <- NULL
@@ -575,18 +584,21 @@ run_case <- function(name) {
             }
 
             if (length(overlaps) > 0) {
-                log$info("- Visualizing overlaps between subcases ...")
+                log$info("Visualizing overlaps between subcases ...")
                 process_overlaps(markers, overlaps, name, each)
             }
 
         }
 
-        if (!is.null(enriches)) {
-            log$info("- Summarizing enrichments in subcases (by each: {each}) ...")
+        if (!is.null(enriches) && length(enriches) > 0) {
+            log$info("Summarizing enrichments in subcases (by each: {each}) ...")
             if (!is.data.frame(enriches)) {
                 each_levels <- names(enriches)
                 enriches <- do_call(rbind, lapply(each_levels, function(x) {
                     enrich_df <- enriches[[x]]
+                    if (is.null(enrich_df) || nrow(enrich_df) == 0) {
+                        return(NULL)
+                    }
                     if (nrow(enrich_df) > 0) {
                         enrich_df[[each]] <- x
                     } else {
@@ -594,11 +606,13 @@ run_case <- function(name) {
                     }
                     enrich_df
                 }))
-                enriches[[each]] <- factor(enriches[[each]], levels = each_levels)
+                if (!is.null(enriches) && nrow(enriches) > 0) {
+                    enriches[[each]] <- factor(enriches[[each]], levels = each_levels)
+                }
             }
 
-            if (length(allenrich_plots) > 0) {
-                log$info("- Visualizing all enrichments together ...")
+            if (length(allenrich_plots) > 0 && !is.null(enriches) && nrow(enriches) > 0) {
+                log$info("Visualizing all enrichments together ...")
                 process_allenriches(enriches, allenrich_plots, name, each)
             }
         }
@@ -615,7 +629,8 @@ run_case <- function(name) {
         {
             RunDEGAnalysis(
                 exprs, group_by = group_by, ident_1 = ident_1, ident_2 = ident_2,
-                paired_by = paired_by, tool = tool, log = log
+                paired_by = paired_by, tool = tool, log = log, ncores = ncores,
+                cache = cache
             )
         }, error = function(e) {
             if (error) {
@@ -646,9 +661,12 @@ run_case <- function(name) {
     ))
 
     if (!is.null(original_case) && !is.null(cases[[original_case]])) {
-        markers[[each_name]] <- each
+        if (!is.null(markers)) {
+            markers[[each_name]] <- each
+        }
         cases[[original_case]]$markers[[each]] <<- markers
         cases[[original_case]]$enriches[[each]] <<- enrich
+        cases[[original_case]]$allexprs[[each]] <<- exprs
     }
 
     invisible()

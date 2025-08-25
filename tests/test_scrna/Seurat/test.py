@@ -298,6 +298,7 @@ class PseudoBulkDEG(PseudoBulkDEG_):
         "group_by": "Group",
         "ident_1": "Group1",
         "ident_2": "Group2",
+        "ncores": 2,
         "sigmarkers": "p_val < 0.25",
         "error": False,
         "aggregate_by": ["Sample", "Group"],
