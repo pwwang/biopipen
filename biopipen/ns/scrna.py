@@ -1137,7 +1137,7 @@ class MarkersFinder(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
         enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
