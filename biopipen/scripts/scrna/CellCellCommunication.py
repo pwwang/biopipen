@@ -7,6 +7,10 @@ import scanpy
 import liana
 import liana.method.sc._liana_pipe as _liana_pipe
 
+# AttributeError: module 'numpy' has no attribute 'product'
+if not hasattr(np, "product"):
+    np.product = np.prod
+
 # monkey-patch liana.method.sc._liana_pipe._trimean due to the updates by scipy 1.14
 # https://github.com/scipy/scipy/commit/a660202652deead0f3b4b688eb9fdcdf9f74066c
 def _trimean(a, axis=0):
