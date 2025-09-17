@@ -353,16 +353,24 @@ process_markers <- function(markers, info, case) {
                 for (db in case$dbs) {
                     plots <- list()
                     for (plotname in names(case$enrich_plots)) {
-                        plotargs <- case$enrich_plots[[plotname]]
+                        plotargs <- extract_vars(case$enrich_plots[[plotname]], "descr", allow_nonexisting = TRUE)
                         plotargs$data <- enrich[enrich$Database == db, , drop = FALSE]
 
                         p <- do_call(VizEnrichment, plotargs)
 
                         if (plotargs$plot_type == "bar") {
                             attr(p, "height") <- attr(p, "height") / 1.5
+                            descr <- descr %||% glue::glue(
+                                "The bar plot shows the top enriched terms in database '{db}', ",
+                                "the x-axis shows the -log10 of the adjusted p-values, ",
+                                "and the y-axis shows the term names. The number next to each bar indicates the overlap gene count."
+                            )
                         }
                         outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
                         save_plot(p, outprefix, plotargs$devpars, formats = "png")
+                        if (!is.null(descr)) {
+                            plots[[length(plots) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+                        }
                         plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
                     }
                     reporter$add2(
