@@ -1,11 +1,13 @@
-library(Seurat)
+library(rlang)
 library(dplyr)
+library(Seurat)
 library(biopipen.utils)
 
 sobjfile <- {{in.srtobj | r}}
 outfile <- {{out.rdsfile | r}}
 defaults <- {{envs.defaults | r}}
 modules <- {{envs.modules | r}}
+post_mutaters <- {{envs.post_mutates | r}}
 
 log <- get_logger()
 
@@ -132,6 +134,12 @@ for (key in names(modules)) {
                 select(-matches(paste0("^", key, "\\d+$")))
         }
     }
+}
+
+if (!is.null(post_mutaters) && length(post_mutaters) > 0) {
+    log$info("Applying post mutaters ...")
+    sobj@meta.data <- sobj@meta.data %>%
+        mutate(!!!lapply(post_mutaters, parse_expr))
 }
 
 # save seurat object

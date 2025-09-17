@@ -787,6 +787,11 @@ class ModuleScoreCalculator(Proc):
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
+        post_mutaters (type=json): The mutaters to mutate the metadata after
+            calculating the module scores.
+            The mutaters will be applied in the order specified.
+            This is useful when you want to create new scores based on the
+            calculated module scores.
     """  # noqa: E501
 
     input = "srtobj:file"
@@ -810,6 +815,7 @@ class ModuleScoreCalculator(Proc):
             # "Activation": {"features": "IFNG"},
             # "Proliferation": {"features": "STMN1,TUBB"},
         },
+        "post_mutaters": {},
     }
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
