@@ -1787,6 +1787,11 @@ class CellTypeAnnotation(Proc):
             the original cell types will be kept and nothing will be changed.
             ///
 
+        more_cell_types (type=json): The additional cell type annotations to add to the metadata.
+            The keys are the new column names and the values are the cell types lists.
+            The cell type lists work the same as `cell_types` above.
+            This is useful when you want to keep multiple annotations of cell types.
+
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species: The specie of cells.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
@@ -1848,6 +1853,7 @@ class CellTypeAnnotation(Proc):
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "cell_types": [],
+        "more_cell_types": None,
         "sccatch_args": {
             "species": None,
             "cancer": "Normal",
