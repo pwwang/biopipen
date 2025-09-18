@@ -27,7 +27,7 @@ defaults <- list(
     devpars = list(res = 100)
 )
 
-cases <- expand_cases(cases, defaults)
+cases <- expand_cases(cases, defaults, default_case = "Cell-Cell Communication")
 log <- get_logger()
 reporter <- get_reporter()
 
