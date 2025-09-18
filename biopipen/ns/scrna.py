@@ -2536,6 +2536,10 @@ class CellCellCommunicationPlots(Proc):
         cases (type=json): The cases for the plots.
             The keys are the names of the cases and the values are the arguments for
             the plots. The arguments include the ones inherited from `envs`.
+            You can have a special `plot_type` `"table"` to generate a table for the
+            ccc data to save as a text file and show in the report.
+            If no cases are given, a default case will be used, with the
+            key `Cell-Cell Communication`.
         <more>: Other arguments passed to
             [scplotter::CCCPlot](https://pwwang.github.io/scplotter/reference/CCCPlot.html)
     """  # noqa: E501
