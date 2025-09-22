@@ -7,7 +7,7 @@ sobjfile <- {{in.srtobj | r}}
 outfile <- {{out.rdsfile | r}}
 defaults <- {{envs.defaults | r}}
 modules <- {{envs.modules | r}}
-post_mutaters <- {{envs.post_mutates | r}}
+post_mutaters <- {{envs.post_mutaters | r}}
 
 log <- get_logger()
 
