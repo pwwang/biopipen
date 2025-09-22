@@ -14,6 +14,7 @@ bcftools <- {{envs.bcftools | r}}
 genome <- {{envs.genome | r}}
 motif_col <- {{envs.motif_col | r}}
 regulator_col <- {{envs.regulator_col | r}}
+var_col <- {{envs.var_col | r}}
 notfound <- {{envs.notfound | r}}
 motifdb <- {{envs.motifdb | r}}
 regmotifs <- {{envs.regmotifs | r}}
@@ -21,6 +22,7 @@ devpars <- {{envs.devpars | r}}
 plot_nvars <- {{envs.plot_nvars | r}}
 plots <- {{envs.plots | r}}
 cutoff <- {{envs.cutoff | r}}
+set.seed(8525)
 
 if (is.null(motifdb) || !file.exists(motifdb)) {
     stop("Motif database (envs.motifdb) is required and must exist")
@@ -47,9 +49,20 @@ log <- get_logger()
 log$info("Reading input regulator/motif file ...")
 in_motifs <- read.table(motiffile, header=TRUE, sep="\t", stringsAsFactors=FALSE, check.names = FALSE)
 
+
 log$info("Ensuring motifs and regulators in the input data ...")
-in_motifs <- ensure_regulator_motifs(in_motifs, outdir, motif_col, regulator_col, regmotifs, notfound = notfound)
+in_motifs <- ensure_regulator_motifs(in_motifs, outdir, motif_col, regulator_col, var_col, regmotifs, notfound = notfound)
 genome_pkg <- get_genome_pkg(genome)
+
+motif_var_pairs <- NULL
+if (!is.null(var_col)) {
+    log$info("Obtaining motif-variant pairs to test ...")
+    if (!var_col %in% colnames(in_motifs)) {
+        stop("Variant column (envs.var_col) not found in the input motif file")
+    }
+
+    motif_var_pairs <- unique(paste0(in_motifs[[motif_col]], " // ", in_motifs[[var_col]]))
+}
 
 log$info("Reading variant file ...")
 if (grepl("\\.vcf$", varfile) || grepl("\\.vcf\\.gz$", varfile)) {
@@ -77,10 +90,13 @@ mdb <- read_meme_to_motifdb(motifdb, in_motifs, motif_col, regulator_col, notfou
 tool <- tolower(tool)
 tool <- match.arg(tool, c("motifbreakr", "atsnp"))
 
-if (tool == "motifbreakr") {
+{% if envs.tool == "motifbreakr" %}
     motifbreakr_args <- {{envs.motifbreakr_args | r}}
     {% include biopipen_dir + "/scripts/regulatory/MotifAffinityTest_MotifBreakR.R" %}
-} else {  # atsnp
-    atsnp_args <- {{envs.atsnp_args | r}}
+{% else %}
+    atsnp_args <- list_update(
+        list(padj_cutoff = TRUE, padj = "BH", p = "Pval_diff"),
+        {{envs.atsnp_args | r}}
+    )
     {% include biopipen_dir + "/scripts/regulatory/MotifAffinityTest_AtSNP.R" %}
-}
+{% endif %}

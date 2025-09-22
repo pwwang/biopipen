@@ -132,6 +132,9 @@ class MotifAffinityTest(Proc):
             If no `regulator_col` is provided, no regulator information is written in
             the output. Otherwise, the regulator information is written in the output in
             the `Regulator` column.
+        var_col: The column names in the `in.motiffile` containing the variant information.
+            It has to be matching the names in the `in.varfile`. This is helpful when
+            we only need to test the pairs of variants and motifs in the `in.motiffile`.
         notfound (choice): What to do if a motif is not found in the database,
             or a regulator is not found in the regulator-motif mapping (envs.regmotifs)
             file.
@@ -200,6 +203,7 @@ class MotifAffinityTest(Proc):
         "bcftools": config.exe.bcftools,
         "motif_col": None,
         "regulator_col": None,
+        "var_col": None,
         "notfound": "error",
         "motifdb": config.ref.tf_motifdb,
         "regmotifs": config.ref.tf_motifs,

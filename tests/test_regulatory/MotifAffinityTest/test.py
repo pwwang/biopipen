@@ -17,6 +17,7 @@ class MotifAffinityTestMotifBreakR(MotifAffinityTest_):
     envs = {
         "tool": "motifbreakr",
         "motif_col": "Motif",
+        "var_col": "Var",
         "notfound": "ignore",
         "motifdb": motifdb,
         "genome": "hg19",
