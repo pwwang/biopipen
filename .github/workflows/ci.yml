@@ -116,7 +116,7 @@ jobs:
       - name: Delete old test intermediate cache
         env:
           GH_TOKEN: ${{ github.token }}
-        # if: steps.restore-test-intermediate.outputs.cache-hit
+        if: steps.restore-test-intermediate.outputs.cache-hit == 'true'
         # Using `--repo` makes it so that this step doesn't require checking out the
         # repo first.
         run: gh cache delete --repo ${{ github.repository }} ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
