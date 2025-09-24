@@ -27,7 +27,7 @@ defaults <- list(
     devpars = list(res = 100)
 )
 
-cases <- expand_cases(cases, defaults)
+cases <- expand_cases(cases, defaults, default_case = "Cell-Cell Communication")
 log <- get_logger()
 reporter <- get_reporter()
 
@@ -35,12 +35,31 @@ do_case <- function(name) {
     log$info("- Case: {name}")
     case <- cases[[name]]
     info <- case_info(name, outdir, is_dir = FALSE)
-    case <- extract_vars(case, "subset", "devpars", "more_formats", "descr")
+    case <- extract_vars(case, subset_ = "subset", "devpars", "more_formats", "descr")
 
     case$data <- ccc
-    if (!is.null(case$subset)) {
-        case$data <- ccc %>% dplyr::filter(!!parse_expr(case$subset))
+    if (!is.null(subset_)) {
+        case$data <- ccc %>% dplyr::filter(!!parse_expr(subset_))
     }
+
+    if (identical(case$plot_type, "table")) {
+        write.table(
+            case$data,
+            file = paste0(info$prefix, ".txt"),
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE,
+            quote = FALSE
+        )
+        report <- list(
+            kind = "table",
+            data = list(nrows = 100),
+            src = paste0(info$prefix, ".txt")
+        )
+        reporter$add2(report, hs = c(info$section, info$name))
+        return()
+    }
+
     if (is.null(case$magnitude)) {
         case$magnitude <- NULL
     }

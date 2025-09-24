@@ -33,7 +33,7 @@ log$info("Reading input data ...")
 indata <- read.table(infile, header=TRUE, sep="\t", stringsAsFactors=FALSE, check.names = FALSE)
 
 log$info("Ensuring regulators in the input data ...")
-indata <- ensure_regulator_motifs(indata, outdir, motif_col, regulator_col, regmotifs, notfound = notfound)
+indata <- ensure_regulator_motifs(indata, outdir, motif_col, regulator_col, "SNP_id", regmotifs, notfound = notfound)
 genome_pkg <- get_genome_pkg(genome)
 
 log$info("Reading motif database ...")

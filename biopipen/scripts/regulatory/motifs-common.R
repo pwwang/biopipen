@@ -138,12 +138,13 @@ motifdb_to_motiflib <- function(motifdb) {
 #' @param outdir Output directory, used to save un-matched regulators
 #' @param motif_col Column name for the motif
 #' @param regulator_col Column name for the regulator
+#' @param var_col Column name for the variant
 #' @param regmotifs Regulator-motif mapping file
 #' @param log_indent Indentation for log messages
 #' @param notfound Action to take if regulators are not found in the mapping file
 #' @return Data frame with regulators and motifs
 #' @export
-ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, regmotifs, log_indent = "", notfound = "error", log = NULL) {
+ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, var_col, regmotifs, log_indent = "", notfound = "error", log = NULL) {
     if (is.null(motif_col)) {
         if (is.null(regmotifs)) {
             stop("Regulator-motif mapping file (envs.regmotifs) is required when no motif column (envs.motif_col) is provided")
@@ -198,7 +199,7 @@ ensure_regulator_motifs <- function (indata, outdir, motif_col, regulator_col, r
             regulator_col <<- rm_reg_col
         }
     } else {
-        indata <- indata[!duplicated(indata[, c(regulator_col, motif_col), drop = FALSE]), , drop = FALSE]
+        indata <- indata[!duplicated(indata[, c(regulator_col, motif_col, var_col), drop = FALSE]), , drop = FALSE]
     }
 
     return(indata)

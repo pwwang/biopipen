@@ -787,6 +787,11 @@ class ModuleScoreCalculator(Proc):
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
+        post_mutaters (type=json): The mutaters to mutate the metadata after
+            calculating the module scores.
+            The mutaters will be applied in the order specified.
+            This is useful when you want to create new scores based on the
+            calculated module scores.
     """  # noqa: E501
 
     input = "srtobj:file"
@@ -810,6 +815,7 @@ class ModuleScoreCalculator(Proc):
             # "Activation": {"features": "IFNG"},
             # "Proliferation": {"features": "STMN1,TUBB"},
         },
+        "post_mutaters": {},
     }
     script = "file://../scripts/scrna/ModuleScoreCalculator.R"
 
@@ -1131,7 +1137,7 @@ class MarkersFinder(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.htmll>.
+            - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
         enrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
@@ -1781,6 +1787,11 @@ class CellTypeAnnotation(Proc):
             the original cell types will be kept and nothing will be changed.
             ///
 
+        more_cell_types (type=json): The additional cell type annotations to add to the metadata.
+            The keys are the new column names and the values are the cell types lists.
+            The cell type lists work the same as `cell_types` above.
+            This is useful when you want to keep multiple annotations of cell types.
+
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species: The specie of cells.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
@@ -1842,6 +1853,7 @@ class CellTypeAnnotation(Proc):
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "cell_types": [],
+        "more_cell_types": None,
         "sccatch_args": {
             "species": None,
             "cancer": "Normal",
@@ -2524,6 +2536,10 @@ class CellCellCommunicationPlots(Proc):
         cases (type=json): The cases for the plots.
             The keys are the names of the cases and the values are the arguments for
             the plots. The arguments include the ones inherited from `envs`.
+            You can have a special `plot_type` `"table"` to generate a table for the
+            ccc data to save as a text file and show in the report.
+            If no cases are given, a default case will be used, with the
+            key `Cell-Cell Communication`.
         <more>: Other arguments passed to
             [scplotter::CCCPlot](https://pwwang.github.io/scplotter/reference/CCCPlot.html)
     """  # noqa: E501

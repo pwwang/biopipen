@@ -46,6 +46,13 @@ atsnp_result <- ComputePValues(
     testing.mc = TRUE
 )
 
+if (!is.null(motif_var_pairs)) {
+    log$info("Filtering motif-variant pairs ...")
+    atsnp_result$motifs_vars <- paste0(atsnp_result$motif, " // ", atsnp_result$snpid)
+    atsnp_result <- atsnp_result[atsnp_result$motifs_vars %in% motif_var_pairs, , drop = FALSE]
+    atsnp_result$motifs_vars <- NULL
+}
+
 padj_col <- paste0(atsnp_args$p, "_adj")
 atsnp_result[[padj_col]] <- p.adjust(atsnp_result[[atsnp_args$p]], method = atsnp_args$padj)
 cutoff_col <- if (atsnp_args$padj_cutoff) padj_col else atsnp_args$p
@@ -87,7 +94,8 @@ write.table(
 
 log$info("Plotting variants ...")
 # Convert result to GRanges object
-atsnp_result$alleleDiff <- -atsnp_result[[cutoff_col]]
+atsnp_result$alleleDiff <- -log10(atsnp_result[[cutoff_col]])
+atsnp_result <- atsnp_result[order(-atsnp_result$alleleDiff), , drop = FALSE]
 atsnp_result$effect <- "strong"
 atsnp_result$motifPos <- lapply(atsnp_result$motifPos, function(x) as.integer(unlist(strsplit(x, ","))))
 atsnp_result <- makeGRangesFromDataFrame(atsnp_result, keep.extra.columns = TRUE, starts.in.df.are.0based = TRUE)
@@ -96,7 +104,6 @@ attributes(atsnp_result)$genome.package <- genome_pkg
 attributes(atsnp_result)$motifs <- mdb
 
 if (is.null(plots) || length(plots) == 0) {
-    atsnp_result <- atsnp_result[order(-abs(atsnp_result$alleleDiff)), , drop = FALSE]
     atsnp_result <- atsnp_result[1:min(plot_nvars, length(atsnp_result)), , drop = FALSE]
     variants <- unique(atsnp_result$SNP_id)
 } else {

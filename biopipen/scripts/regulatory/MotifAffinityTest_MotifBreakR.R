@@ -50,6 +50,7 @@ results <- motifbreakR(
 
 log$info("Calculating p values ...")
 results <- calculatePvalue(results)
+results$.id <- 1:length(results)
 results_to_save <- as.data.frame(unname(results))
 results_to_save$motifPos <- lapply(results_to_save$motifPos, function(x) paste(x, collapse = ","))
 results_to_save$altPos <- lapply(results_to_save$altPos, function(x) paste(x, collapse = ","))
@@ -60,20 +61,28 @@ if (!is.null(regulator_col)) {
         drop = TRUE
     ]
 }
-results_to_save <- apply(results_to_save, 2, as.character)
+results_to_save <- as.data.frame(apply(results_to_save, 2, as.character))
+
+if (!is.null(motif_var_pairs)) {
+    log$info("Filtering motif-variant pairs ...")
+    results_to_save$motifs_vars <- paste0(results_to_save$providerId, " // ", results_to_save$SNP_id)
+    results_to_save <- results_to_save[results_to_save$motifs_vars %in% motif_var_pairs, , drop = FALSE]
+    results_to_save$motifs_vars <- NULL
+}
 
 write.table(
     results_to_save,
     file = file.path(outdir, "motifbreakr.txt"),
     sep = "\t", quote = FALSE, row.names = FALSE
 )
-rm(results_to_save)
+# rm(results_to_save)
 
 log$info("Plotting variants ...")
 if (is.null(plots) || length(plots) == 0) {
-    results <- results[order(-abs(results$alleleDiff)), , drop = FALSE]
-    results <- results[1:min(plot_nvars, length(results)), , drop = FALSE]
-    variants <- unique(results$SNP_id)
+    results_to_save$alleleDiff <- as.numeric(results_to_save$alleleDiff)
+    results_to_save <- results_to_save[order(-abs(results_to_save$alleleDiff)), , drop = FALSE]
+    results_to_save <- results_to_save[1:min(plot_nvars, nrow(results_to_save)), , drop = FALSE]
+    variants <- unique(results_to_save$SNP_id)
 } else {
     variants <- names(plots)
 }
@@ -88,7 +97,7 @@ for (variant in variants) {
     if (is.null(plots[[variant]]$devpars)) {
         plots[[variant]]$devpars <- devpars
     }
-    res <- results[results$SNP_id == variant, , drop = FALSE]
+    res <- results[results$SNP_id == variant & results$.id %in% results_to_save$.id, , drop = FALSE]
     res <- subset(res, subset = eval(parse(text = plots[[variant]]$which)))
 
     plot_variant_motifs(res, variant, plots[[variant]]$devpars, outdir)
