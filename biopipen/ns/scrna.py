@@ -118,6 +118,10 @@ class SeuratPreparing(Proc):
             It doesn't work when data is loaded from loom files.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
+            It can also be a dictionary of expressions, where the names of the list are
+            sample names.
+            You can have a default expression in the list with the name "DEFAULT" for
+            the samples that are not listed.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
             `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`.
 
