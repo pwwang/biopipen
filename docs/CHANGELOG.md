@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.34.9
+
+- chore(deps): update dependencies
+- fix(scrna.CellCellCommunication): handle numpy product attribute error
+- feat(scrna.ModuleScoreCalculator): add post mutaters functionality to allow compound modules based on added modules
+- docs(scrna.MarkersFinder): correct URL in documentation
+- feat(scrna.CellTypeAnnotation): add support for additional direct cell type annotations
+- feat(scrna.MarkersFinder): enhance enrichment plot descriptions
+- chore(scrna.CellCellCommunicationPlots): set default case to  "Cell-Cell Communication"
+- feat(scrna.CellCellCommunicationPlots): add table output option for ccc data
+- feat(regulatory.MotifAffinityTest): add variant column support in MotifAffinityTest so only paired variant-motif can be output
+- fix(regulatory.VariantMotifPlot): correct argument in ensure_regulator_motifs function
+
 ## 0.34.8
 
 - fix(scrna.MarkersFinder): improve marker processing and enrichment checks when result has no markers/enrichments
