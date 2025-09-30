@@ -134,3 +134,5 @@ Rplots.pdf
 /data
 # apptainer images
 *.sif
+
+*.bundle
