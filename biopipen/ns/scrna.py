@@ -786,7 +786,7 @@ class ModuleScoreCalculator(Proc):
             will perform diffusion map as a reduction and add the first 2
             components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
             for `diffusion_map`. Other key-value pairs will pass to
-            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap class).
             You can later plot the diffusion map by using
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
