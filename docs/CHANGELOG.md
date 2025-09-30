@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.10
+
+- ci: correct condition for deleting old test intermediate cache
+- docs(scrna.SeuratPreparing): enhance cell_qc parameter description in SeuratPreparing
+- docs(scrna.ModuleScoreCalculator): update link format in ModuleScoreCalculator docstring
+
 ## 0.34.9
 
 - chore(deps): update dependencies

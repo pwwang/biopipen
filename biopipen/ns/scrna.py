@@ -118,6 +118,10 @@ class SeuratPreparing(Proc):
             It doesn't work when data is loaded from loom files.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
+            It can also be a dictionary of expressions, where the names of the list are
+            sample names.
+            You can have a default expression in the list with the name "DEFAULT" for
+            the samples that are not listed.
             Available QC keys include `nFeature_RNA`, `nCount_RNA`,
             `percent.mt`, `percent.ribo`, `percent.hb`, and `percent.plat`.
 
@@ -782,7 +786,7 @@ class ModuleScoreCalculator(Proc):
             will perform diffusion map as a reduction and add the first 2
             components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
             for `diffusion_map`. Other key-value pairs will pass to
-            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap class).
             You can later plot the diffusion map by using
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
             This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
