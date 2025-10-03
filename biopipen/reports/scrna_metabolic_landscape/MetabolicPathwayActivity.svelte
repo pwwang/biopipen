@@ -82,6 +82,15 @@ The cells are grouped at 2 dimensions: `subset_by`, usually the clinic groups th
 </ListItem>
 </UnorderedList>
 
+<style>
+.listitem {
+    font-size: large;
+    font-weight: bold;
+    margin: 1rem 0 0.5rem 0;
+    display: inline-block;
+}
+</style>
+
 {%- macro report_job(job, h=1) -%}
     {{ job | render_job: h=h }}
 {%- endmacro -%}
@@ -92,11 +101,3 @@ The cells are grouped at 2 dimensions: `subset_by`, usually the clinic groups th
 
 {{ report_jobs(jobs, head_job, report_job) }}
 
-<style>
-.listitem {
-    font-size: large;
-    font-weight: bold;
-    margin: 1rem 0 0.5rem 0;
-    display: inline-block;
-}
-</style>
