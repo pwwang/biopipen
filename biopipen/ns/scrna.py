@@ -1089,7 +1089,7 @@ class MarkersFinder(Proc):
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
             - plot_type: The type of the plot.
-                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
@@ -1099,7 +1099,7 @@ class MarkersFinder(Proc):
                 - width (type=int): The width of the plots.
             - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
             - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
-            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+            - <more>: Other arguments passed to [`biopipen.utils::VizDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html).
         allmarker_plots (type=json): All marker plot cases.
             The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
         allenrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
@@ -1114,7 +1114,7 @@ class MarkersFinder(Proc):
             The cases under `envs.cases` can inherit this options.
         marker_plots_defaults (ns): Default options for the plots to generate for the markers.
             - plot_type: The type of the plot.
-                See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
+                See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
                 There are two additional types available - `volcano_pct` and `volcano_log2fc`.
             - more_formats (type=list): The extra formats to save the plot in.
@@ -1125,7 +1125,7 @@ class MarkersFinder(Proc):
                 - width (type=int): The width of the plots.
             - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
             - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
-            - <more>: Other arguments passed to [`scplotter::FeatureStatPlot()`](https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html).
+            - <more>: Other arguments passed to [`biopipen.utils::VizDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html).
                 If `plot_type` is `volcano_pct` or `volcano_log2fc`, they will be passed to
                 [`scplotter::VolcanoPlot()`](https://pwwang.github.io/plotthis/reference/VolcanoPlot.html).
         marker_plots (type=json): Cases of the plots to generate for the markers.
