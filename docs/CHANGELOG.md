@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.11
+
+- fix(scrna_metabolic_landscape): fix report paging issue
+- docs(scrna.MarkersFinder): fix links in docs
+
 ## 0.34.10
 
 - ci: correct condition for deleting old test intermediate cache
