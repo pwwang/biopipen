@@ -1,6 +1,6 @@
 ARG REF_NAME=dev
 
-FROM biopipen/base:${REF_NAME}
+FROM biopipen/base:${REF_NAME} as builder
 
 # in case we have update dependencies
 COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
@@ -9,6 +9,13 @@ COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
 RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
     micromamba clean --all --yes
 
+FROM biopipen/base:${REF_NAME}
+
+COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /opt/conda /opt/conda
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+
+WORKDIR /workdir
 # Test it by:
 # docker run -it --rm biopipen/test:dev \
 #   pipen run vcf Vcf2Bed --in.infile /biopipen/tests/test_vcf/Vcf2Bed/data/tobed.vcf
