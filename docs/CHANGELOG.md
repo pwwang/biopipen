@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.34.12
+
+- chore: update Dockerfiles to use multi-stage building
+
 ## 0.34.11
 
 - fix(scrna_metabolic_landscape): fix report paging issue
