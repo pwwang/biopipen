@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.14
+
+- fix(scrna.CellTypeAnnotation): update logging for celltypist command execution
+- fix(scrna.MarkersFinder): fix FindMarkers calling with subsetting when sctransform was used
+
 ## 0.34.13
 
 - fix(scrna.SeuratClusterStats): improve error handling in feature plotting when save_code (due to upgrade to ggplot2 v4)
