@@ -271,8 +271,9 @@ process_markers <- function(markers, info, case) {
     if (nrow(markers) > 0) {
         for (plotname in names(case$marker_plots)) {
             plotargs <- case$marker_plots[[plotname]]
-            plotargs$degs <- markers
-            rownames(plotargs$degs) <- make.unique(markers$gene)
+            plotargs$markers <- markers
+            plotargs$object <- case$object
+            plotargs$comparison_by <- case$group_by
             plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
             do_call(VizDEGs, plotargs)
             reporter$add2(
@@ -401,18 +402,18 @@ process_markers <- function(markers, info, case) {
     }
 }
 
-process_allmarkers <- function(markers, plotcases, casename, groupname) {
+process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, subset_by_group = TRUE) {
     name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(plotcases)) {
         plotargs <- plotcases[[plotname]]
-        plotargs$degs <- markers
+        plotargs$markers <- markers
+        plotargs$object <- object
+        plotargs$comparison_by <- comparison_by
+        if (subset_by_group)
+            plotargs$subset_by <- groupname
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
-        if (identical(plotargs$plot_type, "heatmap")) {
-            plotargs$show_row_names = plotargs$show_row_names %||% TRUE
-            plotargs$show_column_names = plotargs$show_column_names %||% TRUE
-        }
         do_call(VizDEGs, plotargs)
         reporter$add2(
             list(
@@ -529,6 +530,7 @@ run_case <- function(name) {
         case,
         "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
         "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style", "original_subset",
+        subset_ = "subset",
         allow_nonexisting = TRUE
     )
 
@@ -562,7 +564,14 @@ run_case <- function(name) {
                 attr(markers, "ident_1") <- NULL
                 attr(markers, "ident_2") <- NULL
                 if (!is.null(markers) && nrow(markers) > 0) {
-                    process_allmarkers(markers, allmarker_plots, name, each)
+                    process_allmarkers(
+                        markers,
+                        object = if (is.null(original_subset)) srtobj else filter(srtobj, !!parse_expr(original_subset)),
+                        comparison_by = group_by,
+                        allmarker_plots,
+                        name,
+                        each
+                    )
                 }
             }
 
@@ -598,10 +607,8 @@ run_case <- function(name) {
         return(invisible())
     }
 
-    case$object <- srtobj
+    case$object <- if (is.null(subset_)) srtobj else filter(srtobj, !!parse_expr(subset_))
     markers <- do_call(RunSeuratDEAnalysis, case)
-    case$object <- NULL
-    gc()
 
     if (is.null(case$ident_1)) {
         all_idents <- unique(as.character(markers[[case$group_by]]))
@@ -614,7 +621,9 @@ run_case <- function(name) {
 
             attr(ident_markers, "ident_1") <- ident
             enrich <- process_markers(ident_markers, info = info, case = list(
+                object = case$object,
                 dbs = dbs,
+                group_by = case$group_by,
                 sigmarkers = sigmarkers,
                 enrich_style = enrich_style,
                 marker_plots = marker_plots,
@@ -627,7 +636,14 @@ run_case <- function(name) {
 
         if (length(allmarker_plots) > 0) {
             log$info("- Visualizing all markers together ...")
-            process_allmarkers(markers, allmarker_plots, name, case$group_by)
+            process_allmarkers(
+                markers,
+                object = case$object,
+                comparison_by = case$group_by,
+                plotcases = allmarker_plots,
+                casename = name,
+                groupname = case$group_by,
+                subset_by_group = FALSE)
         }
 
         if (length(overlaps) > 0) {
@@ -642,7 +658,9 @@ run_case <- function(name) {
     } else {
         info <- case_info(name, outdir, create = TRUE)
         enrich <- process_markers(markers, info = info, case = list(
+            object = case$object,
             dbs = dbs,
+            group_by = case$group_by,
             sigmarkers = sigmarkers,
             enrich_style = enrich_style,
             marker_plots = marker_plots,
