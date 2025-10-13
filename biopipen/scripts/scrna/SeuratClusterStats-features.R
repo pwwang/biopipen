@@ -107,7 +107,12 @@ do_one_features <- function(name) {
         caching$restore()
     } else {
         case$features <- .get_features(features, case$object)
-        p <- do_call(gglogger::register(FeatureStatPlot), case)
+        p <- tryCatch({
+            do_call(gglogger::register(FeatureStatPlot), case)
+        }, error = function(e) {
+            if (save_code) { stop(e) }
+            do_call(FeatureStatPlot, case)
+        })
         save_plot(p, info$prefix, devpars, formats = c("png", more_formats))
         if (save_code) {
             save_plotcode(p, info$prefix,

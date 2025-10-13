@@ -1097,8 +1097,6 @@ class MarkersFinder(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
-            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
             - <more>: Other arguments passed to [`biopipen.utils::VizDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html).
         allmarker_plots (type=json): All marker plot cases.
             The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
@@ -1123,8 +1121,6 @@ class MarkersFinder(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
-            - order_by: an expression to order the markers, passed by `dplyr::arrange()`.
-            - genes: The number of top genes to show or an expression passed to `dplyr::filter()` to filter the genes.
             - <more>: Other arguments passed to [`biopipen.utils::VizDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html).
                 If `plot_type` is `volcano_pct` or `volcano_log2fc`, they will be passed to
                 [`scplotter::VolcanoPlot()`](https://pwwang.github.io/plotthis/reference/VolcanoPlot.html).
@@ -1196,8 +1192,6 @@ class MarkersFinder(Proc):
             "more_formats": [],
             "save_code": False,
             "devpars": {"res": 100},
-            "order_by": "desc(abs(avg_log2FC))",
-            "genes": 10,
         },
         "allmarker_plots": {},
         "allenrich_plots_defaults": {
@@ -1210,8 +1204,6 @@ class MarkersFinder(Proc):
             "more_formats": [],
             "save_code": False,
             "devpars": {"res": 100},
-            "order_by": "desc(abs(avg_log2FC))",
-            "genes": 10,
         },
         "marker_plots": {
             "Volcano Plot (diff_pct)": {"plot_type": "volcano_pct"},

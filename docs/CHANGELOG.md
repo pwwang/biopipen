@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.13
+
+- fix(scrna.SeuratClusterStats): improve error handling in feature plotting when save_code (due to upgrade to ggplot2 v4)
+- feat(MarkersFinder): use scplotter::MarkersPlot (wrapped by biopipen.utils::VizDEGs to visualize markers
+- ci: update CACHE_NUMBER for conda environment to force install latest dependencies
+
 ## 0.34.12
 
 - chore: update Dockerfiles to use multi-stage building
