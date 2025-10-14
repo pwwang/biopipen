@@ -111,7 +111,8 @@ if (file.exists(celltypist_outfile) &&
         command <- paste(command, "-v")
     }
     log$info("Running celltypist:")
-    print("- {command}")
+    # print("- {command}")
+    log$debug("  {command}")
     rc <- system(command)
     if (rc != 0) {
         stop("Failed to run celltypist. Check the job.stderr file to see the error message.")

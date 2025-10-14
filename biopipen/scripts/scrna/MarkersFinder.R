@@ -607,8 +607,14 @@ run_case <- function(name) {
         return(invisible())
     }
 
-    case$object <- if (is.null(subset_)) srtobj else filter(srtobj, !!parse_expr(subset_))
+    # Let RunSeuratDEAnalysis handle the subset
+    case$subset <- subset_
+    case$object <- srtobj
     markers <- do_call(RunSeuratDEAnalysis, case)
+    case$object <- NULL  # Release memory
+    gc()
+
+    subobj <- if (is.null(subset_)) srtobj else filter(srtobj, !!parse_expr(subset_))
 
     if (is.null(case$ident_1)) {
         all_idents <- unique(as.character(markers[[case$group_by]]))
@@ -621,7 +627,7 @@ run_case <- function(name) {
 
             attr(ident_markers, "ident_1") <- ident
             enrich <- process_markers(ident_markers, info = info, case = list(
-                object = case$object,
+                object = subobj,
                 dbs = dbs,
                 group_by = case$group_by,
                 sigmarkers = sigmarkers,
@@ -638,7 +644,7 @@ run_case <- function(name) {
             log$info("- Visualizing all markers together ...")
             process_allmarkers(
                 markers,
-                object = case$object,
+                object = subobj,
                 comparison_by = case$group_by,
                 plotcases = allmarker_plots,
                 casename = name,
@@ -658,7 +664,7 @@ run_case <- function(name) {
     } else {
         info <- case_info(name, outdir, create = TRUE)
         enrich <- process_markers(markers, info = info, case = list(
-            object = case$object,
+            object = subobj,
             dbs = dbs,
             group_by = case$group_by,
             sigmarkers = sigmarkers,
