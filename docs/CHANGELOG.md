@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.15
+
+- feat(scrna.MarkersFinder): allow using other metadata columns from object for enrichment plot of all subcases
+- chore: update dependencies
+
 ## 0.34.14
 
 - fix(scrna.CellTypeAnnotation): update logging for celltypist command execution
