@@ -600,6 +600,28 @@ run_case <- function(name) {
 
             if (length(allenrich_plots) > 0 && !is.null(enriches) && nrow(enriches) > 0) {
                 log$info("- Visualizing all enrichments together ...")
+                # add other metadata columns if any by mapping groupname
+                # only add the metadata columns from object if there is a single value mapped
+                metacols <- srtobj@meta.data %>% group_by(!!sym(each)) %>%
+                    summarize(across(everything(), ~ n_distinct(.) == 1), .groups = "keep") %>%
+                    select(where(~ all(. == TRUE))) %>%
+                    colnames()
+
+                if (length(metacols) > 1) {
+                    metadf <- srtobj@meta.data[, metacols, drop = FALSE]  %>%
+                        distinct(!!sym(each), .keep_all = TRUE)
+
+                    for (col in setdiff(metacols, each)) {
+                        if (col %in% colnames(enriches)) {
+                            warning("Column name conflict: {col}, adding with suffix '_meta'", immediate. = TRUE)
+                            metadf[[paste0(col, "_meta")]] <- metadf[[col]]
+                            metadf[[col]] <- NULL
+                        }
+                    }
+
+                    enriches <- left_join(enriches, metadf, by = each)
+                }
+
                 process_allenriches(enriches, allenrich_plots, name, each)
             }
         }
@@ -659,6 +681,29 @@ run_case <- function(name) {
 
         if (length(allenrich_plots) > 0) {
             log$info("- Visualizing all enrichments together ...")
+            # add other metadata columns if any by mapping groupname
+            # only add the metadata columns from object if there is a single value mapped
+            metacols <- subobj@meta.data %>% group_by(!!sym(case$group_by)) %>%
+                summarize(across(everything(), ~ n_distinct(.) == 1), .groups = "keep") %>%
+                select(where(~ all(. == TRUE))) %>%
+                colnames()
+
+            if (length(metacols) > 1) {
+                metadf <- subobj@meta.data[, metacols, drop = FALSE]  %>%
+                    distinct(!!sym(case$group_by), .keep_all = TRUE)
+
+                for (col in setdiff(metacols, case$group_by)) {
+                    if (col %in% colnames(enriches[[1]])) {
+                        warning("Column name conflict: {col}, adding with suffix '_meta'", immediate. = TRUE)
+                        metadf[[paste0(col, "_meta")]] <- metadf[[col]]
+                        metadf[[col]] <- NULL
+                    }
+                }
+
+                for (ne in names(enriches)) {
+                    enriches[[ne]] <- left_join(enriches[[ne]], metadf, by = case$group_by)
+                }
+            }
             process_allenriches(enriches, allenrich_plots, name, case$group_by)
         }
     } else {
