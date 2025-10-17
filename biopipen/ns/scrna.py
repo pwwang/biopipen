@@ -607,7 +607,7 @@ class SeuratClusterStats(Proc):
                 `ActivationScore` in the metadata.
                 You may also specify the literal order of the clusters by a list of strings (at least two).
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
-            - devpars (ns): The device parameters for the plots. Does not work for `table`.
+            - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
