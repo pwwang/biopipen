@@ -96,6 +96,8 @@ class SeuratPreparing(Proc):
             `RNAData` to assign the path of the data to the samples
             The path will be read by `Read10X()` from `Seurat`, or the path
             to the h5 file that can be read by `Read10X_h5()` from `Seurat`.
+            It can also be an RDS or qs2 file containing a `Seurat` object.
+            Note that it must has a column named `Sample` in the meta.data to specify the sample names.
 
     Output:
         outfile: The qs2 file with the Seurat object with all samples integrated.
@@ -111,11 +113,11 @@ class SeuratPreparing(Proc):
         min_cells (type=int): The minimum number of cells that a gene must be
             expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
-            It doesn't work when data is loaded from loom files.
+            It doesn't work when data is loaded from loom files or RDS/qs2 files.
         min_features (type=int): The minimum number of features that a cell must
             express to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
-            It doesn't work when data is loaded from loom files.
+            It doesn't work when data is loaded from loom files or RDS/qs2 files.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             It can also be a dictionary of expressions, where the names of the list are
@@ -607,7 +609,7 @@ class SeuratClusterStats(Proc):
                 `ActivationScore` in the metadata.
                 You may also specify the literal order of the clusters by a list of strings (at least two).
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
-            - devpars (ns): The device parameters for the plots. Does not work for `table`.
+            - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.

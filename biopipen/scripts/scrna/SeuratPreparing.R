@@ -38,19 +38,27 @@ reporter$add(
     h1 = "Filters and QC"
 )
 
-metadata <- read.table(
-    metafile,
-    header = TRUE,
-    row.names = NULL,
-    sep = "\t",
-    check.names = FALSE
-)
+metadata <- tryCatch({
+    log$debug("Trying to read Seurat object from metafile ...")
+    read_obj(metafile)
+}, error = function(e) {
+    log$debug("Failed to read Seurat object from metafile: {e$message}")
+    log$debug("Reading metafile as a table (sample info) ...")
+    read.table(
+        metafile,
+        header = TRUE,
+        row.names = NULL,
+        sep = "\t",
+        check.names = FALSE
+    )
+})
+is_seurat <- inherits(metadata, "Seurat")
 
-meta_cols = colnames(metadata)
+meta_cols <- if (is_seurat) colnames(metadata@meta.data) else colnames(metadata)
 if (!"Sample" %in% meta_cols) {
-    stop("Error: Column `Sample` is not found in metafile.")
+    stop("Error: Column `Sample` is not found in ", ifelse(is_seurat, "Seurat object's meta.data.", "metafile."))
 }
-if (!"RNAData" %in% meta_cols) {
+if (!"RNAData" %in% meta_cols && !is_seurat) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }
 

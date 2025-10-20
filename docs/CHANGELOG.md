@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.16
+
+- fix(scrna.SeuratClusterStats): update documentation without mentioning table
+- feat(scrna.SeuratPreparing): allow seurat object as input
+- chore: bump pipen to 0.17.21
+
 ## 0.34.15
 
 - feat(scrna.MarkersFinder): allow using other metadata columns from object for enrichment plot of all subcases
