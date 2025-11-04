@@ -134,6 +134,7 @@ class SeuratPreparing(Proc):
 
             ```toml
             [SeuratPreparing.envs]
+
             cell_qc = "nFeature_RNA > 200 & percent.mt < 5"
             ```
             will keep cells with more than 200 genes and less than 5%% mitochondrial
@@ -150,6 +151,7 @@ class SeuratPreparing(Proc):
             /// Tip | Example
             ```toml
             [SeuratPreparing.envs]
+
             gene_qc = { min_cells = 3 }
             ```
             will keep genes that are expressed in at least 3 cells.
