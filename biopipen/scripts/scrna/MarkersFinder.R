@@ -357,7 +357,12 @@ process_markers <- function(markers, info, case) {
                         plotargs <- extract_vars(case$enrich_plots[[plotname]], "descr", allow_nonexisting = TRUE)
                         plotargs$data <- enrich[enrich$Database == db, , drop = FALSE]
 
-                        p <- do_call(VizEnrichment, plotargs)
+                        p <- tryCatch(
+                            do_call(VizEnrichment, plotargs),
+                            error = function(e) {
+                                stop("Failed to plot enrichment for database '", db, "' with plot '", plotname, "': ", e$message)
+                            }
+                        )
 
                         if (plotargs$plot_type == "bar") {
                             attr(p, "height") <- attr(p, "height") / 1.5
@@ -701,9 +706,13 @@ run_case <- function(name) {
                 }
 
                 for (ne in names(enriches)) {
+                    if (!case$group_by %in% colnames(enriches[[ne]])) {
+                        enriches[[ne]][[case$group_by]] <- ne
+                    }
                     enriches[[ne]] <- left_join(enriches[[ne]], metadf, by = case$group_by)
                 }
             }
+            enriches <- do_call(rbind, enriches)
             process_allenriches(enriches, allenrich_plots, name, case$group_by)
         }
     } else {
