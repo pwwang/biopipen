@@ -134,6 +134,7 @@ class SeuratPreparing(Proc):
 
             ```toml
             [SeuratPreparing.envs]
+
             cell_qc = "nFeature_RNA > 200 & percent.mt < 5"
             ```
             will keep cells with more than 200 genes and less than 5%% mitochondrial
@@ -150,6 +151,7 @@ class SeuratPreparing(Proc):
             /// Tip | Example
             ```toml
             [SeuratPreparing.envs]
+
             gene_qc = { min_cells = 3 }
             ```
             will keep genes that are expressed in at least 3 cells.
@@ -482,48 +484,248 @@ class SeuratClusterStats(Proc):
     TCR clones/clusters or other metadata for each T-cell cluster.
 
     Examples:
-        ### Number of cells in each cluster
+        ### Clustree Plot
 
         ```toml
-        [SeuratClusterStats.envs.stats]
-        # suppose you have nothing set in `envs.stats_defaults`
-        # otherwise, the settings will be inherited here
-        nCells_All = { }
+        [SeuratClusterStats.envs.clustrees."Clustree Plot"]
+        prefix = "seurat_clusters"
+        devpars = {height = 500}
         ```
 
-        ![nCells_All](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_nCells_All.png){: width="80%" }
+        ![Clustree Plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/clustrees/seurat_clusters.clustree.png){: width="80%" }
 
-        ### Number of cells in each cluster by groups
+        ### Number of cells in each cluster (Bar Chart)
 
         ```toml
-        [SeuratClusterStats.envs.stats]
-        nCells_Sample = { group_by = "Sample" }
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster (Bar Chart)"]
+        plot_type = "bar"
+        x_text_angle = 90
         ```
 
-        ![nCells_Sample](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_nCells_Sample.png){: width="80%" }
+        ![Number of cells in each cluster (Bar Chart)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-Bar-Chart-.png){: width="80%" }
 
-        ### Violin plots for the gene expressions
+        ### Number of cells in each cluster by Sample (Bar Chart)
 
         ```toml
-        [SeuratClusterStats.envs.features]
-        features = "CD4,CD8A"
-        # Remove the dots in the violin plots
-        vlnplots = { pt-size = 0, kind = "vln" }
-        # Don't use the default genes
-        vlnplots_1 = { features = ["FOXP3", "IL2RA"], pt-size = 0, kind = "vln" }
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster by Sample (Bar Chart)"]
+        plot_type = "bar"
+        group_by = "Sample"
+        x_text_angle = 90
         ```
 
-        ![vlnplots](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_vlnplots.png){: width="80%" }
-        ![vlnplots_1](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_vlnplots_1.png){: width="80%" }
+        ![Number of cells in each cluster by Sample (Bar Chart)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-by-Sample-Bar-Chart-.png){: width="80%" }
 
-        ### Dimension reduction plot with labels
+        ### Number of cells in each cluster by Diagnosis
 
         ```toml
-        [SeuratClusterStats.envs.dimplots.Idents]
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster by Diagnosis"]
+        plot_type = "bar"
+        group_by = "Diagnosis"
+        frac = "group"
+        x_text_angle = 90
+        swap = true
+        position = "stack"
+        ```
+
+        ![Number of cells in each cluster by Diagnosis](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-by-Diagnosis.png){: width="80%" }
+
+        ### Number of cells in each cluster by Diagnosis (Circos Plot)
+
+        ```toml
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster by Diagnosis (Circos Plot)"]
+        plot_type = "circos"
+        group_by = "Diagnosis"
+        ```
+
+        ![Number of cells in each cluster by Diagnosis (Circos Plot)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-by-Diagnosis-Circos-Plot-.png){: width="80%" }
+
+        ### Number of cells in each cluster by Diagnosis (Sankey Plot)
+
+        ```toml
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster by Diagnosis (Sankey Plot)"]
+        plot_type = "sankey"
+        group_by = ["seurat_clusters", "Diagnosis"]
+        links_alpha = 0.6
+        devpars = {width = 800}
+        ```
+
+        ![Number of cells in each cluster by Diagnosis (Sankey Plot)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-by-Diagnosis-Sankey-Plot-.png){: width="80%" }
+
+        ### Number of cells in each cluster by Sample (Spider Plot)
+
+        ```toml
+        [SeuratClusterStats.envs.stats."Number of cells in each cluster by Sample (Spider Plot)"]
+        plot_type = "spider"
+        group_by = "Diagnosis"
+        palette = "Set1"
+        ```
+
+        ![Number of cells in each cluster by Sample (Spider Plot)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/stats/Number-of-cells-in-each-cluster-by-Sample-Spider-Plot-.png){: width="80%" }
+
+        ### Number of genes detected in each cluster
+
+        ```toml
+        [SeuratClusterStats.envs.ngenes."Number of genes detected in each cluster"]
+        plot_type = "violin"
+        add_box = true
+        add_point = true
+        ```
+
+        ![Number of genes detected in each cluster](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/ngenes/Number-of-genes-detected-in-each-cluster.png){: width="80%" }
+
+        ### Feature Expression in Clusters (Violin Plots)
+
+        ```toml
+        [SeuratClusterStats.envs.features_defaults]
+        features = ["CD3D", "CD4", "CD8A", "MS4A1", "CD14", "LYZ", "FCGR3A", "NCAM1", "KLRD1"]
+
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters (Violin Plots)"]
+        plot_type = "violin"
+        ident = "seurat_clusters"
+        ```
+
+        ![Feature Expression in Clusters (Violin Plots)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-Violin-Plots-.png){: width="80%" }
+
+        ### Feature Expression in Clusters (Ridge Plots)
+
+        ```toml
+        # Using the same features as above
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters (Ridge Plots)"]
+        plot_type = "ridge"
+        ident = "seurat_clusters"
+        flip = true
+        ```
+
+        ![Feature Expression in Clusters (Ridge Plots)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-Ridge-Plots-.png){: width="80%" }
+
+        ### Feature Expression in Clusters by Diagnosis
+
+        ```toml
+        # Using the same features as above
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters by Diagnosis"]
+        plot_type = "violin"
+        group_by = "Diagnosis"
+        ident = "seurat_clusters"
+        comparisons = true
+        sig_label = "p.signif"
+        ```
+
+        ![Feature Expression in Clusters by Diagnosis](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-by-Diagnosis.png){: width="80%" }
+
+        ### Feature Expression in Clusters (stacked)
+
+        ```toml
+        # Using the same features as above
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters (stacked)"]
+        plot_type = "violin"
+        ident = "seurat_clusters"
+        add_bg = true
+        stack = true
+        add_box = true
+        ```
+
+        ![Feature Expression in Clusters (stacked)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-stacked-.png){: width="80%" }
+
+        ### CD4 Expression on UMAP
+
+        ```toml
+        [SeuratClusterStats.envs.features."CD4 Expression on UMAP"]
+        plot_type = "dim"
+        feature = "CD4"
+        highlight = "seurat_clusters == 'c1'"
+        ```
+
+        ![CD4 Expression on UMAP](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/CD4-Expression-on-UMAP.png){: width="80%" }
+
+        ### Feature Expression in Clusters by Diagnosis (Heatmap)
+
+        ```toml
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters by Diagnosis (Heatmap)"]
+        # Grouped features
+        features = {"T cell markers" = ["CD3D", "CD4", "CD8A"], "B cell markers" = ["MS4A1"], "Monocyte markers" = ["CD14", "LYZ", "FCGR3A"], "NK cell markers" = ["NCAM1", "KLRD1"]}
+        plot_type = "heatmap"
+        ident = "Diagnosis"
+        columns_split_by = "seurat_clusters"
+        name = "Expression"
+        devpars = {height = 560}
+        ```
+
+        ![Feature Expression in Clusters by Diagnosis (Heatmap)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-by-Diagnosis-Heatmap-.png){: width="80%" }
+
+        ### Feature Expression in Clusters by Diagnosis (Heatmap with annotations)
+
+        ```toml
+        # Using the default features
+        [SeuratClusterStats.envs.features."Feature Expression in Clusters by Diagnosis (Heatmap with annotations)"]
+        ident = "seurat_clusters"
+        cell_type = "dot"
+        plot_type = "heatmap"
+        name = "Expression Level"
+        dot_size = "nanmean"
+        dot_size_name = "Percent Expressed"
+        add_bg = true
+        rows_split_by = "Diagnosis"
+        cluster_rows = false
+        flip = true
+        palette = "YlOrRd"
+        column_annotation = ["percent.mt", "VDJ_Presence"]
+        column_annotation_type = {"percent.mt" = "violin", VDJ_Presence = "pie"}
+        column_annotation_params = {"percent.mt" = {show_legend = false}}
+        devpars = {width = 1400, height = 900}
+        ```
+
+        ![Feature Expression in Clusters by Diagnosis (Heatmap with annotations)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/features/Feature-Expression-in-Clusters-by-Diagnosis-Heatmap-with-annotations-.png){: width="80%" }
+
+        ### Dimensional reduction plot
+
+        ```toml
+        [SeuratClusterStats.envs.features."Dimensional reduction plot"]
         label = true
         ```
 
-        ![dimplots](https://pwwang.github.io/immunopipe/latest/processes/images/SeuratClusterStats_dimplots.png){: width="80%" }
+        ![Dimensional reduction plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/dimplots/Dimensional-reduction-plot.dim.png){: width="80%" }
+
+        ### Dimensional reduction plot (with marks)
+
+        ```toml
+        [SeuratClusterStats.envs.dimplots."Dimensional reduction plot (with marks)"]
+        add_mark = true
+        mark_linetype = 2
+        ```
+
+        ![Dimensional reduction plot (with marks)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/dimplots/Dimensional-reduction-plot-with-marks-.dim.png){: width="80%" }
+
+        ### Dimensional reduction plot (with hex bins)
+
+        ```toml
+        [SeuratClusterStats.envs.dimplots."Dimensional reduction plot (with hex bins)"]
+        hex = true
+        hex_bins = 50
+        ```
+
+        ![Dimensional reduction plot (with hex bins)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/dimplots/Dimensional-reduction-plot-with-hex-bins-.dim.png){: width="80%" }
+
+        ### Dimensional reduction plot (with Diagnosis stats)
+
+        ```toml
+        [SeuratClusterStats.envs.dimplots."Dimensional reduction plot (with Diagnosis stats)"]
+        stat_by = "Diagnosis"
+        stat_plot_type = "ring"
+        stat_plot_size = 0.15
+        ```
+
+        ![Dimensional reduction plot (with Diagnosis stats)](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/dimplots/Dimensional-reduction-plot-with-Diagnosis-stats-.dim.png){: width="80%" }
+
+        ### Dimensional reduction plot by Diagnosis
+
+        ```toml
+        [SeuratClusterStats.envs.dimplots."Dimensional reduction plot by Diagnosis"]
+        facet_by = "Diagnosis"
+        highlight = true
+        theme = "theme_blank"
+        ```
+
+        ![Dimensional reduction plot by Diagnosis](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/seuratclusterstats/SeuratClusterStats/sampleinfo.scRep.cluster_stats/dimplots/Dimensional-reduction-plot-by-Diagnosis.dim.png){: width="80%" }
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -580,12 +782,6 @@ class SeuratClusterStats(Proc):
                 See <https://pwwang.github.io/scplotter/reference/CellStatPlot.html>.
         stats (type=json): The number/fraction of cells to plot.
             Keys are the names of the plots and values are the dicts inherited from `env.stats_defaults`.
-            Here are some examples -
-            >>> {
-            >>>     "nCells_All": {},
-            >>>     "nCells_Sample": {"group_by": "Sample"},
-            >>>     "fracCells_Sample": {"scale_y": True, "group_by": "Sample", plot_type = "pie"},
-            >>> }
         ngenes_defaults (ns): The default parameters for `ngenes`.
             The default parameters to plot the number of genes expressed in each cell.
             - more_formats (type=list): The formats to save the plots other than `png`.
@@ -1608,6 +1804,32 @@ class ScFGSEA(Proc):
     For each case, the process will generate a table with the enrichment scores for
     each gene set, and GSEA plots for the top gene sets.
 
+    Examples:
+        ### The summary and GSEA plots
+
+        ![GSEA summary](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/scfgsea/ScFGSEA/sampleinfo.fgsea/seurat_clusters/c1/summary.png){: width="80%"}
+
+        ![GSEA plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/scfgsea/ScFGSEA/sampleinfo.fgsea/seurat_clusters/c1/pathways.png){: width="80%"}
+
+        ### Summary plot for all subsets or idents
+
+        If you use `each` to separate the cells into different subsets, this is useful to
+        make a summary plot for all subsets. Or if you don't specify `ident_1`, the summary plot for all idents in `group_by` will be generated.
+
+        ```toml
+        [ScFGSEA.envs]
+        group_by = "Diagnosis"
+        ident_1 = "Colitis"
+        ident_2 = "Control"
+        each = "seurat_clusters"
+
+        [ScFGSEA.envs.alleach_plots.Heatmap]
+        plot_type = "heatmap"
+        group_by = "Diagnosis"
+        ```
+
+        ![GSEA summary for all subsets](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/scfgsea/ScFGSEA/sampleinfo.fgsea/GSEA-all-seurat_clusters-/all.Heatmap.png){: width="80%"}
+
     Input:
         srtobj: The seurat object in RDS format
 
@@ -2425,6 +2647,18 @@ class CellCellCommunication(Proc):
             * `lr_means`: mean ligand-receptor expression, as a measure of ligand-receptor interaction magnitude.
             * `cellphone_pvals`: permutation-based p-values, as a measure of interaction specificity.
 
+            A typical output will look like this:
+
+            | ligand | ligand_complex | ligand_props | ligand_trimean | mat_max | receptor | receptor_complex | receptor_props | receptor_trimean | source | target | lr_probs | cellchat_pvals | mag_score | spec_score |
+            |--------|---------------|--------------|----------------|---------|----------|------------------|----------------|------------------|--------|--------|----------|----------------|-----------|------------|
+            | VIM | VIM | 1.00 | 0.36 | 8.73 | CD44 | CD44 | 0.77 | 0.16 | c7 | c3 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | MIF | MIF | 0.97 | 0.22 | 8.73 | CXCR4 | CD74_CXCR4 | 0.87 | 0.26 | c5 | c6 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | HLA-B | HLA-B | 1.00 | 0.44 | 8.73 | KLRD1 | KLRD1 | 0.73 | 0.13 | c9 | c2 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | HMGB1 | HMGB1 | 0.99 | 0.26 | 8.73 | CXCR4 | CXCR4 | 0.81 | 0.21 | c2 | c7 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | CD48 | CD48 | 0.94 | 0.20 | 8.73 | CD2 | CD2 | 0.99 | 0.28 | c7 | c8 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | HLA-C | HLA-C | 1.00 | 0.38 | 8.73 | CD8B | CD8B | 0.73 | 0.15 | c1 | c9 | 0.10 | 0.00 | 0.10 | 0.00 |
+            | LGALS1 | LGALS1 | 0.95 | 0.17 | 8.73 | CD69 | CD69 | 0.99 | 0.34 | c10 | c5 | 0.10 | 0.00 | 0.10 | 0.00 |
+
     Envs:
         method (choice): The method to use for cell-cell communication inference.
             - CellPhoneDB: Use CellPhoneDB method.
@@ -2510,6 +2744,38 @@ class CellCellCommunication(Proc):
 
 class CellCellCommunicationPlots(Proc):
     """Visualization for cell-cell communication inference.
+
+    Examples:
+        ### Network Plot
+
+        ```toml
+        [CellCellCommunicationPlots.envs.cases."Cell-Cell Communication Network"]
+        plot_type = "network"
+        legend-position = "none"
+        theme = "theme_blank"
+        theme_args = {add_coord = false}
+        ```
+
+        ![Network Plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/cccplots/CellCellCommunicationPlots/sampleinfo.scRep-ccc_plots/Cell-Cell-Communication-Network.png){: width="80%"}
+
+        ### Circos Plot
+
+        ![Circos Plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/cccplots/CellCellCommunicationPlots/sampleinfo.scRep-ccc_plots/Cell-Cell-Communication-Circos-Plot.png){: width="80%"}
+
+        ### Heatmap Plot
+
+        ![Heatmap Plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/cccplots/CellCellCommunicationPlots/sampleinfo.scRep-ccc_plots/Cell-Cell-Communication-Heatmap.png){: width="80%"}
+
+        ### Cell-Cell Communication Interaction (Box Plot)
+
+        ```toml
+        [CellCellCommunicationPlots.envs.cases."Cell-Cell Communication Interaction (Box Plot)"]
+        plot_type = "box"
+        x_text_angle = 90
+        method = "interaction"
+        ```
+
+        ![Box Plot](https://raw.githubusercontent.com/pwwang/immunopipe/tests-output/cccplots/CellCellCommunicationPlots/sampleinfo.scRep-ccc_plots/Cell-Cell-Communication-Interaction-Box-Plot-.png){: width="80%"}
 
     Input:
         cccfile: The output file from `CellCellCommunication`

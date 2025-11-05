@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.34.17
+
+- fix(scrna.MarkersFinder): enhance error handling in enrichment plotting and fix all-enrich plots when ident_1 is NULL
+- fix(web.Download): improve URL handling in output filename generation
+- fix(tcr.ClonalStats): replace deprecated ClonalDynamicsPlot with ClonalStatPlot
+- docs(scrna.SeuratPreparing): improve documentation for SeuratPreparing to make sure new lines in code blocks
+- docs(scrna.SeuratClusterStats): enhance documentation for cluster statistics plots
+- docs(tcr.ClonalStats): add exapmle configurations and plots
+- docs(scrna.ScFGSEA): add examples and usage details for GSEA plots
+- docs(CellCellCommunication): add example output for ligand-receptor interactions
+- docs(CellCellCommunicationPlots): add examples for various plot types
+- docs(scrna.MetabolicPathwayActivity): add merged heatmap example
+- chore(ci): change CACHE_NUMBER for conda environment to ensure latest biopipen.utils.R is installed
+
 ## 0.34.16
 
 - fix(scrna.SeuratClusterStats): update documentation without mentioning table

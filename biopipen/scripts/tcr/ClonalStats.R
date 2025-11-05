@@ -21,7 +21,7 @@ VIZ_TYPE_TO_SECTION <- list(
     abundance = "Clonal Abundance",
     length = "Clonal Sequence Length",
     residency = "Clonal Residency",
-    dynamics = "Clonal Dynamics",
+    stat = "Clonal Statistics",
     composition = "Clonal Composition",
     overlap = "Clonal Overlap",
     diversity = "Clonal Diversity",
@@ -114,15 +114,15 @@ get_plot_descr <- function(viz_type, case) {
             )
         }
         out <- glue("{out} The clones are identified by {case$clone_call %||% 'aa'} and {case$chain %||% 'both'} chain(s) was/were used.")
-    } else if (identical(viz_type, "dynamics")) {
+    } else if (identical(viz_type, "stat")) {
         if (case$plot_type %in% c("sankey", "alluvial")) {
             out <- glue(
-                "This {case$plot_type} plot illustrates the dynamics of clones across different groups. ",
+                "This {case$plot_type} plot illustrates the statistics of clones across different groups. ",
                 "The bars are showing the groups and the flow/links are showing the transitions of the clones. "
             )
         } else {  # trend
             out <- glue(
-                "This trend plot illustrates the dynamics of clones across different groups. ",
+                "This trend plot illustrates the statistics of clones across different groups. ",
                 "The x-axis represents the groups, while the y-axis denotes the number/fraction of clones. ",
                 "The links between the groups are showing the transitions of the clones. "
             )
@@ -429,7 +429,7 @@ cases <- list_rename(cases, function(name, case) {
 })
 
 do_case <- function(name, case) {
-    log$info("- Processing case: {name}")
+    log$info("- Case: {name}")
     info <- case_info(name, outdir, is_dir = FALSE, create = TRUE)
 
     case <- extract_vars(case, "viz_type", "descr", "devpars", "more_formats", "save_code", subset_ = "subset")
@@ -439,8 +439,11 @@ do_case <- function(name, case) {
     } else {
         case$data <- screp
     }
-
-    plot_fn <- paste0("Clonal", tools::toTitleCase(viz_type), "Plot")
+    fnname <- tools::toTitleCase(viz_type)
+    if (fnname == "Geneusage") {
+        fnname <- "GeneUsage"
+    }
+    plot_fn <- paste0("Clonal", fnname, "Plot")
     plot_fn <- utils::getFromNamespace(plot_fn, "scplotter")
     if (is.null(plot_fn)) {
         stop("Error: Unknown visualization type: ", viz_type)

@@ -31,8 +31,13 @@ class Download(Proc):
     """
     input = "url"
     output = (
+        # Need to replace http:// and https:// to avoid cloudpathlib.AnyPath to get
+        # the basename for something like "https://example.com/data/?file=datafile.txt"
+        # as data, but "?file=datafile.txt"
         "outfile:file:"
         """{{in.url
+            | replace: 'http://', ''
+            | replace: 'https://', ''
             | basename
             | url_decode
             | slugify: separator='.', lowercase=False, regex_pattern='[^-a-zA-Z0-9_]+'
