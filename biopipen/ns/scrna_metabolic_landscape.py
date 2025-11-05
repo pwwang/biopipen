@@ -29,6 +29,10 @@ class MetabolicPathwayActivity(Proc):
 
     ![MetabolicPathwayActivity_violin](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayActivity_violin.png){: width="45%"}
 
+    You may also have a merged heatmap to show all subsets in one plot.
+
+    ![MetabolicPathwayActivity_merged_heatmap](https://pwwang.github.io/immunopipe/latest/processes/images/MetabolicPathwayActivity_merged_heatmap.png){: width="80%"}
+
     Input:
         sobjfile: The Seurat object file.
             It should be loaded as a Seurat object
