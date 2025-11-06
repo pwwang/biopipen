@@ -1,6 +1,6 @@
 ARG REF_NAME=dev
 
-FROM biopipen/base:${REF_NAME} as builder
+FROM biopipen/base:${REF_NAME} AS builder
 
 # in case we have update dependencies
 COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml

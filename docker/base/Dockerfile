@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:2.3.0 as builder
+FROM mambaorg/micromamba:2.3.0 AS builder
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
