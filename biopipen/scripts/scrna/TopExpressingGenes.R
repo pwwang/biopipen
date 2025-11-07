@@ -25,9 +25,6 @@ reporter <- get_reporter()
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
-if (!"Identity" %in% colnames(srtobj@meta.data)) {
-    srtobj@meta.data$Identity <- Idents(srtobj)
-}
 assay <- DefaultAssay(srtobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
@@ -171,7 +168,7 @@ run_case <- function(name) {
     } else {
         subobj <- srtobj
     }
-    case$group_by <- case$group_by %||% "Identity"
+    case$group_by <- case$group_by %||% GetIdentityColumn(srtobj)
     if (is.null(case$ident)) {
         case$ident <- as.character(unique(subobj@meta.data[[case$group_by]]))
     }

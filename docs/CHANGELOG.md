@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.18
+
+- docs: improve documentation for SeuratPreparing to make sure new line… (#180)
+- style: update Dockerfile formatting for consistency
+- fix(scrna): update group_by assignment to use GetIdentityColumn
+
 ## 0.34.17
 
 - fix(scrna.MarkersFinder): enhance error handling in enrichment plotting and fix all-enrich plots when ident_1 is NULL
