@@ -1,4 +1,5 @@
 
+library(rlang)
 library(Seurat)
 library(biopipen.utils)
 
@@ -11,8 +12,11 @@ RunPCAArgs <- {{envs.RunPCA | r: todot="-"}}
 FindNeighborsArgs <- {{envs.FindNeighbors | r: todot="-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot="-"}}
 RunUMAPArgs <- {{envs.RunUMAP | r: todot="-"}}
+ident <- {{envs.ident | r }}
 cache <- {{envs.cache | r}}
 ncores <- {{envs.ncores | r}}
+
+FindClustersArgs$cluster.name <- FindClustersArgs$cluster.name %||% ident %||% "seurat_clusters"
 
 log <- get_logger()
 

@@ -339,13 +339,16 @@ class SeuratClustering(Proc):
         srtobj: The seurat object loaded by SeuratPreparing
 
     Output:
-        outfile: The seurat object with cluster information at `seurat_clusters`.
+        outfile: The seurat object with cluster information at `seurat_clusters` or
+            the name specified by `envs.ident`
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
+        ident: The name in the metadata to save the cluster labels.
+            A shortcut for `envs["FindClusters"]["cluster.name"]`.
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
@@ -361,12 +364,12 @@ class SeuratClustering(Proc):
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            The cluster labels will be saved in `seurat_clusters` and prefixed with "c".
+            The cluster labels will be saved in cluster names and prefixed with "c".
             The first cluster will be "c1", instead of "c0".
             - resolution (type=auto): The resolution of the clustering. You can have multiple resolutions as a list or as a string separated by comma.
                 Ranges are also supported, for example: `0.1:0.5:0.1` will generate `0.1, 0.2, 0.3, 0.4, 0.5`. The step can be omitted, defaulting to 0.1.
-                The results will be saved in `seurat_clusters_<resolution>`.
-                The final resolution will be used to define the clusters at `seurat_clusters`.
+                The results will be saved in `<ident>_<resolution>`.
+                The final resolution will be used to define the clusters at `<ident>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
         cache (type=auto): Where to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
@@ -386,6 +389,7 @@ class SeuratClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
+        "ident": "seurat_clusters",
         "RunPCA": {},
         "RunUMAP": {},
         "FindNeighbors": {},
