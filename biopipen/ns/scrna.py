@@ -1222,7 +1222,7 @@ class DimPlots(Proc):
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
-    When only `group_by` is specified as `"seurat_clusters"` in
+    When only `group_by` is specified as identity column in
     `envs.cases`, the markers will be found for all the clusters.
 
     You can also find the differentially expressed genes between
@@ -1246,7 +1246,7 @@ class MarkersFinder(Proc):
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         group_by: The column name in metadata to group the cells.
-            If only `group_by` is specified, and `ident-1` and `ident-2` are
+            If only `group_by` is specified, and `ident_1` and `ident_2` are
             not specified, markers will be found for all groups in this column
             in the manner of "group vs rest" comparison.
             `NA` group will be ignored.
@@ -1255,7 +1255,7 @@ class MarkersFinder(Proc):
         ident_1: The first group of cells to compare
             When this is empty, the comparisons will be expanded to each group v.s. the rest of the cells in `group_by`.
         ident_2: The second group of cells to compare
-            If not provided, the rest of the cells are used for `ident-2`.
+            If not provided, the rest of the cells are used for `ident_2`.
         each: The column name in metadata to separate the cells into different
             cases.
             When this is specified, the case will be expanded for each value of
@@ -1289,7 +1289,7 @@ class MarkersFinder(Proc):
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
-        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
@@ -1344,7 +1344,7 @@ class MarkersFinder(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
-            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            This means either `ident_1` should be empty, so that they can be expanded to multiple comparisons.
             - sigmarkers: The expression to filter the significant markers for each case.
                 If not provided, `envs.sigmarkers` will be used.
             - plot_type (choice): The type of the plot to generate for the overlaps.
@@ -1363,8 +1363,8 @@ class MarkersFinder(Proc):
         overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
             The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
             There are two situations that we can perform overlaps:
-            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
-            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
+            1. If `ident_1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident_1` must be specified.
         cases (type=json): If you have multiple cases for marker discovery, you can specify them
             here. The keys are the names of the cases and the values are the above options. If some options are
             not specified, the default values specified above (under `envs`) will be used.
@@ -1850,7 +1850,7 @@ class ScFGSEA(Proc):
 
         group_by: The column name in metadata to group the cells.
         ident_1: The first group of cells to compare
-        ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident-2`.
+        ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident_2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
@@ -3031,7 +3031,7 @@ class PseudoBulkDEG(Proc):
         enrich_style (choice): The style of the enrichment analysis.
             - enrichr: Use `enrichr`-style for the enrichment analysis.
             - clusterProfiler: Use `clusterProfiler`-style for the enrichment analysis.
-        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
@@ -3090,7 +3090,7 @@ class PseudoBulkDEG(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
-            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            This means either `ident_1` should be empty, so that they can be expanded to multiple comparisons.
             - sigmarkers: The expression to filter the significant markers for each case.
                 If not provided, `envs.sigmarkers` will be used.
             - plot_type (choice): The type of the plot to generate for the overlaps.
@@ -3109,8 +3109,8 @@ class PseudoBulkDEG(Proc):
         overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
             The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
             There are two situations that we can perform overlaps:
-            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
-            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
+            1. If `ident_1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident_1` must be specified.
         tool (choice): The method to use for the differential expression analysis.
             - DESeq2: Use DESeq2 for the analysis.
             - edgeR: Use edgeR for the analysis.
