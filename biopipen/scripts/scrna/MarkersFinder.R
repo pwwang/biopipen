@@ -48,9 +48,6 @@ if (ncores > 1) {
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
-if (!"Identity" %in% colnames(srtobj@meta.data)) {
-    srtobj@meta.data$Identity <- Idents(srtobj)
-}
 
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
@@ -105,7 +102,7 @@ log$info("Expanding cases ...")
 post_casing <- function(name, case) {
     outcases <- list()
 
-    case$group_by <- case$group_by %||% "Identity"
+    case$group_by <- case$group_by %||% GetIdentityColumn(srtobj)
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
         # single cases, no need to expand

@@ -33,9 +33,6 @@ alleach_plots <- lapply(alleach_plots, function(x) {
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
-if (!"Identity" %in% colnames(srtobj@meta.data)) {
-    srtobj@meta.data$Identity <- Idents(srtobj)
-}
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating metadata columns ...")
@@ -63,7 +60,7 @@ defaults <- list(
 expand_each <- function(name, case) {
     outcases <- list()
 
-    case$group_by <- case$group_by %||% "Identity"
+    case$group_by <- case$group_by %||% GetIdentityColumn(srtobj)
 
     if (is.null(case$each) || is.na(case$each) || nchar(case$each) == 0 || isFALSE(each)) {
         if (length(case$alleach_plots) > 0) {
