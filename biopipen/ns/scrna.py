@@ -901,7 +901,7 @@ class SeuratClusterStats(Proc):
         },
         "features": {},
         "dimplots_defaults": {
-            "group_by": "seurat_clusters",
+            "group_by": None,  # use default ident
             "split_by": None,
             "subset": None,
             "reduction": "dim",
