@@ -42,11 +42,12 @@ class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
 
 class AnnData2Seurat(AnnData2Seurat_):
     requires = PrepareAnnData
+    envs = {"ident": "bulk_labels"}
 
 
 class CellCellCommunicationSeurat(CellCellCommunication_):
     requires = AnnData2Seurat
-    envs = {"groupby": "bulk_labels"}
+    # envs = {"groupby": "bulk_labels"}
 
 
 class CellCellCommunicationSeuratPlots(CellCellCommunicationPlots_):

@@ -2699,6 +2699,11 @@ class CellCellCommunication(Proc):
         ncores (type=int): The number of cores to use.
         groupby: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            If provided input is a Seurat object, the default identity will be used by default.
+            Otherwise, it is recommended to provide this parameter.
+            "seurat_clusters" will be used with a warning if the input is in AnnData format and
+            this parameter is not provided.
+        group_by: alias for `groupby`
         species (choice): The species of the cells.
             - human: Human cells, the 'consensus' resource will be used.
             - mouse: Mouse cells, the 'mouseconsensus' resource will be used.
@@ -2730,7 +2735,8 @@ class CellCellCommunication(Proc):
         "subset_using": "auto",
         "split_by": None,
         "ncores": config.misc.ncores,
-        "groupby": "seurat_clusters",
+        "groupby": None,
+        "group_by": None,
         "species": "human",
         "expr_prop": 0.1,
         "min_cells": 5,
