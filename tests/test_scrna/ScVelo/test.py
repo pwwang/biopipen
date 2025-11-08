@@ -8,7 +8,7 @@ conda_exe = os.environ.get("CONDA_EXE", "")
 if conda_exe:
     # Make sure we have scvelo 0.3.3 and numpy<2
     python = os.path.join(
-        os.path.dirname(os.path.dirname(conda_exe)), "envs", "bio39", "bin", "python"
+        os.path.dirname(os.path.dirname(conda_exe)), "envs", "py39", "bin", "python"
     )
 else:
     python = "python"
@@ -34,7 +34,9 @@ class PrepareSeurat(Proc):
     input = "annfile:file"
     output = "outfile:file:{{in.annfile | stem}}.qs"
     script = """
-        biopipen.utils::ConvertAnnDataToSeurat({{in.annfile | r}}, {{out.outfile | r}})
+        obj <- biopipen.utils::ConvertAnnDataToSeurat({{in.annfile | r}})
+        Seurat::Idents(obj) <- obj$clusters
+        biopipen.utils::save_obj(obj, {{out.outfile | r}})
     """
 
 
@@ -47,7 +49,8 @@ class ScVeloAnnData(ScVelo_):
 class ScVeloSeurat(ScVelo_):
     requires = PrepareSeurat
     lang = python
-    envs = {"group_by": "clusters", "ncores": 16}
+    # Using the default group_by "ident" for Seurat objects
+    envs = {"ncores": 16}
 
 
 def pipeline():

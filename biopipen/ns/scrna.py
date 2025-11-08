@@ -3,15 +3,6 @@
 from pipen.utils import mark
 from ..core.proc import Proc
 from ..core.config import config
-# from ..utils.common_docstrs import (
-#     indent_docstr,
-#     format_placeholder,
-#     MUTATE_HELPERS_CLONESIZE,
-#     ENVS_SECTION_EACH,
-# )
-
-# MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
-# ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -2853,6 +2844,10 @@ class ScVelo(Proc):
         ncores (type=int): Number of cores to use.
         group_by: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            If provided input is a Seurat object, the default identity will be used by
+            default. Otherwise, it is recommended to provide this parameter.
+            "seurat_clusters" will be used with a warning if the input is in AnnData
+            format and this parameter is not provided.
         mode (type=list): The mode to use for the velocity analysis.
             It should be a subset of `['deterministic', 'stochastic', 'dynamical']`,
             meaning that we can perform the velocity analysis in multiple modes.
@@ -2891,7 +2886,7 @@ class ScVelo(Proc):
     lang = config.lang.python
     envs = {
         "ncores": config.misc.ncores,
-        "group_by": "seurat_clusters",
+        "group_by": None,
         "mode": ["deterministic", "stochastic", "dynamical"],
         "fitting_by": "stochastic",
         "min_shared_counts": 30,
