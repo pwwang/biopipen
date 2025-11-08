@@ -2537,6 +2537,9 @@ class AnnData2Seurat(Proc):
 
     Envs:
         assay: The assay to use to convert to seurat object.
+        ident: The column name in `adfile.obs` to use as the identity
+            for the seurat object.
+            If not specified, no identity will be set.
         dotplot_check (type=auto): Whether to do a check with a dot plot.
             (`scplotter::FeatureStatPlot(plot_type = "dot", ..)` will be used)
             to see if the conversion is successful.
@@ -2549,7 +2552,7 @@ class AnnData2Seurat(Proc):
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"assay": "RNA", "dotplot_check": True}
+    envs = {"assay": "RNA", "ident": None, "dotplot_check": True}
     script = "file://../scripts/scrna/AnnData2Seurat.R"
 
 
