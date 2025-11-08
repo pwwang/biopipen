@@ -20,6 +20,7 @@ class DownloadDemoData(Download):
 
 class AnnData2Seurat(AnnData2Seurat_):
     requires = DownloadDemoData
+    envs = {"ident": "cell_type"}
 
 
 class CellTypeAnnotationAnnData(CellTypeAnnotation):

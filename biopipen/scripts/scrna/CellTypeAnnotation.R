@@ -2,8 +2,9 @@ set.seed(8525)
 
 merge_clusters_with_same_labels <- function(sobj, newcol) {
     if (is.null(newcol)) {
-        sobj@meta.data$seurat_clusters <- sub("\\.\\d+$", "", sobj@meta.data$seurat_clusters)
-        Idents(sobj) <- "seurat_clusters"
+        newcol <- biopipen.utils::GetIdentityColumn(sobj)
+        sobj@meta.data[[newcol]] <- sub("\\.\\d+$", "", sobj@meta.data[[newcol]])
+        Idents(sobj) <- newcol
     } else {
         sobj@meta.data[[newcol]] <- sub("\\.\\d+$", "", sobj@meta.data[[newcol]])
     }

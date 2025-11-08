@@ -1932,13 +1932,13 @@ class CellTypeAnnotation(Proc):
     3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
     4. Use [`hitype`](https://github.com/pwwang/hitype)
 
-    The annotated cell types will replace the original `seurat_clusters` column in the metadata,
+    The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The old `seurat_clusters` column will be renamed to `seurat_clusters_id`.
+    The old identity column will be renamed to `seurat_clusters_id`.
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
-    the old `seurat_clusters` to the new cell types will be generated and saved to
+    the old identity to the new cell types will be generated and saved to
     `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
 
     Examples:
@@ -1962,8 +1962,10 @@ class CellTypeAnnotation(Proc):
 
     Output:
         outfile: The rds/qs/qs2/h5ad file of seurat object with cell type annotated.
-            A text file containing the mapping from the old `seurat_clusters` to the new cell types
+            A text file containing the mapping from the old identity to the new cell types
             will be generated and saved to `cluster2celltype.tsv` under the job output directory.
+            Note that if `envs.ident` is specified, the output Seurat object will have
+            the identity set to the specified column in metadata.
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
@@ -1981,6 +1983,10 @@ class CellTypeAnnotation(Proc):
             If not specified, all rows in `sctype_db` will be used.
         sctype_db: The database to use for sctype.
             Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+        ident: The column name in metadata to use as the clusters.
+            If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
+            If input data is h5ad, this is required to run cluster-based annotation tools.
+            For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
         hitype_tissue: The tissue to use for `hitype`.
             Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
             If not specified, all rows in `hitype_db` will be used.
@@ -1990,7 +1996,7 @@ class CellTypeAnnotation(Proc):
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
         cell_types (list): The cell types to use for direct annotation.
             You can use `"-"` or `""` as the placeholder for the clusters that
-            you want to keep the original cell types (`seurat_clusters`).
+            you want to keep the original cell types.
             If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell
             types.
@@ -2031,8 +2037,8 @@ class CellTypeAnnotation(Proc):
         merge (flag): Whether to merge the clusters with the same cell types.
             Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
         newcol: The new column name to store the cell types.
-            If not specified, the `seurat_clusters` column will be overwritten.
-            If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
+            If not specified, the identity column will be overwritten.
+            If specified, the original identity column will be kept and `Idents` will be kept as the original identity.
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
@@ -2067,6 +2073,7 @@ class CellTypeAnnotation(Proc):
         "tool": "hitype",
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
+        "ident": None,
         "cell_types": [],
         "more_cell_types": None,
         "sccatch_args": {
