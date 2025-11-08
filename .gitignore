@@ -136,3 +136,4 @@ Rplots.pdf
 *.sif
 
 *.bundle
+tests/running/
