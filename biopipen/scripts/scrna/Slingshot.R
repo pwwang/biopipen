@@ -16,16 +16,14 @@ align_start <- {{envs.align_start | r}}
 seed <- {{envs.seed | r}}
 
 set.seed(seed)
-if (is.null(group_by)) {
-    stop("envs.group_by is required")
-}
 
 log <- get_logger()
 
 log$info("Reading Seurat object ...")
 srt <- read_obj(sobjfile)
+group_by <- group_by %||% biopipen.utils::GetIdentityColumn(srt)
 
-if (!group_by %in% colnames(srt@meta.data)) {
+if (is.null(group_by) || !group_by %in% colnames(srt@meta.data)) {
     stop(paste("Grouping column", group_by, "not found in the Seurat object"))
 }
 

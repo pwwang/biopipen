@@ -2924,6 +2924,7 @@ class Slingshot(Proc):
     Envs:
         group_by: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            Default is the default identity of the seurat object.
         reduction: The nonlinear reduction to use for the trajectory analysis.
         dims (type=auto): The dimensions to use for the analysis.
             A list or a string with comma separated values.
@@ -2940,7 +2941,7 @@ class Slingshot(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
-        "group_by": "seurat_clusters",
+        "group_by": None,
         "reduction": None,
         "dims": [1, 2],
         "start": None,
