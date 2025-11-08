@@ -2,6 +2,7 @@
 
 Need R and R packages Seurat, SeuratDisk and biopipen.utils.R installed.
 """
+from __future__ import annotations
 
 
 def convert_seurat_to_anndata(
@@ -10,7 +11,8 @@ def convert_seurat_to_anndata(
     assay=None,
     subset=None,
     rscript="Rscript",
-):
+    return_ident_col=False,
+) -> None | str:
     """Convert Seurat object to AnnData format.
 
     Args:
@@ -42,6 +44,21 @@ def convert_seurat_to_anndata(
     # Run the R script using the provided Rscript command
     cmd = [rscript, temp_script_path]
     run_command(cmd, fg=True)
+
+    if return_ident_col:
+        ident_col_script = f"""
+            library(biopipen.utils)
+
+            obj <- read_obj("{input_file}")
+            cat(GetIdentityColumn(obj))
+        """
+        with NamedTemporaryFile(suffix=".R", delete=False) as temp_script:
+            temp_script.write(ident_col_script.encode('utf-8'))
+            temp_script_path = temp_script.name
+
+        cmd = [rscript, temp_script_path]
+        ident_col = run_command(cmd, stdout="RETURN").strip()
+        return ident_col
 
 
 def convert_anndata_to_seurat(
