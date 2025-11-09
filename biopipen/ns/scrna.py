@@ -1935,10 +1935,10 @@ class CellTypeAnnotation(Proc):
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The old identity column will be renamed to `seurat_clusters_id`.
+    The original identity column will be renamed to `seurat_clusters_id` if no `envs.newcol` is specified.
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
-    the old identity to the new cell types will be generated and saved to
+    the original identity to the new cell types will be generated and saved to
     `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
 
     Examples:
@@ -1987,6 +1987,9 @@ class CellTypeAnnotation(Proc):
             If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
             If input data is h5ad, this is required to run cluster-based annotation tools.
             For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
+        backup_col: The backup column name to store the original identities.
+            If not specified, the original identity column will not be stored.
+            If `envs.newcol` is specified, this will be ignored.
         hitype_tissue: The tissue to use for `hitype`.
             Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
             If not specified, all rows in `hitype_db` will be used.
@@ -2074,6 +2077,7 @@ class CellTypeAnnotation(Proc):
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "ident": None,
+        "backup_col": "seurat_clusters_id",
         "cell_types": [],
         "more_cell_types": None,
         "sccatch_args": {

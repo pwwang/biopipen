@@ -126,11 +126,11 @@ class SeuratSubClustering(SeuratSubClustering_):
         "cache": False,
         "cases": {
             "mono_subcluster": {
-                "subset": "seurat_clusters == 'FCFR3A+ Mono'",
+                "subset": "seurat_clusters == 'c1'",
                 "FindClusters": {"resolution": "0.1:0.8,0.1"},
             },
             "dc_subcluster": {
-                "subset": "seurat_clusters == 'DC'",
+                "subset": "seurat_clusters == 'c2'",
                 "FindClusters": {"resolution": "0.1:0.8,0.2"},
             },
         },

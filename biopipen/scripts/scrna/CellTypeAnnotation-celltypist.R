@@ -160,11 +160,7 @@ if (outtype == "h5ad") {
                 summarise(seurat_clusters = first(seurat_clusters), .groups = "drop") %>%
                 mutate(seurat_clusters = make.unique(seurat_clusters))
             cluster_map <- split(cluster_map$seurat_clusters, cluster_map$seurat_clusters_id)
-            cluster_map$object <- sobj
-            log$info("Renaming clusters ...")
-            Idents(sobj) <- over_clustering
-            sobj <- do_call(RenameIdents, cluster_map)
-            Idents(sobj) <- over_clustering
+            sobj <- rename_idents(sobj, over_clustering, cluster_map)
         }
     } else if (!is.null(newcol)) {
         sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]

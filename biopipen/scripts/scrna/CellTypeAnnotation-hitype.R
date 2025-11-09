@@ -1,13 +1,13 @@
-library(Seurat)
+library(rlang)
 library(dplyr)
 library(hitype)
-library(biopipen.utils)
 
 sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 tissue = {{envs.hitype_tissue | r}}
 db = {{envs.hitype_db | r}}
 newcol = {{envs.newcol | r}}
+ident = {{envs.ident | r }}
 merge_same_labels = {{envs.merge | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
@@ -16,6 +16,8 @@ log <- get_logger()
 
 log$info("Reading Seurat object...")
 sobj = biopipen.utils::read_obj(sobjfile)
+ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
+Idents(sobj) <- ident
 
 # prepare gene sets
 log$info("Preparing gene sets...")
@@ -30,18 +32,14 @@ log$info("Running RunHitype...")
 sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
 log$info("Renaming cell types...")
-hitype_levels = sobj@meta.data %>%
-    select(seurat_clusters, hitype) %>%
-    distinct(seurat_clusters, .keep_all = TRUE) %>%
-    arrange(as.numeric(seurat_clusters)) %>%
-    pull("hitype")
+hitype_labels <- sobj@meta.data %>%
+    distinct(!!sym(ident), hitype)
+hitype_labels <- split(hitype_labels$hitype, hitype_labels[[ident]])
 
 if (is.null(newcol)) {
-    sobj$seurat_clusters_id = sobj$seurat_clusters
-    sobj$seurat_clusters = factor(sobj$hitype, levels = hitype_levels)
-    Idents(sobj) = "seurat_clusters"
+    sobj <- rename_idents(sobj, ident, hitype_labels)
 } else {
-    sobj[[newcol]] = factor(sobj$hitype, levels = hitype_levels)
+    sobj[[newcol]] = sobj$hitype
 }
 
 if (merge_same_labels) {
@@ -55,9 +53,9 @@ biopipen.utils::save_obj(sobj, outfile)
 log$info("Saving the mappings ...")
 if (is.null(newcol)) {
     celltypes = sobj@meta.data %>%
-        group_by(seurat_clusters_id) %>%
+        group_by(!!sym(backup_col)) %>%
         summarize(CellType = hitype[1]) %>%
-        select(Cluster = seurat_clusters_id, CellType) %>%
+        select(Cluster = !!sym(backup_col), CellType) %>%
         ungroup()
 } else {
     celltypes = sobj@meta.data %>%

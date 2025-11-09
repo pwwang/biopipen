@@ -1,9 +1,13 @@
 library(Seurat)
+library(rlang)
+library(dplyr)
+library(tidyseurat)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
 celltypes <- {{envs.cell_types | r}}
 newcol <- {{envs.newcol | r}}
+ident <- {{envs.ident | r }}
 merge_same_labels <- {{envs.merge | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -23,6 +27,8 @@ if (is.null(celltypes) || length(celltypes) == 0) {
 } else {
     log$info("Loading Seurat object ...")
     sobj <- biopipen.utils::read_obj(sobjfile)
+    ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
+    Idents(sobj) <- ident
     idents <- Idents(sobj)
     if (is.factor(idents)) {
         idents <- levels(idents)
@@ -62,23 +68,11 @@ if (is.null(celltypes) || length(celltypes) == 0) {
 
     log$info("Renaming cell types ...")
     if (is.null(newcol)) {
-        has_na <- "NA" %in% unlist(celltypes) || anyNA(unlist(celltypes))
-        sobj$seurat_clusters_id <- Idents(sobj)
-        celltypes$object <- sobj
-        sobj <- biopipen.utils::do_call(RenameIdents, celltypes)
-        sobj$seurat_clusters <- Idents(sobj)
-        if (has_na) {
-            log$info("Filtering clusters if NA ...")
-            sobj <- subset(
-                sobj,
-                subset = seurat_clusters != "NA" & !is.na(seurat_clusters)
-            )
-        }
+        sobj <- rename_idents(sobj, ident, celltypes)
+        log$info("Filtering clusters if NA ...")
+        sobj <- filter(sobj, !!sym(ident) != "NA" & !is.na(!!sym(ident)))
     } else {
-        celltypes$object <- sobj
-        sobj <- do_call(RenameIdents, celltypes)
-        sobj[[newcol]] <- Idents(sobj)
-        Idents(sobj) <- "seurat_clusters"
+        sobj[[newcol]] <- celltypes[as.character(Idents(sobj))]
     }
 
     if (merge_same_labels) {
