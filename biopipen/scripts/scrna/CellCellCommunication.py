@@ -1,5 +1,6 @@
 from pathlib import Path
 from biopipen.utils.misc import run_command, logger
+from biopipen.scripts.scrna.seurat_anndata_conversion import convert_seurat_to_anndata
 import os
 import numpy as np
 import pandas as pd
@@ -39,33 +40,40 @@ ncores = envs.pop("ncores")
 species = envs.pop("species")
 rscript = envs.pop("rscript")
 subset = envs.pop("subset")
+group_by = envs.pop("group_by", None)
+groupby = envs.pop("groupby", None) or group_by
 subset_using = envs.pop("subset_using", "auto")
 if subset_using == "auto":
     subset_using = "python" if subset and "[" in subset else "r"
 split_by = envs.pop("split_by")
 
 if sobjfile.suffix.lower() in (".rds", ".qs", "qs2"):
-    logger.info("Converting the Seurat object to h5ad ...")
-
     annfile = outfile.parent / f"{sobjfile.stem}.h5ad"
-    if subset and subset_using == "r":
-        r_script_convert_to_anndata = (
-            "biopipen.utils::ConvertSeuratToAnnData"
-            f"({str(sobjfile)!r}, {str(annfile)!r}, "
-            f"assay = {{envs['assay'] | r}}, subset = {{envs['subset'] | r}})"
-        )
-    else:
-        r_script_convert_to_anndata = (
-            "biopipen.utils::ConvertSeuratToAnnData"
-            f"({str(sobjfile)!r}, {str(annfile)!r}, assay = {{envs['assay'] | r}})"
-        )
-    run_command([rscript, "-e", r_script_convert_to_anndata], fg=True)
+    seurat_ident_col = convert_seurat_to_anndata(
+        input_file=str(sobjfile),
+        output_file=str(annfile),
+        assay=assay,
+        subset=subset if subset_using == "r" else None,
+        rscript=rscript,
+        return_ident_col=not groupby,
+    )
+    groupby = groupby or seurat_ident_col
     sobjfile = annfile
 elif subset and subset == "r":
     raise ValueError(
         "h5ad file is provided as input, ",
         "'subset' can only be a 'python' expression (`envs.subset_using = 'python'`)."
     )
+
+if not groupby:
+    logger.warning(
+        "`groupby` is not provided. "
+        "Using 'seurat_clusters' as the default groupby column. "
+        "It is recommended to provide the `groupby` parameter."
+    )
+    groupby = "seurat_clusters"
+
+envs["groupby"] = groupby
 
 logger.info("Reading the h5ad file ...")
 adata = scanpy.read_h5ad(sobjfile)

@@ -136,3 +136,5 @@ Rplots.pdf
 *.sif
 
 *.bundle
+tests/running/
+debug.ipynb

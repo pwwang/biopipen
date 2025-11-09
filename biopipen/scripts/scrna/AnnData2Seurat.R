@@ -8,10 +8,11 @@ outfile <- {{out.outfile | r}}
 dotplot_check <- {{envs.dotplot_check | r}}
 outdir <- dirname(outfile)
 assay <- {{envs.assay | r}}
+ident <- {{envs.ident | r}}
 
 log <- get_logger()
 
-ConvertAnnDataToSeurat(adfile, outfile = outfile, assay = assay, log = log)
+ConvertAnnDataToSeurat(adfile, outfile = outfile, assay = assay, ident = ident, log = log)
 
 if (!isFALSE(dotplot_check)) {
     log$info("Reading Seurat object ...")

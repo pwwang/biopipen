@@ -6,7 +6,8 @@ from pathlib import Path
 from pipen import Pipen
 
 TESTING_INDEX_INIT = 1
-TESTING_PARENT_DIR = Path(tempfile.gettempdir())
+TESTING_PARENT_DIR = Path(__file__).parent.parent.parent.joinpath("tests", "running")
+TESTING_PARENT_DIR.mkdir(parents=True, exist_ok=True)
 TESTING_DIR = str(TESTING_PARENT_DIR.joinpath("biopipen-tests-%(index)s"))
 RSCRIPT_DIR = TESTING_PARENT_DIR.joinpath("biopipen-tests-rscripts")
 RSCRIPT_DIR.mkdir(exist_ok=True)

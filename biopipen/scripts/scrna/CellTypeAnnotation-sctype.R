@@ -11,6 +11,7 @@ outfile = {{out.outfile | r}}
 tissue = {{envs.sctype_tissue | r}}
 db = {{envs.sctype_db | r}}
 newcol = {{envs.newcol | r}}
+ident = {{envs.ident | r }}
 merge_same_labels = {{envs.merge | r}}
 
 if (is.null(db)) { stop("`envs.sctype_args.db` is not set") }
@@ -19,6 +20,8 @@ log <- get_logger()
 
 log$info("Reading Seurat object...")
 sobj = biopipen.utils::read_obj(sobjfile)
+ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
+Idents(sobj) <- ident
 
 # prepare gene sets
 log$info("Preparing gene sets...")
@@ -116,15 +119,9 @@ for (key in names(celltypes)) {
 
 celltypes = as.list(celltypes)
 if (is.null(newcol)) {
-    sobj$seurat_clusters_id = sobj$seurat_clusters
-    celltypes$object = sobj
-    sobj = do_call(RenameIdents, celltypes)
-    sobj$seurat_clusters = Idents(sobj)
+    sobj <- rename_idents(sobj, ident, celltypes)
 } else {
-    celltypes$object = sobj
-    sobj = do_call(RenameIdents, celltypes)
-    sobj[[newcol]] = Idents(sobj)
-    Idents(sobj) = "seurat_clusters"
+    sobj@meta.data[[newcol]] = celltypes[as.character(Idents(sobj))]
 }
 celltypes$object = NULL
 gc()

@@ -23,15 +23,33 @@ _handler.setFormatter(
 logger.addHandler(_handler)
 
 
-def exec_code(code, global_vars=None, local_vars=None, return_var=None):
-    global_vars = global_vars or {}
-    local_vars = local_vars or {}
-    exec(code, global_vars, local_vars)
+def require_package(package: str, version: str | None = None) -> None:
+    """Require a Python package to be installed with optional version check.
 
-    if return_var is not None:
-        return local_vars[return_var]
+    The version specifier should follow the format used by pip, e.g., '>=1.2.3'.
+    Multiple version specifiers can be separated by commas, e.g., '>=1.2.3,<2.0.0'.
 
-    return None
+    Args:
+        package (str): The name of the package to check.
+        version (str | None): The version specifier string.
+    """
+    import importlib
+    from importlib.metadata import version as get_version
+    from packaging.specifiers import SpecifierSet
+
+    try:
+        importlib.import_module(package)
+    except ImportError:
+        raise ImportError(f"Package '{package}' is required but not installed.")
+
+    if version:
+        installed_version = get_version(package)
+        specifier = SpecifierSet(version)
+        if installed_version not in specifier:
+            raise ImportError(
+                f"Package '{package}' version '{installed_version}' does not satisfy "
+                f"the requirement '{package}{version}'."
+            )
 
 
 def run_command(
@@ -80,6 +98,7 @@ def run_command(
         kwargs["stdin"] = PIPE
 
     return_stdout = False
+    stdout_file = None
     if kwargs.get("stdout") is True:
         kwargs["stdout"] = PIPE
     elif kwargs.get("stdout") in ("RETURN", "return"):
@@ -88,7 +107,8 @@ def run_command(
     elif isinstance(kwargs.get("stdout"), (str, Path)):
         if isinstance(kwargs["stdout"], str):
             kwargs["stdout"] = Path(kwargs["stdout"])
-        kwargs["stdout"] = kwargs["stdout"].open("w")
+        stdout_file = kwargs["stdout"].open("w")
+        kwargs["stdout"] = stdout_file
         kwargs["close_fds"] = True
 
     if kwargs.get("stderr") is True:
@@ -120,6 +140,10 @@ def run_command(
     if fg or wait or return_stdout:
         rc = p.wait()
         if rc != 0:
+            if stdout_file:
+                stdout_file.close()
+            if return_stdout and p.stdout:
+                p.stdout.close()
             raise RuntimeError(
                 f"Failed to run command: rc={rc}\n"
                 f"Command (list): {cmd}\n"
@@ -127,7 +151,13 @@ def run_command(
             )
 
         if return_stdout:
-            return p.stdout.read().decode()  # type: ignore
+            try:
+                return p.stdout.read().decode()  # type: ignore
+            finally:
+                p.stdout.close()  # type: ignore
+
+        if stdout_file:
+            stdout_file.close()
 
         return p
 

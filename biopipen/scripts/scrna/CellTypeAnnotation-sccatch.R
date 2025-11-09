@@ -6,6 +6,7 @@ sobjfile = {{in.sobjfile | r}}
 outfile = {{out.outfile | r}}
 sccatch_args = {{envs.sccatch_args | r}}
 newcol = {{envs.newcol | r}}
+ident = {{envs.ident | r }}
 merge_same_labels = {{envs.merge | r}}
 
 log <- get_logger()
@@ -22,6 +23,8 @@ if (is.integer(sccatch_args$use_method)) {
 
 log$info("Reading Seurat object...")
 sobj = read_obj(sobjfile)
+ident <- ident %||% GetIdentityColumn(sobj)
+Idents(sobj) <- ident
 
 log$info("Running createscCATCH ...")
 obj = createscCATCH(data = GetAssayData(sobj), cluster = as.character(Idents(sobj)))
@@ -48,15 +51,9 @@ if (length(celltypes) == 0) {
     log$warn("- No cell types annotated from the database!")
 } else {
     if (is.null(newcol)) {
-        sobj$seurat_clusters_id = Idents(sobj)
-        celltypes$object = sobj
-        sobj = do_call(RenameIdents, celltypes)
-        sobj$seurat_clusters = Idents(sobj)
+        sobj <- rename_idents(sobj, ident, celltypes)
     } else {
-        celltypes$object = sobj
-        sobj = do_call(RenameIdents, celltypes)
-        sobj[[newcol]] = Idents(sobj)
-        Idents(sobj) = "seurat_clusters"
+        sobj@meta.data[[newcol]] = celltypes[as.character(Idents(sobj))]
     }
 
     if (merge_same_labels) {

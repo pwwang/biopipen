@@ -7,13 +7,21 @@ from diot import Diot  # type: ignore[import]
 import scanpy as sc
 import scvelo as scv
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from biopipen.utils.misc import logger
+from biopipen.utils.misc import logger, require_package
 from biopipen.scripts.scrna.seurat_anndata_conversion import (
     convert_seurat_to_anndata,
     convert_anndata_to_seurat,
 )
 
+require_package("scvelo", ">=0.3.3")
+from biopipen.scripts.scrna import scvelo_paga  # noqa: F401
+
+warnings.simplefilter("ignore", category=UserWarning)
+warnings.simplefilter("ignore", category=FutureWarning)
+warnings.simplefilter("ignore", category=DeprecationWarning)
 
 
 def SCVELO(
@@ -45,10 +53,6 @@ def SCVELO(
     dpi=100,
     fileprefix="",
 ):
-    warnings.simplefilter("ignore", category=UserWarning)
-    warnings.simplefilter("ignore", category=FutureWarning)
-    warnings.simplefilter("ignore", category=DeprecationWarning)
-
     os.chdir(os.path.expanduser(dirpath))
     if linear_reduction is None:
         sc.pp.pca(adata, n_comps=n_pcs)
@@ -526,18 +530,26 @@ calculate_velocity_genes: bool = {{envs.calculate_velocity_genes | repr}}  # pyr
 top_n: int = {{envs.top_n | repr}}  # pyright: ignore  # noqa: E999
 rscript: str = {{envs.rscript | repr}}  # pyright: ignore  # noqa: E999
 
-if group_by is None:
-    raise ValueError("The 'envs.group_by' parameter must be specified.")
 
 if sobjfile.endswith(".h5ad"):
     h5ad_file = Path(sobjfile)
 else:
     h5ad_file = Path(outfile).with_suffix(".input.h5ad")
     logger.info("Converting Seurat object to AnnData (h5ad) format...")
-    convert_seurat_to_anndata(
+    seurat_ident_col = convert_seurat_to_anndata(
         input_file=sobjfile,
         output_file=h5ad_file,
         rscript=rscript,
+        return_ident_col=not group_by,
+    )
+    group_by = group_by or seurat_ident_col
+
+if group_by is None:
+    group_by = "seurat_clusters"
+    logger.warning(
+        "`envs.group_by` is not provided. "
+        "Using 'seurat_clusters' as the default groupby column. "
+        "It is recommended to provide the `envs.group_by` parameter."
     )
 
 logger.info(f"Reading AnnData (h5ad) file ...")

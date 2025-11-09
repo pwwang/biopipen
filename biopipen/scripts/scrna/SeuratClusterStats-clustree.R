@@ -16,7 +16,7 @@ if (
             if (startsWith(key, "FindClusters") && length(srtobj@commands[[key]]$resolution) > 1) {
                 pref <- substring(key, 14)
                 if (pref == "") {
-                    pref <- "seurat_clusters"
+                    pref <- biopipen.utils::GetIdentityColumn(srtobj)
                 }
 
                 clustrees[[pref]] <- list(prefix = pref)

@@ -3,15 +3,6 @@
 from pipen.utils import mark
 from ..core.proc import Proc
 from ..core.config import config
-# from ..utils.common_docstrs import (
-#     indent_docstr,
-#     format_placeholder,
-#     MUTATE_HELPERS_CLONESIZE,
-#     ENVS_SECTION_EACH,
-# )
-
-# MUTATE_HELPERS_CLONESIZE_INDENTED = indent_docstr(MUTATE_HELPERS_CLONESIZE, "    " * 3)
-# ENVS_SECTION_EACH_INDENTED = indent_docstr(ENVS_SECTION_EACH, "    " * 3)
 
 
 class SeuratLoading(Proc):
@@ -339,13 +330,16 @@ class SeuratClustering(Proc):
         srtobj: The seurat object loaded by SeuratPreparing
 
     Output:
-        outfile: The seurat object with cluster information at `seurat_clusters`.
+        outfile: The seurat object with cluster information at `seurat_clusters` or
+            the name specified by `envs.ident`
 
     Envs:
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
+        ident: The name in the metadata to save the cluster labels.
+            A shortcut for `envs["FindClusters"]["cluster.name"]`.
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
@@ -361,12 +355,12 @@ class SeuratClustering(Proc):
             - <more>: See <https://satijalab.org/seurat/reference/findneighbors>
         FindClusters (ns): Arguments for [`FindClusters()`](https://satijalab.org/seurat/reference/findclusters).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
-            The cluster labels will be saved in `seurat_clusters` and prefixed with "c".
+            The cluster labels will be saved in cluster names and prefixed with "c".
             The first cluster will be "c1", instead of "c0".
             - resolution (type=auto): The resolution of the clustering. You can have multiple resolutions as a list or as a string separated by comma.
                 Ranges are also supported, for example: `0.1:0.5:0.1` will generate `0.1, 0.2, 0.3, 0.4, 0.5`. The step can be omitted, defaulting to 0.1.
-                The results will be saved in `seurat_clusters_<resolution>`.
-                The final resolution will be used to define the clusters at `seurat_clusters`.
+                The results will be saved in `<ident>_<resolution>`.
+                The final resolution will be used to define the clusters at `<ident>`.
             - <more>: See <https://satijalab.org/seurat/reference/findclusters>
         cache (type=auto): Where to cache the information at different steps.
             If `True`, the seurat object will be cached in the job output directory, which will be not cleaned up when job is rerunning.
@@ -386,6 +380,7 @@ class SeuratClustering(Proc):
     lang = config.lang.rscript
     envs = {
         "ncores": config.misc.ncores,
+        "ident": "seurat_clusters",
         "RunPCA": {},
         "RunUMAP": {},
         "FindNeighbors": {},
@@ -897,7 +892,7 @@ class SeuratClusterStats(Proc):
         },
         "features": {},
         "dimplots_defaults": {
-            "group_by": "seurat_clusters",
+            "group_by": None,  # use default ident
             "split_by": None,
             "subset": None,
             "reduction": "dim",
@@ -1218,7 +1213,7 @@ class DimPlots(Proc):
 class MarkersFinder(Proc):
     """Find markers between different groups of cells
 
-    When only `group_by` is specified as `"seurat_clusters"` in
+    When only `group_by` is specified as identity column in
     `envs.cases`, the markers will be found for all the clusters.
 
     You can also find the differentially expressed genes between
@@ -1242,7 +1237,7 @@ class MarkersFinder(Proc):
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
         group_by: The column name in metadata to group the cells.
-            If only `group_by` is specified, and `ident-1` and `ident-2` are
+            If only `group_by` is specified, and `ident_1` and `ident_2` are
             not specified, markers will be found for all groups in this column
             in the manner of "group vs rest" comparison.
             `NA` group will be ignored.
@@ -1251,7 +1246,7 @@ class MarkersFinder(Proc):
         ident_1: The first group of cells to compare
             When this is empty, the comparisons will be expanded to each group v.s. the rest of the cells in `group_by`.
         ident_2: The second group of cells to compare
-            If not provided, the rest of the cells are used for `ident-2`.
+            If not provided, the rest of the cells are used for `ident_2`.
         each: The column name in metadata to separate the cells into different
             cases.
             When this is specified, the case will be expanded for each value of
@@ -1285,7 +1280,7 @@ class MarkersFinder(Proc):
             Use `-` to replace `.` in the argument name. For example,
             use `min-pct` instead of `min.pct`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
-        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
@@ -1340,7 +1335,7 @@ class MarkersFinder(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
-            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            This means either `ident_1` should be empty, so that they can be expanded to multiple comparisons.
             - sigmarkers: The expression to filter the significant markers for each case.
                 If not provided, `envs.sigmarkers` will be used.
             - plot_type (choice): The type of the plot to generate for the overlaps.
@@ -1359,8 +1354,8 @@ class MarkersFinder(Proc):
         overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
             The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
             There are two situations that we can perform overlaps:
-            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
-            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
+            1. If `ident_1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident_1` must be specified.
         cases (type=json): If you have multiple cases for marker discovery, you can specify them
             here. The keys are the names of the cases and the values are the above options. If some options are
             not specified, the default values specified above (under `envs`) will be used.
@@ -1846,7 +1841,7 @@ class ScFGSEA(Proc):
 
         group_by: The column name in metadata to group the cells.
         ident_1: The first group of cells to compare
-        ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident-2`.
+        ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident_2`.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
@@ -1937,13 +1932,13 @@ class CellTypeAnnotation(Proc):
     3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
     4. Use [`hitype`](https://github.com/pwwang/hitype)
 
-    The annotated cell types will replace the original `seurat_clusters` column in the metadata,
+    The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The old `seurat_clusters` column will be renamed to `seurat_clusters_id`.
+    The original identity column will be renamed to `seurat_clusters_id` if no `envs.newcol` is specified.
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
-    the old `seurat_clusters` to the new cell types will be generated and saved to
+    the original identity to the new cell types will be generated and saved to
     `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
 
     Examples:
@@ -1967,8 +1962,10 @@ class CellTypeAnnotation(Proc):
 
     Output:
         outfile: The rds/qs/qs2/h5ad file of seurat object with cell type annotated.
-            A text file containing the mapping from the old `seurat_clusters` to the new cell types
+            A text file containing the mapping from the old identity to the new cell types
             will be generated and saved to `cluster2celltype.tsv` under the job output directory.
+            Note that if `envs.ident` is specified, the output Seurat object will have
+            the identity set to the specified column in metadata.
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
@@ -1986,6 +1983,13 @@ class CellTypeAnnotation(Proc):
             If not specified, all rows in `sctype_db` will be used.
         sctype_db: The database to use for sctype.
             Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+        ident: The column name in metadata to use as the clusters.
+            If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
+            If input data is h5ad, this is required to run cluster-based annotation tools.
+            For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
+        backup_col: The backup column name to store the original identities.
+            If not specified, the original identity column will not be stored.
+            If `envs.newcol` is specified, this will be ignored.
         hitype_tissue: The tissue to use for `hitype`.
             Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
             If not specified, all rows in `hitype_db` will be used.
@@ -1995,7 +1999,7 @@ class CellTypeAnnotation(Proc):
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
         cell_types (list): The cell types to use for direct annotation.
             You can use `"-"` or `""` as the placeholder for the clusters that
-            you want to keep the original cell types (`seurat_clusters`).
+            you want to keep the original cell types.
             If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell
             types.
@@ -2036,8 +2040,8 @@ class CellTypeAnnotation(Proc):
         merge (flag): Whether to merge the clusters with the same cell types.
             Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
         newcol: The new column name to store the cell types.
-            If not specified, the `seurat_clusters` column will be overwritten.
-            If specified, the original `seurat_clusters` column will be kept and `Idents` will be kept as the original `seurat_clusters`.
+            If not specified, the identity column will be overwritten.
+            If specified, the original identity column will be kept and `Idents` will be kept as the original identity.
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
@@ -2072,6 +2076,8 @@ class CellTypeAnnotation(Proc):
         "tool": "hitype",
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
+        "ident": None,
+        "backup_col": "seurat_clusters_id",
         "cell_types": [],
         "more_cell_types": None,
         "sccatch_args": {
@@ -2542,6 +2548,9 @@ class AnnData2Seurat(Proc):
 
     Envs:
         assay: The assay to use to convert to seurat object.
+        ident: The column name in `adfile.obs` to use as the identity
+            for the seurat object.
+            If not specified, no identity will be set.
         dotplot_check (type=auto): Whether to do a check with a dot plot.
             (`scplotter::FeatureStatPlot(plot_type = "dot", ..)` will be used)
             to see if the conversion is successful.
@@ -2554,7 +2563,7 @@ class AnnData2Seurat(Proc):
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"assay": "RNA", "dotplot_check": True}
+    envs = {"assay": "RNA", "ident": None, "dotplot_check": True}
     script = "file://../scripts/scrna/AnnData2Seurat.R"
 
 
@@ -2701,6 +2710,11 @@ class CellCellCommunication(Proc):
         ncores (type=int): The number of cores to use.
         groupby: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            If provided input is a Seurat object, the default identity will be used by default.
+            Otherwise, it is recommended to provide this parameter.
+            "seurat_clusters" will be used with a warning if the input is in AnnData format and
+            this parameter is not provided.
+        group_by: alias for `groupby`
         species (choice): The species of the cells.
             - human: Human cells, the 'consensus' resource will be used.
             - mouse: Mouse cells, the 'mouseconsensus' resource will be used.
@@ -2732,7 +2746,8 @@ class CellCellCommunication(Proc):
         "subset_using": "auto",
         "split_by": None,
         "ncores": config.misc.ncores,
-        "groupby": "seurat_clusters",
+        "groupby": None,
+        "group_by": None,
         "species": "human",
         "expr_prop": 0.1,
         "min_cells": 5,
@@ -2849,6 +2864,10 @@ class ScVelo(Proc):
         ncores (type=int): Number of cores to use.
         group_by: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            If provided input is a Seurat object, the default identity will be used by
+            default. Otherwise, it is recommended to provide this parameter.
+            "seurat_clusters" will be used with a warning if the input is in AnnData
+            format and this parameter is not provided.
         mode (type=list): The mode to use for the velocity analysis.
             It should be a subset of `['deterministic', 'stochastic', 'dynamical']`,
             meaning that we can perform the velocity analysis in multiple modes.
@@ -2887,7 +2906,7 @@ class ScVelo(Proc):
     lang = config.lang.python
     envs = {
         "ncores": config.misc.ncores,
-        "group_by": "seurat_clusters",
+        "group_by": None,
         "mode": ["deterministic", "stochastic", "dynamical"],
         "fitting_by": "stochastic",
         "min_shared_counts": 30,
@@ -2925,6 +2944,7 @@ class Slingshot(Proc):
     Envs:
         group_by: The column name in metadata to group the cells.
             Typically, this column should be the cluster id.
+            Default is the default identity of the seurat object.
         reduction: The nonlinear reduction to use for the trajectory analysis.
         dims (type=auto): The dimensions to use for the analysis.
             A list or a string with comma separated values.
@@ -2941,7 +2961,7 @@ class Slingshot(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
-        "group_by": "seurat_clusters",
+        "group_by": None,
         "reduction": None,
         "dims": [1, 2],
         "start": None,
@@ -3027,7 +3047,7 @@ class PseudoBulkDEG(Proc):
         enrich_style (choice): The style of the enrichment analysis.
             - enrichr: Use `enrichr`-style for the enrichment analysis.
             - clusterProfiler: Use `clusterProfiler`-style for the enrichment analysis.
-        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident-1` is not specified.
+        allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
@@ -3086,7 +3106,7 @@ class PseudoBulkDEG(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         overlaps_defaults (ns): Default options for investigating the overlapping of significant markers between different cases or comparisons.
-            This means either `ident-1` should be empty, so that they can be expanded to multiple comparisons.
+            This means either `ident_1` should be empty, so that they can be expanded to multiple comparisons.
             - sigmarkers: The expression to filter the significant markers for each case.
                 If not provided, `envs.sigmarkers` will be used.
             - plot_type (choice): The type of the plot to generate for the overlaps.
@@ -3105,8 +3125,8 @@ class PseudoBulkDEG(Proc):
         overlaps (type=json): Cases for investigating the overlapping of significant markers between different cases or comparisons.
             The keys are the names of the cases and the values are the dicts inherited from `overlaps_defaults`.
             There are two situations that we can perform overlaps:
-            1. If `ident-1` is not specified, the overlaps can be performed between different comparisons.
-            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident-1` must be specified.
+            1. If `ident_1` is not specified, the overlaps can be performed between different comparisons.
+            2. If `each` is specified, the overlaps can be performed between different cases, where in each case, `ident_1` must be specified.
         tool (choice): The method to use for the differential expression analysis.
             - DESeq2: Use DESeq2 for the analysis.
             - edgeR: Use edgeR for the analysis.

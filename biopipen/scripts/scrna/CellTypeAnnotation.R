@@ -1,13 +1,36 @@
+library(Seurat)
+library(biopipen.utils)
 set.seed(8525)
 
-merge_clusters_with_same_labels <- function(sobj, newcol) {
+backup_col <- {{envs.backup_col | r}}
+
+
+merge_clusters_with_same_labels <- function(sobj, newcol = NULL) {
     if (is.null(newcol)) {
-        sobj@meta.data$seurat_clusters <- sub("\\.\\d+$", "", sobj@meta.data$seurat_clusters)
-        Idents(sobj) <- "seurat_clusters"
+        newcol <- biopipen.utils::GetIdentityColumn(sobj)
+        sobj@meta.data[[newcol]] <- sub("\\.\\d+$", "", sobj@meta.data[[newcol]])
+        Idents(sobj) <- newcol
     } else {
         sobj@meta.data[[newcol]] <- sub("\\.\\d+$", "", sobj@meta.data[[newcol]])
     }
 
+    sobj
+}
+
+rename_idents <- function(sobj, ident_col, mapping) {
+    orig_ident_col <- biopipen.utils::GetIdentityColumn(sobj)
+    if (!identical(ident_col, orig_ident_col)) {
+        Idents(sobj) <- ident_col
+        mapping$object <- sobj
+        sobj <- do_call(RenameIdents, mapping)
+    } else {
+        if (!is.null(backup_col)) {
+            sobj@meta.data[[backup_col]] <- Idents(sobj)
+        }
+        mapping$object <- sobj
+        sobj <- do_call(RenameIdents, mapping)
+    }
+    Idents(sobj) <- ident_col
     sobj
 }
 
