@@ -1,5 +1,22 @@
 # Change Log
 
+## 0.34.19
+
+- feat(scrna.SeuratClustering): add envs.ident as shortcut for custom cluster name
+- chore(scrna.SeuratClusterStats): set default group_by for dimplots to None
+- docs(scrna): correct parameter names in docstring (ident-1 to ident_1, and ident-2 to ident-2)
+- fix(tests): update testing directory path to not use temporary directory
+- refactor: remove common_docstrs.py and related tests from the repository
+- feat(utils.misc): add require_package function and comprehensive tests for package requirements and command execution
+- feat(scrna): add return option for identity column in convert_seurat_to_anndata function
+- feat(scrna.ScVelo): allow envs.group_by to be None to use default ident  for Seurat objects
+- chore: add commit message instructions for GitHub Copilot
+- feat(scrna.Slingshot): allow group_by to be None for default identity column in Seurat object
+- feat(scrna.AnnData2Seurat): add ident parameter to specify identity column for Seurat object after conversion
+- feat(scrna.CellCellCommunication): enhance groupby handling for Seurat objects
+- feat(scrna.CellTypeAnnotation): add support for specifying identity column in CellTypeAnnotation for celltypist
+- feat(scrna.CellTypeAnnotation): enhance identity column handling and add backup column support
+
 ## 0.34.18
 
 - docs: improve documentation for SeuratPreparing to make sure new line… (#180)
