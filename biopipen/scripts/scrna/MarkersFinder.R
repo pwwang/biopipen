@@ -409,6 +409,7 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(plotcases)) {
+        log$info("  {plotname} ...")
         plotargs <- plotcases[[plotname]]
         plotargs$markers <- markers
         plotargs$object <- object
@@ -436,6 +437,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
     for (db in dbs) {
         plots <- list()
         for (plotname in names(plotcases)) {
+            log$info("  {plotname} ({db}) ...")
             plotargs <- plotcases[[plotname]]
             plotargs <- extract_vars(plotargs, "devpars")
             plotargs$data <- enriches[enriches$Database == db, , drop = FALSE]
@@ -468,6 +470,7 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(ovcases)) {
+        log$info("  {plotname} ...")
         args <- extract_vars(
             ovcases[[plotname]],
             sigm = "sigmarkers", "more_formats", "save_code", "devpars", "plot_type",
