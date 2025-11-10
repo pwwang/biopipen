@@ -1,6 +1,7 @@
 from unittest import TestCase, main
 from pathlib import Path
 import tempfile
+import sys
 from biopipen.utils.misc import require_package, run_command
 
 
@@ -20,6 +21,38 @@ class TestUtilsMisc(TestCase):
         # Test with a non-installed package
         with self.assertRaises(ImportError):
             require_package("non_existent_package_12345")
+
+    def test_require_package_with_python(self):
+        # Test with current Python interpreter
+        python_exe = sys.executable
+
+        # Test with an installed package without version check
+        require_package("math", python=python_exe)
+
+        # Test with an installed package with satisfying version
+        require_package("pip", version=">=0.0.1", python=python_exe)
+
+        # Test with an installed package with non-satisfying version
+        with self.assertRaises(ImportError) as cm:
+            require_package("pip", version=">=9999.0.0", python=python_exe)
+        self.assertIn("does not satisfy the requirement", str(cm.exception))
+
+        # Test with a non-installed package
+        with self.assertRaises(ImportError) as cm:
+            require_package(
+                "non_existent_package_12345",
+                python=python_exe
+            )
+        self.assertIn("is required but not installed", str(cm.exception))
+
+        # Test with a non-existent Python interpreter
+        with self.assertRaises(ImportError) as cm:
+            require_package(
+                "math",
+                python="/nonexistent/path/to/python"
+            )
+        self.assertIn("Python interpreter", str(cm.exception))
+        self.assertIn("not found", str(cm.exception))
 
     def test_run_command_string(self):
         # Test running a simple string command

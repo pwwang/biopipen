@@ -23,7 +23,11 @@ _handler.setFormatter(
 logger.addHandler(_handler)
 
 
-def require_package(package: str, version: str | None = None) -> None:
+def require_package(
+    package: str,
+    version: str | None = None,
+    python: str | None = None,
+) -> None:
     """Require a Python package to be installed with optional version check.
 
     The version specifier should follow the format used by pip, e.g., '>=1.2.3'.
@@ -32,24 +36,81 @@ def require_package(package: str, version: str | None = None) -> None:
     Args:
         package (str): The name of the package to check.
         version (str | None): The version specifier string.
+        python (str | None): The Python interpreter to use.
     """
-    import importlib
-    from importlib.metadata import version as get_version
-    from packaging.specifiers import SpecifierSet
+    if not python:
+        import importlib
+        from importlib.metadata import version as get_version
+        from packaging.specifiers import SpecifierSet
 
-    try:
-        importlib.import_module(package)
-    except ImportError:
-        raise ImportError(f"Package '{package}' is required but not installed.")
+        try:
+            importlib.import_module(package)
+        except ImportError:
+            raise ImportError(f"Package '{package}' is required but not installed.")
 
-    if version:
-        installed_version = get_version(package)
-        specifier = SpecifierSet(version)
-        if installed_version not in specifier:
-            raise ImportError(
-                f"Package '{package}' version '{installed_version}' does not satisfy "
-                f"the requirement '{package}{version}'."
+        if version:
+            installed_version = get_version(package)
+            specifier = SpecifierSet(version)
+            if installed_version not in specifier:
+                raise ImportError(
+                    f"Package '{package}' version '{installed_version}' does not "
+                    f"satisfy the requirement '{package}{version}'."
+                )
+    else:
+        import subprocess
+        from packaging.specifiers import SpecifierSet
+
+        # Check if package is installed using the specified Python interpreter
+        try:
+            result = subprocess.run(
+                [python, "-c", f"import {package}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
+            if result.returncode != 0:
+                raise ImportError(
+                    f"Package '{package}' is required but not installed in {python}."
+                )
+        except subprocess.TimeoutExpired:
+            raise ImportError(
+                f"Timeout while checking if package '{package}' is "
+                f"installed in {python}."
+            )
+        except FileNotFoundError:
+            raise ImportError(f"Python interpreter '{python}' not found.")
+
+        if version:
+            # Get the installed version
+            try:
+                version_cmd = (
+                    f"from importlib.metadata import version; "
+                    f"print(version('{package}'))"
+                )
+                result = subprocess.run(
+                    [python, "-c", version_cmd],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if result.returncode != 0:
+                    raise ImportError(
+                        f"Failed to get version of package '{package}' "
+                        f"in {python}."
+                    )
+                installed_version = result.stdout.strip()
+                specifier = SpecifierSet(version)
+                if installed_version not in specifier:
+                    raise ImportError(
+                        f"Package '{package}' version '{installed_version}' "
+                        f"in {python} does not satisfy the requirement "
+                        f"'{package}{version}'."
+                    )
+            except subprocess.TimeoutExpired:
+                raise ImportError(
+                    f"Timeout while checking version of package '{package}' "
+                    f"in {python}."
+                )
 
 
 def run_command(
