@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.34.20
+
+- feat(scrna.CellTypeAnnotation): enhance classifier initialization and input handling for celltypist
+- enh(scrna.MarkersFinder): add logging for plot processing in marker and enrichment functions
+- feat(utils.misc): add support for specifying Python interpreter in require_package
+- feat(scrna.CellTypeAnnotation): require celltypist package with specified version and python interpreter
+
 ## 0.34.19
 
 - feat(scrna.SeuratClustering): add envs.ident as shortcut for custom cluster name
