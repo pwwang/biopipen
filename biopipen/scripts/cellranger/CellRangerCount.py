@@ -65,6 +65,7 @@ command = [
 #   cellranger cellranger-7.2.0
 version: str = run_command([cellranger, "--version"], stdout = "RETURN")  # type: ignore
 version = version.replace("cellranger", "").replace("-", "").strip()  # type: ignore
+print(f"# Detected cellranger version: {version}")
 version: list[int] = list(map(int, version.split(".")))  # type: ignore
 if version[0] >= 8:
     command += ["--create-bam", create_bam]
