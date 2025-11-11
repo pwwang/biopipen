@@ -85,18 +85,18 @@ ref = "/path/to/reference"
 
 To obtain the reference genome, please refer to:
 
-- https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-inputs-overview#count
-- https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-inputs-overview#vdj
+- <https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-inputs-overview#count>
+- <https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-inputs-overview#vdj>
 
 You may also make your own reference by `cellranger mkref` for gene expression. See the cellranger documentation:
 
-- https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-3p-references
+- <https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/inputs/cr-3p-references>
 
 Also check out docker/cellranger_pipeline/make-examples.sh to see how the references are prepared.
 
 ## Docker image
 
-You can use the docker image [`biopipen/cellranger-pipeline`] to run the pipeline. The image contains
+You can use the docker image [`biopipen/cellranger-pipeline`](https://hub.docker.com/r/biopipen/cellranger-pipeline) to run the pipeline. The image contains
 the cellranger software and the biopipen package. It is also built with an example dataset for you to
 test the pipeline:
 
