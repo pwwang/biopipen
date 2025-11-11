@@ -15,6 +15,9 @@ ncores = {{envs.ncores | int}}  # pyright: ignore
 include_introns = {{envs.include_introns | repr}}  # pyright: ignore
 create_bam = {{envs.create_bam | repr}}  # pyright: ignore
 
+ref: Path = Path(ref).resolve()  # pyright: ignore
+if not ref.exists():
+    raise FileNotFoundError(f"Reference path does not exist: {ref}")
 include_introns = str(include_introns).lower()
 create_bam = str(create_bam).lower()
 
@@ -49,7 +52,7 @@ command = [
     "--fastqs",
     fastqdir,
     "--transcriptome",
-    Path(ref).resolve(),
+    str(ref),
     "--localcores",
     ncores,
     "--disable-ui",
