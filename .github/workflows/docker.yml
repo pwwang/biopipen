@@ -6,7 +6,7 @@ jobs:
 
   docker-base:
     runs-on: ubuntu-latest
-    if: contains(github.event.commits.*.modified, 'docker/base/Dockerfile')
+    if: contains(join(github.event.commits.*.modified, ','), 'docker/base/Dockerfile')
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
@@ -28,7 +28,7 @@ jobs:
 
   docker-test:
     needs: docker-base
-    if: always() && (needs.docker-base.result == 'success' || contains(github.event.commits.*.modified, 'docker/test/Dockerfile') || contains(github.event.commits.*.modified, 'tests/conda/env_biopipen.yml'))
+    if: always() && (needs.docker-base.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/test/Dockerfile') || contains(join(github.event.commits.*.modified, ','), 'tests/conda/env_biopipen.yml'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
