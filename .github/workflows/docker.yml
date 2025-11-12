@@ -58,7 +58,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [ "${{ needs.docker-test.result }}" == "success" ] || git diff --name-only HEAD^ HEAD | grep -q 'cnvkit'; then
+          if [ "${{ needs.docker-test.result }}" == "success" ] && git diff --name-only HEAD^ HEAD | grep -q 'cnvkit'; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -95,7 +95,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [ "${{ needs.docker-test.result }}" == "success" ] || git diff --name-only HEAD^ HEAD | grep -q 'cellranger'; then
+          if [ "${{ needs.docker-test.result }}" == "success" ] && git diff --name-only HEAD^ HEAD | grep -q 'cellranger'; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
