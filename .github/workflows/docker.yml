@@ -28,7 +28,7 @@ jobs:
 
   docker-test:
     needs: docker-base
-    if: always() && (needs.docker-base.result == 'success' || needs.docker-base.result == 'skipped') &&    (contains(github.event.commits.*.modified, 'docker/test/Dockerfile') || contains(github.event.commits.*.modified, 'tests/conda/env_biopipen.yml'))
+    if: always() && (needs.docker-base.result == 'success' || contains(github.event.commits.*.modified, 'docker/test/Dockerfile') || contains(github.event.commits.*.modified, 'tests/conda/env_biopipen.yml'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
 
   docker-cnvkit-pipeline:
     needs: docker-test
-    if: always() && (needs.docker-test.result == 'success' || needs.docker-test.result == 'skipped') && (contains(join(github.event.commits.*.modified, ','), 'docker/cnvkit_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cnvkit_pipeline/'))
+    if: always() && (needs.docker-test.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/cnvkit_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cnvkit_pipeline/'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
 
   docker-cellranger-pipeline:
     needs: docker-test
-    if: always() && (needs.docker-test.result == 'success' || needs.docker-test.result == 'skipped') && (contains(join(github.event.commits.*.modified, ','), 'docker/cellranger_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cellranger_pipeline/'))
+    if: always() && (needs.docker-test.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/cellranger_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cellranger_pipeline/'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
