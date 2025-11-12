@@ -1,6 +1,7 @@
 import hashlib
 import shutil
 import re
+from contextlib import suppress
 from pathlib import Path, PosixPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
@@ -87,6 +88,21 @@ if outdir_is_mounted:
 
     if copy_outs_only:
         outdir.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(odir / "outs", outdir / "outs")
+        with suppress(Exception):
+            # Some files may be failed to copy due to permission issues
+            # But the contents are actually copied
+            shutil.copytree(odir / "outs", outdir / "outs")
     else:
-        shutil.copytree(local_outdir, outdir)  # type: ignore
+        with suppress(Exception):
+            shutil.copytree(local_outdir, outdir)  # type: ignore
+
+    # Make sure essential files exist
+    web_summary_html = outdir / "outs" / "web_summary.html"
+    web_summary_js = outdir / "outs" / "web_summary.js"
+    filtered_annotations_csv = outdir / "outs" / "filtered_contig_annotations.csv"
+    for f in [web_summary_html, web_summary_js, filtered_annotations_csv]:
+        if not f.exists():
+            raise RuntimeError(
+                f"{f} does not exist in {outdir}/outs. "
+                "Copying results back from tmpdir failed."
+            )
