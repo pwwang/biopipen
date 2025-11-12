@@ -27,7 +27,7 @@ for fastq in fastqs:
     fastq = Path(fastq)
     (fastqdir / fastq.name).symlink_to(fastq)
 
-other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['cellranger', 'reference', 'ref', 'tmpdir', 'id', 'ncores']}}  # pyright: ignore
+other_args = {{envs | dict_to_cli_args: dashify=True, exclude=['cellranger', 'reference', 'ref', 'tmpdir', 'id', 'ncores', 'outdir_is_mounted', 'copy_outs_only']}}  # pyright: ignore
 
 command = [
     cellranger,
