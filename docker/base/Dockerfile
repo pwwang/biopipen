@@ -14,7 +14,6 @@ RUN micromamba install -y -n base python=3.10 nodejs=20 git poetry procps-ng && 
     poetry install -v && \
     pipen report update
 
-
 FROM mambaorg/micromamba:2.3.0
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /biopipen /biopipen
