@@ -1,12 +1,20 @@
 name: docker
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'docker/base/Dockerfile'
+      - 'docker/test/Dockerfile'
+      - 'tests/conda/env_biopipen.yml'
+      - 'docker/cnvkit_pipeline/**'
+      - 'docker/cellranger_pipeline/**'
+      - '.github/workflows/docker.yml'
 
 jobs:
 
   docker-base:
     runs-on: ubuntu-latest
-    if: contains(join(github.event.commits.*.modified, ','), 'docker/base/Dockerfile')
+    if: contains(github.event.head_commit.modified, 'docker/base/Dockerfile') || contains(github.event.head_commit.added, 'docker/base/Dockerfile')
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
@@ -28,7 +36,7 @@ jobs:
 
   docker-test:
     needs: docker-base
-    if: always() && (needs.docker-base.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/test/Dockerfile') || contains(join(github.event.commits.*.modified, ','), 'tests/conda/env_biopipen.yml'))
+    if: always() && (needs.docker-base.result == 'success' || contains(github.event.head_commit.modified, 'docker/test/Dockerfile') || contains(github.event.head_commit.added, 'docker/test/Dockerfile') || contains(github.event.head_commit.modified, 'tests/conda/env_biopipen.yml') || contains(github.event.head_commit.added, 'tests/conda/env_biopipen.yml'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,20 +59,34 @@ jobs:
 
   docker-cnvkit-pipeline:
     needs: docker-test
-    if: always() && (needs.docker-test.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/cnvkit_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cnvkit_pipeline/'))
+    if: always() && needs.docker-test.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q '^docker/cnvkit_pipeline/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - name: Set up QEMU
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Build and push
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -74,20 +96,34 @@ jobs:
 
   docker-cellranger-pipeline:
     needs: docker-test
-    if: always() && (needs.docker-test.result == 'success' || contains(join(github.event.commits.*.modified, ','), 'docker/cellranger_pipeline/') || contains(join(github.event.commits.*.added, ','), 'docker/cellranger_pipeline/'))
+    if: always() && needs.docker-test.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q '^docker/cellranger_pipeline/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - name: Set up QEMU
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Build and push
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           push: true
