@@ -1,7 +1,5 @@
-ARG REF_NAME=dev
-
 FROM biopipen/cellranger:9.0.1 AS cellranger
-FROM biopipen/base:${REF_NAME}
+FROM biopipen/base:latest
 
 COPY --from=cellranger /cellranger /cellranger
 
