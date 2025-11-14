@@ -45,9 +45,13 @@ command = [
     *other_args,
 ]
 
+version: str = run_command([cellranger, "--version"], stdout = "RETURN")  # type: ignore
+version = version.replace("cellranger", "").replace("-", "").strip()  # type: ignore
+print(f"# Detected cellranger version: {version}")
+
 if outdir_is_mounted:
     print("# Using mounted outdir, redirecting cellranger output to a local tmpdir")
-    local_outdir = tmpdir / f"{Path(outdir).name}-{uid}" / id
+    local_outdir = tmpdir / f"{outdir.name}-{uid}" / id
     if local_outdir.parent.exists():
         shutil.rmtree(local_outdir.parent)
     local_outdir.parent.mkdir(parents=True, exist_ok=True)
