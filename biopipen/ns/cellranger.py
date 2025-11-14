@@ -30,6 +30,19 @@ class CellRangerCount(Proc):
         ref: Path of folder containing 10x-compatible transcriptome reference
         tmpdir: Path to temporary directory, used to save the soft-lined fastq files
             to pass to cellranger
+        outdir_is_mounted (flag): A flag indicating whether the output directory is
+            on a mounted filesystem. As of `cellranger` v9.0.1, `cellranger vdj` will
+            fail when trying to copy/operate files to a mounted filesystem.
+            See <https://github.com/10XGenomics/cellranger/issues/210> and
+            <https://github.com/10XGenomics/cellranger/issues/250> for similar issues.
+            If that is the case, set this flag to `True` to use `envs.tmpdir` as
+            the output directory for `cellranger vdj`, and then move the results
+            to the final output directory after `cellranger vdj` finishes.
+            In this case, make sure that `envs.tmpdir` must have enough space and
+            it must be a local filesystem.
+        copy_outs_only (flag): If `outdir_is_mounted` is `True`, set this flag to `True`
+            to only copy the `outs` folder from the temporary output directory
+            to the final output directory, instead of the whole output directory.
         include_introns (flag): Set to false to exclude intronic reads in count.
         create_bam (flag): Enable or disable BAM file generation.
             This is required by cellrange v8+. When using cellrange v8-, it will be
@@ -59,6 +72,8 @@ class CellRangerCount(Proc):
         "cellranger": config.exe.cellranger,
         "ref": config.ref.ref_cellranger_gex,
         "tmpdir": config.path.tmpdir,
+        "outdir_is_mounted": False,
+        "copy_outs_only": True,
         "include_introns": True,
         "create_bam": False,
     }
