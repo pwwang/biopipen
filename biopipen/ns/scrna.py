@@ -1254,9 +1254,18 @@ class MarkersFinder(Proc):
             then the case will be expanded as `envs.cases."Cluster Markers - Sample1"`, `envs.cases."Cluster Markers - Sample2"`, etc.
             You can specify `allmarker_plots` and `overlaps` to plot the markers for all cases in the same plot and plot the overlaps of the markers
             between different cases by values in this column.
-        dbs (list): The dbs to do enrichment analysis for significant
-            markers See below for all libraries.
-            <https://maayanlab.cloud/Enrichr/#libraries>
+        dbs (list): The dbs to do enrichment analysis for significant markers.
+            You can use built-in dbs in `enrichit`, or provide your own gmt files.
+            See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
+            The built-in dbs include:
+            * "BioCarta" or "BioCarta_2016"
+            * "GO_Biological_Process" or "GO_Biological_Process_2025"
+            * "GO_Cellular_Component" or "GO_Cellular_Component_2025"
+            * "GO_Molecular_Function" or "GO_Molecular_Function_2025"
+            * "KEGG", "KEGG_Human", "KEGG_2021", or "KEGG_2021_Human"
+            * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
+            * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
+            * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
             Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
@@ -1450,9 +1459,18 @@ class TopExpressingGenes(Proc):
         group_by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
-        dbs (list): The dbs to do enrichment analysis for significant
-            markers See below for all libraries.
-            <https://maayanlab.cloud/Enrichr/#libraries>
+        dbs (list): The dbs to do enrichment analysis for significant markers.
+            You can use built-in dbs in `enrichit`, or provide your own gmt files.
+            See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
+            The built-in dbs include:
+            * "BioCarta" or "BioCarta_2016"
+            * "GO_Biological_Process" or "GO_Biological_Process_2025"
+            * "GO_Cellular_Component" or "GO_Cellular_Component_2025"
+            * "GO_Molecular_Function" or "GO_Molecular_Function_2025"
+            * "KEGG", "KEGG_Human", "KEGG_2021", or "KEGG_2021_Human"
+            * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
+            * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
+            * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
         n (type=int): The number of top expressing genes to find.
         enrich_style (choice): The style of the enrichment analysis.
             The enrichment analysis will be done by `EnrichIt()` from [`enrichit`](https://pwwang.github.io/enrichit/).
@@ -1845,7 +1863,17 @@ class ScFGSEA(Proc):
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
-            One could also use a URL to a GMT file. For example, from <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/Pathways/>.
+            You can use built-in dbs in `enrichit`, or provide your own gmt files.
+            See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
+            The built-in dbs include:
+            * "BioCarta" or "BioCarta_2016"
+            * "GO_Biological_Process" or "GO_Biological_Process_2025"
+            * "GO_Cellular_Component" or "GO_Cellular_Component_2025"
+            * "GO_Molecular_Function" or "GO_Molecular_Function_2025"
+            * "KEGG", "KEGG_Human", "KEGG_2021", or "KEGG_2021_Human"
+            * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
+            * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
+            * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
         method (choice): The method to do the preranking.
             - signal_to_noise: Signal to noise.
                 The larger the differences of the means (scaled by the standard deviations);
@@ -2455,9 +2483,18 @@ class MetaMarkers(Proc):
         idents: The groups of cells to compare, values should be in the `group-by` column.
         each: The column name in metadata to separate the cells into different cases.
         prefix_each (flag): Whether to add the `each` value as prefix to the case name.
-        dbs (list): The dbs to do enrichment analysis for significant
-            markers See below for all libraries.
-            <https://maayanlab.cloud/Enrichr/#libraries>
+        dbs (list): The dbs to do enrichment analysis for significant markers.
+            You can use built-in dbs in `enrichit`, or provide your own gmt files.
+            See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
+            The built-in dbs include:
+            * "BioCarta" or "BioCarta_2016"
+            * "GO_Biological_Process" or "GO_Biological_Process_2025"
+            * "GO_Cellular_Component" or "GO_Cellular_Component_2025"
+            * "GO_Molecular_Function" or "GO_Molecular_Function_2025"
+            * "KEGG", "KEGG_Human", "KEGG_2021", or "KEGG_2021_Human"
+            * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
+            * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
+            * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
         subset: The subset of the cells to do the analysis.
             An expression passed to `dplyr::filter()`.
         p_adjust (choice): The method to adjust the p values, which can be used to filter the significant markers.
@@ -3032,11 +3069,17 @@ class PseudoBulkDEG(Proc):
         paired_by: The column name in metadata to mark the paired samples.
             For example, subject. If specified, the paired test will be performed.
         dbs (list): The databases to use for enrichment analysis.
-            The databases are passed to `biopipen.utils::Enrichr()` to do the
-            enrichment analysis. The default databases are `KEGG_2021_Human` and
-            `MSigDB_Hallmark_2020`.
-            See <https://maayanlab.cloud/Enrichr/#libraries> for the available
-            libraries.
+            You can use built-in dbs in `enrichit`, or provide your own gmt files.
+            See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
+            The built-in dbs include:
+            * "BioCarta" or "BioCarta_2016"
+            * "GO_Biological_Process" or "GO_Biological_Process_2025"
+            * "GO_Cellular_Component" or "GO_Cellular_Component_2025"
+            * "GO_Molecular_Function" or "GO_Molecular_Function_2025"
+            * "KEGG", "KEGG_Human", "KEGG_2021", or "KEGG_2021_Human"
+            * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
+            * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
+            * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
             The default is `p_val_adj < 0.05`.
