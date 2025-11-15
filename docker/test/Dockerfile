@@ -1,6 +1,4 @@
-ARG REF_NAME=dev
-
-FROM biopipen/base:${REF_NAME} AS builder
+FROM biopipen/base:latest AS builder
 
 # in case we have update dependencies
 COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
@@ -9,7 +7,7 @@ COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
 RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
     micromamba clean --all --yes
 
-FROM biopipen/base:${REF_NAME}
+FROM biopipen/base:latest
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /opt/conda /opt/conda
 

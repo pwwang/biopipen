@@ -32,7 +32,7 @@ def dict_to_cli_args(
 
     Args:
         dic: The dict to convert
-        exclude: The keys to exclude
+        exclude: The keys to exclude before conversion (e.g. dashify)
         prefix: The prefix of the keys after conversion
             Defaults to `None`, mean `-` for short keys and `--` for long keys
         sep: The separator between key and value

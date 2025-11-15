@@ -23,7 +23,7 @@ jobs:
           push: true
           context: .
           file: docker/base/Dockerfile
-          tags: biopipen/base:${{ github.ref_name }}
+          tags: biopipen/base:latest
 
   docker-test:
     needs: docker-base
@@ -45,51 +45,78 @@ jobs:
           push: true
           context: .
           file: docker/test/Dockerfile
-          tags: biopipen/test:${{ github.ref_name }}
-          build-args: REF_NAME=${{ github.ref_name }}
+          tags: biopipen/test:latest
 
   docker-cnvkit-pipeline:
     needs: docker-test
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ "${{ needs.docker-test.result }}" == "success" ] && git diff --name-only HEAD^ HEAD | grep -q 'cnvkit'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - name: Set up QEMU
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Build and push
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           push: true
           context: .
           file: docker/cnvkit_pipeline/Dockerfile
           tags: biopipen/cnvkit-pipeline:${{ github.ref_name }}
-          build-args: REF_NAME=${{ github.ref_name }}
 
   docker-cellranger-pipeline:
     needs: docker-test
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ "${{ needs.docker-test.result }}" == "success" ] && git diff --name-only HEAD^ HEAD | grep -q 'cellranger'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - name: Set up QEMU
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Build and push
+        if: steps.check_changes.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           push: true
           context: .
           file: docker/cellranger_pipeline/Dockerfile
           tags: biopipen/cellranger-pipeline:${{ github.ref_name }}
-          build-args: REF_NAME=${{ github.ref_name }}

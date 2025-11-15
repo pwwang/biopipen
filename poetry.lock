@@ -427,6 +427,7 @@ description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
+markers = "python_version < \"3.11\""
 files = [
     {file = "hypercorn-0.17.3-py3-none-any.whl", hash = "sha256:059215dec34537f9d40a69258d323f56344805efb462959e727152b0aa504547"},
     {file = "hypercorn-0.17.3.tar.gz", hash = "sha256:1b37802ee3ac52d2d85270700d565787ab16cf19e1462ccfa9f089ca17574165"},
@@ -447,6 +448,31 @@ docs = ["pydata_sphinx_theme", "sphinxcontrib_mermaid"]
 h3 = ["aioquic (>=0.9.0,<1.0)"]
 trio = ["trio (>=0.22.0)"]
 uvloop = ["uvloop (>=0.18) ; platform_system != \"Windows\""]
+
+[[package]]
+name = "hypercorn"
+version = "0.18.0"
+description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.11\""
+files = [
+    {file = "hypercorn-0.18.0-py3-none-any.whl", hash = "sha256:225e268f2c1c2f28f6d8f6db8f40cb8c992963610c5725e13ccfcddccb24b1cd"},
+    {file = "hypercorn-0.18.0.tar.gz", hash = "sha256:d63267548939c46b0247dc8e5b45a9947590e35e64ee73a23c074aa3cf88e9da"},
+]
+
+[package.dependencies]
+h11 = "*"
+h2 = ">=4.3.0"
+priority = "*"
+wsproto = ">=0.14.0"
+
+[package.extras]
+docs = ["pydata_sphinx_theme", "sphinxcontrib_mermaid"]
+h3 = ["aioquic (>=0.9.0)"]
+trio = ["trio"]
+uvloop = ["uvloop"]
 
 [[package]]
 name = "hyperframe"
@@ -1140,14 +1166,14 @@ pipen-annotate = ">=0.15,<0.16"
 
 [[package]]
 name = "pipen-board"
-version = "0.17.2"
+version = "0.17.3"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_board-0.17.2-py3-none-any.whl", hash = "sha256:ae8233d99c1e88edf465bb138eea16387c9aa84a6929bc026729b54c19fd8ae1"},
-    {file = "pipen_board-0.17.2.tar.gz", hash = "sha256:fdbb8f31433037c554661604493f41b92cb3dde4d5bb3f771fb8a8d60f12314e"},
+    {file = "pipen_board-0.17.3-py3-none-any.whl", hash = "sha256:eb10d093bed28fca85c75755e09f5ed38f1ed85a6190eec0b1a21a520f924879"},
+    {file = "pipen_board-0.17.3.tar.gz", hash = "sha256:f8445e87f4e59116bfb6880e94727325e63bd852fa24f3cda48084db2f039b3c"},
 ]
 
 [package.dependencies]
@@ -1157,6 +1183,7 @@ pipen-report = {version = ">=0.23,<0.24", optional = true, markers = "extra == \
 psutil = ">=7,<8"
 python-slugify = ">=8.0,<9.0"
 quart = ">=0.20,<0.21"
+taskgroup = {version = ">=0.2,<0.3", markers = "python_version < \"3.11\""}
 websocket-client = ">=1.8,<2.0"
 
 [package.extras]
@@ -2196,6 +2223,7 @@ description = "WebSockets state-machine based protocol implementation"
 optional = false
 python-versions = ">=3.7.0"
 groups = ["main"]
+markers = "python_version < \"3.11\""
 files = [
     {file = "wsproto-1.2.0-py3-none-any.whl", hash = "sha256:b9acddd652b585d75b20477888c56642fdade28bdfd3579aa24a4d2c037dd736"},
     {file = "wsproto-1.2.0.tar.gz", hash = "sha256:ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065"},
@@ -2203,6 +2231,22 @@ files = [
 
 [package.dependencies]
 h11 = ">=0.9.0,<1"
+
+[[package]]
+name = "wsproto"
+version = "1.3.1"
+description = "Pure-Python WebSocket protocol implementation"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.11\""
+files = [
+    {file = "wsproto-1.3.1-py3-none-any.whl", hash = "sha256:297ce79322989c0d286cc158681641cd18bc7632dfb38cf4054696a89179b993"},
+    {file = "wsproto-1.3.1.tar.gz", hash = "sha256:81529992325c28f0d9b86ca66fc973da96eb80ab53410249ce2e502749c7723c"},
+]
+
+[package.dependencies]
+h11 = ">=0.16.0,<1"
 
 [[package]]
 name = "xqute"
