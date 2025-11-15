@@ -1,5 +1,22 @@
 # Change Log
 
+## 0.34.21
+
+- fix(cellranger.CellRangerCount): ensure reference path exists before processing
+- chore(docker/cellranger_pipeline): ensure telemetry is disabled for cellranger in Dockerfile
+- chore(cellranger.CellRangerCount): print detected cellranger version for better debugging
+- docs(cellranger_pipeline): update reference URLs for clarity and consistency
+- feat(cellranger.CellRangerVdj): add support for handling mounted output directories
+- ci(docker): update Dockerfiles to use 'latest' tag for base images
+- ci: simplify conditions for docker-test, docker-cnvkit-pipeline, and docker-cellranger-pipeline jobs
+- ci: update conditions in docker workflow to use join for modified files
+- fix(cellranger.CellRangerVdj): exclude additional environment variables in CLI arguments
+- ci(docker): change condition for checking changes to use logical AND
+- fix(cellranger.CellRangerVdj): handle exceptions during output copying to ensure essential files exist
+- feat(cellranger.CellRangerCount): handle output directory issues for mounted filesystems
+- feat(cellranger.CellRangerVdj): print version of cellranger in stdout
+- docs(scrna): update dbs/gmtfile parameter description for enrichment analysis
+
 ## 0.34.20
 
 - feat(scrna.CellTypeAnnotation): enhance classifier initialization and input handling for celltypist
