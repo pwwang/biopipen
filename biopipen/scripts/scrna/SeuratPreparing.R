@@ -17,7 +17,7 @@ reporter <- get_reporter()
 
 set.seed(8525)
 # 8TB
-options(future.globals.maxSize = 8 * 1024 ^ 4)
+options(future.globals.maxSize = Inf)
 options(future.rng.onMisuse="ignore")
 options(Seurat.object.assay.version = "v5")
 plan(strategy = "multicore", workers = envs$ncores)

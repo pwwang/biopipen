@@ -42,7 +42,7 @@ if (isTRUE(cache)) { cache <- joboutdir }
 
 set.seed(8525)
 if (ncores > 1) {
-    options(future.globals.maxSize = 80000 * 1024^2)
+    options(future.globals.maxSize = Inf)
     plan(strategy = "multicore", workers = ncores)
 }
 

@@ -21,7 +21,7 @@ FindClustersArgs$cluster.name <- FindClustersArgs$cluster.name %||% ident %||% "
 log <- get_logger()
 
 # options(str = strOptions(vec.len = 5, digits.d = 5))
-options(future.globals.maxSize = 80000 * 1024^2)
+options(future.globals.maxSize = Inf)
 plan(strategy = "multicore", workers = ncores)
 
 log$info("Reading Seurat object ...")
