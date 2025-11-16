@@ -1163,10 +1163,10 @@ class Attach2Seurat(Proc):
     script = "file://../scripts/tcr/Attach2Seurat.R"
 
 
-class TCRClustering(Proc):
-    """Cluster the TCR clones by their CDR3 sequences
+class CDR3Clustering(Proc):
+    """Cluster the TCR/BCR clones by their CDR3 sequences
 
-    This process is used to cluster TCR clones based on their CDR3 sequences.
+    This process is used to cluster TCR/BCR clones based on their CDR3 sequences.
 
     It uses either
 
@@ -1190,7 +1190,7 @@ class TCRClustering(Proc):
     yield similar results.
 
     A text file will be generated with the cluster assignments for each cell, together
-    with the `immunarch` object (in `R`) with the cluster assignments at `TCR_Clsuter`
+    with the `immunarch` object (in `R`) with the cluster assignments at `CDR3_Clsuter`
     column. This information will then be merged to a `Seurat` object for further
     downstream analysis.
 
@@ -1200,14 +1200,20 @@ class TCRClustering(Proc):
     CDR3 sequence may be shared by multiple cells.
 
     Input:
-        screpfile: The TCR data object loaded by `scRepertoire::CombineTCR()` or
-            `scRepertoire::CombineExpression()`
+        screpfile: The TCR/BCR data object loaded by `scRepertoire::CombineTCR()`,
+            `scRepertoire::CombineBCR()` or `scRepertoire::CombineExpression()`
 
     Output:
-        outfile: The `scRepertoire` object in qs with TCR cluster information.
-            Column `TCR_Cluster` will be added to the metadata.
+        outfile: The `scRepertoire` object in qs with TCR/BCR cluster information.
+            Column `CDR3_Cluster` will be added to the metadata.
 
     Envs:
+        type (choice): The type of the data.
+            - TCR: T cell receptor data
+            - BCR: B cell receptor data
+            - auto: Automatically detect the type from the data.
+                Try to find TRB or IGH genes in the CTgene column to determine
+                whether it is TCR or BCR data.
         tool (choice): The tool used to do the clustering, either
             [GIANA](https://github.com/s175573/GIANA) or
             [ClusTCR](https://github.com/svalkiers/clusTCR).
@@ -1216,7 +1222,7 @@ class TCRClustering(Proc):
             - ClusTCR: by Sebastiaan Valkiers, etc
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
-        within_sample (flag): Whether to cluster the TCR clones within each sample.
+        within_sample (flag): Whether to cluster the TCR/BCR clones within each sample.
             When `in.screpfile` is a `Seurat` object, the samples are marked by
             the `Sample` column in the metadata.
         args (type=json): The arguments for the clustering tool
@@ -1224,10 +1230,22 @@ class TCRClustering(Proc):
             See <https://github.com/s175573/GIANA#usage>.
             For ClusTCR, they will be passed to `clustcr.Clustering(...)`
             See <https://svalkiers.github.io/clusTCR/docs/clustering/how-to-use.html#clustering>.
-        chain (choice): The TCR chain to use for clustering.
-            - alpha: TCR alpha chain (the first sequence in CTaa, separated by `_`)
-            - beta: TCR beta chain (the second sequence in CTaa, separated by `_`)
-            - both: Both TCR alpha and beta chains
+        chain (choice): The TCR/BCR chain to use for clustering.
+            - heavy: The heavy chain, TRB for TCR, IGH for BCR.
+                For TCR, TRB is the second sequence in `CTaa`, separated by `_` if
+                input is a Seurat object; otherwise, it is extracted from the `cdr3_aa2` column.
+                For BCR, IGH is the first sequence in `CTaa`, separated by `_` if
+                input is a Seurat object; otherwise, it is extracted from the `cdr3_aa1` column.
+            - light: The light chain, TRA for TCR, IGL/IGK for BCR.
+                For TCR, TRA is the first sequence in `CTaa`, separated by `_` if
+                input is a Seurat object; otherwise, it is extracted from the `cdr3_aa1` column.
+                For BCR, IGL/IGK is the second sequence in `CTaa`, separated by `_` if
+                input is a Seurat object; otherwise, it is extracted from the `cdr3_aa2` column.
+            - TRA: Only the TRA chain for TCR (light chain).
+            - TRB: Only the TRB chain for TCR (heavy chain).
+            - IGH: Only the IGH chain for BCR (heavy chain).
+            - IGLK: Only the IGL/IGK chain for BCR (light chain).
+            - both: Both sequences from the heavy and light chains (CTaa column).
 
     Requires:
         clusTCR:
@@ -1238,13 +1256,14 @@ class TCRClustering(Proc):
     output = "outfile:file:{{in.screpfile | stem}}.tcr_clustered.qs"
     lang = config.lang.rscript
     envs = {
+        "type": "auto",  # or TCR, BCR
         "tool": "GIANA",  # or ClusTCR
         "python": config.lang.python,
         "within_sample": True,  # whether to cluster the TCR clones within each sample
         "args": {},
-        "chain": "both",  # alpha, beta, both
+        "chain": "both",
     }
-    script = "file://../scripts/tcr/TCRClustering.R"
+    script = "file://../scripts/tcr/CDR3Clustering.R"
 
 
 @mark(deprecated="{proc.name} is deprecated, use ClonalStats instead.")
