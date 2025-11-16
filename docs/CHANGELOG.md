@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.22
+
+- chore(scrna): update future.globals.maxSize to Inf for improved memory handling
+- feat(tcr.CDR3Clustering): rename TCRClustering to CDR3Clustering and adopt BCR data
+- ci(docker): add cache deletion step to save space in Docker workflows
+
 ## 0.34.21
 
 - fix(cellranger.CellRangerCount): ensure reference path exists before processing
