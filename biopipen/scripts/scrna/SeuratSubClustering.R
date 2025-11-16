@@ -17,7 +17,7 @@ FindNeighborsArgs <- {{envs.FindNeighbors | r: todot = "-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot = "-"}}
 cases <- {{envs.cases | r}}
 
-options(future.globals.maxSize = 80000 * 1024^2)
+options(future.globals.maxSize = Inf)
 plan(strategy = "multicore", workers = ncores)
 
 log <- get_logger()

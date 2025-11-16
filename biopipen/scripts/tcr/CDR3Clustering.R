@@ -13,6 +13,7 @@ python <- {{envs.python | r}}
 within_sample <- {{envs.within_sample | r}}
 args <- {{envs.args | r}}
 chain <- {{envs.chain | r}}
+type <- {{envs.type | r}}
 
 setwd(outdir)
 
@@ -22,7 +23,36 @@ log$info("Reading input file ...")
 obj <- read_obj(screpfile)
 is_seurat <- inherits(obj, "Seurat")
 
-get_cdr3aa_df = function() {
+
+get_type <- function() {
+    if (!is_seurat) {
+        for (sample in names(obj)) {
+            for (gene in obj[[sample]]$CTgene) {
+                if (grepl("^TRB", gene) || grepl("^TRG", gene) || grepl("^TRA", gene) || grepl("^TRD", gene)) {
+                    return("TCR")
+                } else if (grepl("^IGH", gene) || grepl("^IGK", gene) || grepl("^IGL", gene)) {
+                    return("BCR")
+                }
+            }
+        }
+    } else {
+        for (gene in obj@meta.data$CTgene) {
+            if (grepl("^TRB", gene) || grepl("^TRG", gene) || grepl("^TRA", gene) || grepl("^TRD", gene)) {
+                return("TCR")
+            } else if (grepl("^IGH", gene) || grepl("^IGK", gene) || grepl("^IGL", gene)) {
+                return("BCR")
+            }
+        }
+    }
+    stop("Cannot determine the type of the data (TCR or BCR). Please set envs.type to 'TCR' or 'BCR'.")
+}
+
+if (type == "auto") {
+    type <- get_type()
+    log$info("Auto-detected data type: {type}")
+}
+
+get_cdr3aa_df <- function() {
     if (!is_seurat) {
         out <- NULL
         for (sample in names(obj)) {
@@ -32,10 +62,12 @@ get_cdr3aa_df = function() {
             )
             if (chain == "both") {
                 df$CDR3.aa <- obj[[sample]]$CTaa
-            } else if (chain == "alpha") {
+            } else if ((type == "BCR" && chain == "heavy") || (type == "TCR" && chain == "light")) {
                 df$CDR3.aa <- obj[[sample]]$cdr3_aa1
-            } else if (chain == "beta") {
+            } else if ((type == "BCR" && chain == "light") || (type == "TCR" && chain == "heavy")) {
                 df$CDR3.aa <- obj[[sample]]$cdr3_aa2
+            } else {
+                stop(paste("Unknown chain:", chain, "for", type))
             }
             out <- rbind(out, df)
         }
@@ -47,11 +79,13 @@ get_cdr3aa_df = function() {
             if (chain == "both") {
                 out$CDR3.aa <- out$CTaa
             } else {
-                out <- separate(out, CTaa, into = c("alpha.aa", "beta.aa"), sep = "_")
-                if (chain == "alpha") {
-                    out$CDR3.aa <- out$alpha.aa
-                } else if (chain == "beta") {
-                    out$CDR3.aa <- out$beta.aa
+                out <- separate(out, CTaa, into = c("first", "second"), sep = "_")
+                if ((type == "BCR" && chain == "heavy") || (type == "TCR" && chain == "light")) {
+                    out$CDR3.aa <- out$first
+                } else if ((type == "BCR" && chain == "light") || (type == "TCR" && chain == "heavy")) {
+                    out$CDR3.aa <- out$second
+                } else {
+                    stop(paste("Unknown chain:", chain, "for", type))
                 }
             }
         } else {
@@ -132,21 +166,24 @@ output.clusters_df.to_csv(clustcr_dir + "/clusters.txt", sep="\t", index=False)
 
 clean_clustcr_output = function(clustcr_outfile) {
     clustcr_out = read.delim2(clustcr_outfile, header=TRUE, row.names = NULL)
-    colnames(clustcr_out) = c("CDR3.aa", "TCR_Cluster")
+    colnames(clustcr_out) = c("CDR3.aa", "CDR3_Cluster")
     out = left_join(cdr3aa_df, distinct(clustcr_out), by=c(cdr3seq4clustering = "CDR3.aa")) %>%
         mutate(
-            TCR_Cluster = if_else(
-                is.na(TCR_Cluster),
+            CDR3_Cluster = if_else(
+                is.na(CDR3_Cluster),
                 paste0("S_", row_number()),
-                paste0("M_", as.character(TCR_Cluster))
+                paste0("M_", as.character(CDR3_Cluster))
             )
         )
 
     if (within_sample) {
-        out <- mutate(out, TCR_Cluster = paste0(Sample, ".", TCR_Cluster))
+        out <- mutate(out, CDR3_Cluster = paste0(Sample, ".", CDR3_Cluster))
     }
 
-    left_join(cdr3aa_df, out, by = "CDR3.aa")
+    # This join would result in more rows than dplyr can handle
+    # left_join(cdr3aa_df, out, by = "CDR3.aa")
+    out <- out[match(cdr3aa_df$CDR3.aa, out$CDR3.aa), , drop=FALSE]
+    cbind(cdr3aa_df, out[, setdiff(colnames(out), "CDR3.aa"), drop=FALSE])
 }
 
 run_clustcr = function() {
@@ -208,25 +245,28 @@ prepare_input = function() {
 
 clean_giana_output = function(giana_outfile) {
     # generate an output file with columns:
-    # CDR3.aa, TCR_Cluster, V.name, Sample
+    # CDR3.aa, CDR3_Cluster, V.name, Sample
     # If sequence doesn't exist in the input file,
     # Then a unique cluster id is assigned to it.
     giana_out = read.delim2(giana_outfile, header=FALSE, comment.char = "#", row.names = NULL)[, 1:2, drop=FALSE]
-    colnames(giana_out) = c("CDR3.aa", "TCR_Cluster")
+    colnames(giana_out) = c("CDR3.aa", "CDR3_Cluster")
     out = left_join(cdr3aa_df, distinct(giana_out), by=c(cdr3seq4clustering = "CDR3.aa")) %>%
         mutate(
-            TCR_Cluster = if_else(
-                is.na(TCR_Cluster),
+            CDR3_Cluster = if_else(
+                is.na(CDR3_Cluster),
                 paste0("S_", row_number()),
-                paste0("M_", as.character(TCR_Cluster))
+                paste0("M_", as.character(CDR3_Cluster))
             )
         )
 
     if (within_sample) {
-        out <- mutate(out, TCR_Cluster = paste0(Sample, ".", TCR_Cluster))
+        out <- mutate(out, CDR3_Cluster = paste0(Sample, ".", CDR3_Cluster))
     }
 
-    left_join(cdr3aa_df, out, by = "CDR3.aa")
+    # This join would result in more rows than dplyr can handle
+    # left_join(cdr3aa_df, out, by = "CDR3.aa")
+    out <- out[match(cdr3aa_df$CDR3.aa, out$CDR3.aa), , drop=FALSE]
+    cbind(cdr3aa_df, out[, setdiff(colnames(out), "CDR3.aa"), drop=FALSE])
 }
 
 run_giana = function() {
@@ -276,12 +316,12 @@ attach_to_obj = function(obj, out) {
     rownames(out) <- out$Barcode
     if (is_seurat) {
         # Attach results to Seurat object
-        obj@meta.data$TCR_Cluster <- out[rownames(obj@meta.data), "TCR_Cluster"]
+        obj@meta.data$CDR3_Cluster <- out[rownames(obj@meta.data), "CDR3_Cluster"]
     } else {
         # Attach results to the list of data frames
         for (sample in names(obj)) {
             sout <- filter(out, Sample == sample)
-            obj[[sample]]$TCR_Cluster <- sout[obj[[sample]]$barcode, "TCR_Cluster"]
+            obj[[sample]]$CDR3_Cluster <- sout[obj[[sample]]$barcode, "CDR3_Cluster"]
         }
     }
     obj

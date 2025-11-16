@@ -25,7 +25,7 @@ plots = {{envs.plots | r}}
 log <- get_logger()
 reporter <- get_reporter()
 
-options(future.globals.maxSize = 8 * 1024 ^ 4)
+options(future.globals.maxSize = Inf)
 options(future.rng.onMisuse="ignore")
 options(Seurat.object.assay.version = "v5")
 
@@ -43,7 +43,6 @@ if (isTRUE(cache)) {
     cache = joboutdir
 }
 if (is.null(split_by)) {
-    options(future.globals.maxSize = 8 * 1024 ^ 4)
     future::plan(strategy = "multicore", workers = ncores)
 }
 
