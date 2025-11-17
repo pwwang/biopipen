@@ -2080,6 +2080,7 @@ class ClonalStats(Proc):
         save_code (flag): Whether to save the code used to generate the plots
             Note that the data directly used to generate the plots will also be saved in an `rda` file.
             Be careful if the data is large as it may take a lot of disk space.
+        save_data (flag): Whether to save the data used to generate the plot.
         descr: The description of the plot, used to show in the report.
         <more>: The arguments for the plot function
             See the documentation of the corresponding plot function for the details
@@ -2103,6 +2104,7 @@ class ClonalStats(Proc):
         "devpars": {"width": None, "height": None, "res": 100},
         "more_formats": [],
         "save_code": False,
+        "save_data": False,
         "descr": None,
         "cases": {
             "Clonal Volume": {"viz_type": "volume"},

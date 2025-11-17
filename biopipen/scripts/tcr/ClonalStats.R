@@ -432,7 +432,7 @@ do_case <- function(name, case) {
     log$info("- Case: {name}")
     info <- case_info(name, outdir, is_dir = FALSE, create = TRUE)
 
-    case <- extract_vars(case, "viz_type", "descr", "devpars", "more_formats", "save_code", subset_ = "subset")
+    case <- extract_vars(case, "viz_type", "descr", "devpars", "more_formats", "save_code", "save_data", subset_ = "subset")
 
     if (!is.null(subset_)) {
         case$data <- ScRepSubset(screp, subset_)
@@ -452,35 +452,73 @@ do_case <- function(name, case) {
     p <- do_call(plot_fn, case)
     save_plot(p, info$prefix, devpars, formats = unique(c("png", more_formats)))
 
-    report <- list(
-        kind = "table_image",
-        src = paste0(info$prefix, ".png"),
-        download = list(),
-        descr = html_escape(descr %||% get_plot_descr(viz_type, case)),
-        name = html_escape(info$name)
-    )
-    exformats <- setdiff(more_formats, "png")
-    if (length(exformats) > 0) {
-        report$download <- lapply(exformats, function(fmt) {
-            paste0(info$prefix, ".", fmt)
-        })
-    }
-
-    if (isTRUE(save_code)) {
-        save_plotcode(
-            p,
-            setup = c('library(scplotter)', '', 'load("data.RData")'),
-            prefix = info$prefix,
-            "case"
+    if (save_data) {
+        pdata <- attr(p, "data") %||% p$data
+        if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
+            stop("'save_data = TRUE' is not supported for viz_type: ", viz_type, " and plot_type: ", case$plot_type)
+        }
+        write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+        reporter$add2(
+            list(
+                name = "Plot",
+                contents = list(
+                    list(
+                        kind = "descr",
+                        content = html_escape(descr %||% get_plot_descr(viz_type, case))
+                    ),
+                    reporter$image(
+                        info$prefix, more_formats, save_code, kind = "image"
+                    )
+                )
+            ),
+            list(
+                name = "Data",
+                contents = list(
+                    list(
+                        kind = "descr",
+                        content = "The data used to generate the plot."
+                    ),
+                    list(
+                        kind = "table",
+                        src = paste0(info$prefix, ".data.txt"),
+                        data = list(nrows = 100)
+                    )
+                )
+            ),
+            hs = c(info$section, info$name),
+            ui = "tabs"
         )
-        report$download <- c(report$download, list(list(
-            src = paste0(info$prefix, ".code.zip"),
-            tip = "Download the code to reproduce the plot",
-            icon = "Code"
-        )))
-    }
+    } else {
+        report <- list(
+            kind = "table_image",
+            src = paste0(info$prefix, ".png"),
+            download = list(),
+            descr = html_escape(descr %||% get_plot_descr(viz_type, case)),
+            name = html_escape(info$name)
+        )
+        exformats <- setdiff(more_formats, "png")
+        if (length(exformats) > 0) {
+            report$download <- lapply(exformats, function(fmt) {
+                paste0(info$prefix, ".", fmt)
+            })
+        }
 
-    reporter$add2(report, hs = c(info$section, info$name), ui = "table_of_images:2")
+        if (isTRUE(save_code)) {
+            save_plotcode(
+                p,
+                setup = c('library(scplotter)', '', 'load("data.RData")'),
+                prefix = info$prefix,
+                "case"
+            )
+            report$download <- c(report$download, list(list(
+                src = paste0(info$prefix, ".code.zip"),
+                tip = "Download the code to reproduce the plot",
+                icon = "Code"
+            )))
+        }
+
+        reporter$add2(report, hs = c(info$section, info$name), ui = "table_of_images:2")
+    }
 }
 
 lapply(names(cases), function(name) do_case(name, cases[[name]]))
