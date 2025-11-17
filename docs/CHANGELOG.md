@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.23
+
+- docs(scrna.CellTypeAnnotation): clarify renaming of original identity column during cell type annotation
+- chore: bump up denpendencies in poetry.lock
+
 ## 0.34.22
 
 - chore(scrna): update future.globals.maxSize to Inf for improved memory handling

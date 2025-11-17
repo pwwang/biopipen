@@ -1963,7 +1963,12 @@ class CellTypeAnnotation(Proc):
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
 
-    The original identity column will be renamed to `seurat_clusters_id` if no `envs.newcol` is specified.
+    /// Note
+
+    When cell types are annotated, the original identity column (e.g. `seurat_clusters`) will be renamed
+    to `envs.backup_col` (e.g. `seurat_clusters_id`), and the new identity column will be added.
+
+    ///
 
     If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
     the original identity to the new cell types will be generated and saved to
