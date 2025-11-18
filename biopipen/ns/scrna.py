@@ -3208,7 +3208,7 @@ class PseudoBulkDEG(Proc):
         "subset": None,
         "aggregate_by": None,
         "layer": "counts",
-        "assay": "RNA",
+        "assay": None,
         "error": False,
         "group_by": None,
         "ident_1": None,
