@@ -30,7 +30,7 @@ rename_idents <- function(sobj, ident_col, mapping) {
         mapping$object <- sobj
         sobj <- do_call(RenameIdents, mapping)
     }
-    Idents(sobj) <- ident_col
+    sobj@meta.data[[ident_col]] <- Idents(sobj)
     sobj
 }
 

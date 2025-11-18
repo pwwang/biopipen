@@ -115,13 +115,33 @@ class CellTypeAnnotation(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationDirect(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "direct",
+        "cell_types": [
+            "Naive CD4+ T",
+            "B",
+            "Memory CD4+",
+            "Naive CD4+ T",
+            "DC",
+            "DC",
+            "CD8+ T",
+            "NK",
+            "FCFR3A+ Mono",
+            "CD8+ T",
+        ],
+        "merge": True,
+    }
+
+
 class TopExpressingGenes(TopExpressingGenes_):
     requires = CellTypeAnnotation
     envs = {"cases": {"Cluster": {}}}
 
 
 class SeuratSubClustering(SeuratSubClustering_):
-    requires = CellTypeAnnotation
+    requires = SeuratClustering
     envs = {
         "cache": False,
         "cases": {
@@ -245,7 +265,7 @@ class SeuratClusterStats(SeuratClusterStats_):
             },
             "Number of cells in each old cluster": {
                 "plot_type": "pie",
-                "ident": "seurat_clusters_id",
+                "ident": "seurat_clusters.0.2",
             },
         },
         "features": {

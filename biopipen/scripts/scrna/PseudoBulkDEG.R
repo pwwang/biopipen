@@ -1,6 +1,7 @@
 library(rlang)
 library(dplyr)
 library(plotthis)
+library(Seurat)
 library(biopipen.utils)
 
 sobjfile <- {{in.sobjfile | r}}

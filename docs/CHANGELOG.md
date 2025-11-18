@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.25
+
+- fix(scrna.PseudoBulkDEG): change default assay from "RNA" to None so that default assay can be used by default
+- feat(scrna.ScFGSEA): add assay parameter to allow specification of assay in analysis
+- fix(scrna.CellTypeAnnotation): correct assignment of identities in rename_idents function
+
 ## 0.34.24
 
 - feat(tcr.ClonalStats): add save_data parameter to ClonalStats for saving plot data
