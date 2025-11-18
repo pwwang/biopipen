@@ -1266,6 +1266,7 @@ class MarkersFinder(Proc):
             * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
             * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
             * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
+            You can also fetch more dbs from <https://maayanlab.cloud/Enrichr/#libraries>.
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
             Available variables are `p_val`, `avg_log2FC`, `pct.1`, `pct.2` and
@@ -1471,6 +1472,7 @@ class TopExpressingGenes(Proc):
             * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
             * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
             * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
+            You can also fetch more dbs from <https://maayanlab.cloud/Enrichr/#libraries>.
         n (type=int): The number of top expressing genes to find.
         enrich_style (choice): The style of the enrichment analysis.
             The enrichment analysis will be done by `EnrichIt()` from [`enrichit`](https://pwwang.github.io/enrichit/).
@@ -1874,6 +1876,7 @@ class ScFGSEA(Proc):
             * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
             * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
             * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
+            You can also fetch more dbs from <https://maayanlab.cloud/Enrichr/#libraries>.
         method (choice): The method to do the preranking.
             - signal_to_noise: Signal to noise.
                 The larger the differences of the means (scaled by the standard deviations);
@@ -2500,6 +2503,7 @@ class MetaMarkers(Proc):
             * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
             * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
             * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
+            You can also fetch more dbs from <https://maayanlab.cloud/Enrichr/#libraries>.
         subset: The subset of the cells to do the analysis.
             An expression passed to `dplyr::filter()`.
         p_adjust (choice): The method to adjust the p values, which can be used to filter the significant markers.
@@ -3085,6 +3089,7 @@ class PseudoBulkDEG(Proc):
             * "Hallmark", "MSigDB_Hallmark", or "MSigDB_Hallmark_2020"
             * "Reactome", "Reactome_Pathways", or "Reactome_Pathways_2024"
             * "WikiPathways", "WikiPathways_2024", "WikiPathways_Human", or "WikiPathways_2024_Human"
+            You can also fetch more dbs from <https://maayanlab.cloud/Enrichr/#libraries>.
         sigmarkers: An expression passed to `dplyr::filter()` to filter the
             significant markers for enrichment analysis.
             The default is `p_val_adj < 0.05`.
