@@ -1862,6 +1862,7 @@ class ScFGSEA(Proc):
         group_by: The column name in metadata to group the cells.
         ident_1: The first group of cells to compare
         ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident_2`.
+        assay: The assay to use. If not provided, the default assay will be used.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
@@ -1929,6 +1930,7 @@ class ScFGSEA(Proc):
     envs = {
         "mutaters": {},
         "ncores": config.misc.ncores,
+        "assay": None,
         "group_by": None,
         "ident_1": None,
         "ident_2": None,

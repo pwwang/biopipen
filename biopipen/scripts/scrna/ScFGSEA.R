@@ -10,6 +10,7 @@ mutaters <- {{envs.mutaters | r}}  # nolint
 group_by <- {{envs.group_by | default: envs["group-by"] | default: None | r}}  # nolint
 ident_1 <- {{envs.ident_1 | default: envs["ident-1"] | default: None | r}}  # nolint
 ident_2 <- {{envs.ident_2 | default: envs["ident-2"] | default: None | r}}  # nolint
+assay <- {{envs.assay | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
@@ -43,6 +44,7 @@ defaults <- list(
     group_by = group_by,
     ident_1 = ident_1,
     ident_2 = ident_2,
+    assay = assay,
     each = each,
     subset = subset,
     gmtfile = gmtfile,
@@ -230,7 +232,7 @@ do_case <- function(name) {
         case$ident_2 <- "Other"
         allclasses[allclasses != case$ident_1] <- "Other"
     }
-    exprs <- GetAssayData(sobj, layer = "data")
+    exprs <- GetAssayData(sobj, layer = "data", assay = case$assay)
 
     # get preranks
     log$info("  Getting preranks...")
