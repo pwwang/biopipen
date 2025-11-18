@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.24
+
+- feat(tcr.ClonalStats): add save_data parameter to ClonalStats for saving plot data
+- docs(scrna): add link to additional databases in multiple classes for enrichment analysis
+
 ## 0.34.23
 
 - docs(scrna.CellTypeAnnotation): clarify renaming of original identity column during cell type annotation
