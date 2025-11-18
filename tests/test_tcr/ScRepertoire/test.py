@@ -52,13 +52,18 @@ class ClonalStats(ClonalStats_):
                 "viz_type": "length",
                 "group_by": "Type",
                 "plot_type": "box",
-            }
+            },
+            "Clonal Volume": {
+                "viz_type": "volume",
+                "save_data": True,
+            },
+            "Clonal Abundance": {"viz_type": "abundance"},
         }
     }
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(ContigPreparation)
+    return get_pipeline(__file__, enable_report=False).set_starts(ContigPreparation)
 
 
 def testing(pipen):
