@@ -5,7 +5,8 @@ COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
 
 # Install dependencies
 RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
-    micromamba clean --all --yes
+    micromamba clean --all --yes && \
+    rm -rf /opt/conda/pkgs/*
 
 FROM biopipen/base:latest
 
