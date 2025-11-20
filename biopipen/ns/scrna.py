@@ -3288,13 +3288,6 @@ class CellSNPLite(Proc):
         bamfile: The input BAM file for single-cell RNA-seq data.
         barcodefile: The cell barcode file corresponding to the BAM file.
             Each line contains one barcode.
-        sampleid: The sample id for the BAM file.
-            If not given, will infer from the directory name of the BAM file, supposing
-            that the BAM file is in the output directory of CellRanger, typically
-            `X/outs/possorted_genome_bam.bam`, where `X` is the sample id.
-            If failed to infer, will use `Sample_<hash>` as the sample id, where
-            the hash is computed from the BAM file path.
-            `barcodefile` and `sampleid` should not be given together.
 
     Output:
         outdir: The output directory for cellsnp-lite results.
