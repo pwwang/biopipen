@@ -1,4 +1,4 @@
-FROM biopipen/cellranger:9.0.1 AS cellranger
+FROM biopipen/cellranger:10.0.0 AS cellranger
 FROM biopipen/base:latest
 
 COPY --from=cellranger /cellranger /cellranger
