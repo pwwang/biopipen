@@ -54,6 +54,7 @@ dependencies:
   - bioconda::plink2
   - bioconda::samtools
   - bioconda::bedtools
+  - bioconda::cellsnp-lite
   - bioconda::r-presto
   - bioconda::r-scimpute
   - bioconda::r-loomr
@@ -110,4 +111,5 @@ dependencies:
     - celltypist
     - mygene
     - liana
+    - mquad
     - cyvcf2==0.31.1  # works with numpy v2+

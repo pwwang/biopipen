@@ -3267,3 +3267,90 @@ class PseudoBulkDEG(Proc):
         "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
+
+
+class CellSNPLite(Proc):
+    """Genotyping bi-allelic SNPs on single cells using cellsnp-lite.
+
+    The output from cellsnp-lite can be directly used for downstream analysis such as -
+
+    * Donor deconvolution in multiplexed single-cell RNA-seq data (e.g., with vireo).
+    * Allele-specific CNV analysis in single-cell or spatial transcriptomics data (e.g., with Numbat, XClone, or CalicoST).
+    * Clonal substructure discovery using single cell mitochondrial variants (e.g., with MQuad).
+
+    Here we only support model `1a`/`2a` in cellsnp-lite, which is designed for a single bam file as input.
+    For model `1b`/`2b`, which is designed for multiple bam files as input (e.g., one per cell), you can still
+    run with this process, but only one bam file is allowed.
+
+    See <https://github.com/single-cell-genetics/cellsnp-lite> for more details about cellsnp-lite.
+
+    Input:
+        bamfile: The input BAM file for single-cell RNA-seq data.
+        barcodefile: The cell barcode file corresponding to the BAM file.
+            Each line contains one barcode.
+        sampleid: The sample id for the BAM file.
+            If not given, will infer from the directory name of the BAM file, supposing
+            that the BAM file is in the output directory of CellRanger, typically
+            `X/outs/possorted_genome_bam.bam`, where `X` is the sample id.
+            If failed to infer, will use `Sample_<hash>` as the sample id, where
+            the hash is computed from the BAM file path.
+            `barcodefile` and `sampleid` should not be given together.
+
+    Output:
+        outdir: The output directory for cellsnp-lite results.
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+            Will pass to `-p` option in cellsnp-lite.
+        regionsVCF: A vcf file listing all candidate SNPs, for fetch each variants.
+        genotype (flag): Whether to perform genotyping.
+            If `False`, only the allele counts will be computed.
+        gzip (flag): Whether to gzip the output files.
+        <more>: Other arguments passed to cellsnp-lite.
+            See <https://cellsnp-lite.readthedocs.io/en/latest/main/manual.html#full-parameters> for more details.
+    """  # noqa: E501
+
+    input = "bamfile:file, barcodefile:file, sampleid:var"
+    output = "outdir:dir:{{in.sampleid if in.sampleid else stem(in.bamfile)}}.cellsnp"
+    lang = config.lang.python
+    envs = {
+        "cellsnp_lite": config.exe.cellsnp_lite,
+        "ncores": config.misc.ncores,
+        "regionsVCF": None,
+        "genotype": False,
+        "gzip": True,
+    }
+    script = "file://../scripts/scrna/CellSNPLite.py"
+
+
+class MQuad(Proc):
+    """Clonal substructure discovery using single cell mitochondrial variants with MQuad.
+
+    MQuad uses a Mixture Model for Mitochondrial Mutation detection in single-cell omics data.
+
+    MQuad is a tool that detects mitochondrial mutations that are informative for clonal substructure inference. It uses a binomial mixture model to assess the heteroplasmy of mtDNA variants among background noise.
+
+    Input:
+        cellsnpout: The output directory from `CellSNPLite` process, which should contain
+            AD and DP sparse matrices (.mtx) or the vcf file.
+
+    Output:
+        outdir: The output directory for MQuad results.
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+            It will be passed to `--nproc` option in MQuad.
+        seed (type=int): The seed for the random number generator.
+            It will be passed to `--randSeed` option in MQuad.
+        <more>: Other arguments passed to MQuad.
+            See <https://github.com/single-cell-genetics/MQuad/blob/main/mquad/mquad_CLI.py> for more details.
+    """  # noqa: E501
+    input = "cellsnpout:dir"
+    output = "outdir:dir:{{in.cellsnpout | stem}}.mquad"
+    lang = config.lang.python
+    envs = {
+        "mquad": config.exe.mquad,
+        "ncores": config.misc.ncores,
+        "seed": 8525,
+    }
+    script = "file://../scripts/scrna/MQuad.py"
