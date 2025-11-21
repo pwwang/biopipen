@@ -3285,9 +3285,10 @@ class CellSNPLite(Proc):
     See <https://github.com/single-cell-genetics/cellsnp-lite> for more details about cellsnp-lite.
 
     Input:
-        bamfile: The input BAM file for single-cell RNA-seq data.
-        barcodefile: The cell barcode file corresponding to the BAM file.
-            Each line contains one barcode.
+        crdir: The cellranger output directory or the directory containing
+            the bam file and barcode file.
+            It should contain the `outs/possorted_genome_bam.bam` file and
+            the `outs/filtered_feature_bc_matrix/barcodes.tsv.gz` file.
 
     Output:
         outdir: The output directory for cellsnp-lite results.
@@ -3303,8 +3304,16 @@ class CellSNPLite(Proc):
             See <https://cellsnp-lite.readthedocs.io/en/latest/main/manual.html#full-parameters> for more details.
     """  # noqa: E501
 
-    input = "bamfile:file, barcodefile:file, sampleid:var"
-    output = "outdir:dir:{{in.sampleid if in.sampleid else stem(in.bamfile)}}.cellsnp"
+    input = "crdir:dir"
+    output = """
+        outdir:dir:
+        {%- if basename(in.crdir) == 'outs' -%}
+            {{in.crdir | dirname | basename}}
+        {%- else -%}
+            {{in.crdir | basename}}
+        {%- endif -%}
+        .cellsnp
+    """  # noqa: E501
     lang = config.lang.python
     envs = {
         "cellsnp_lite": config.exe.cellsnp_lite,
