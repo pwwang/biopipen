@@ -189,7 +189,15 @@ def run_command(
     if "env" in kwargs:
         kwargs["env"] = {**os.environ, **kwargs["env"]}
 
+    # Enable line buffering for stdout/stderr when redirecting to files or pipes
+    if "bufsize" not in kwargs:
+        kwargs["bufsize"] = 1  # Line buffering
+        if "universal_newlines" not in kwargs:
+            # Required for line buffering in text mode
+            kwargs["universal_newlines"] = True
+
     try:
+
         p = Popen(cmd, **kwargs)
     except Exception as e:
         raise RuntimeError(
