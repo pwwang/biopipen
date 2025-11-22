@@ -1,7 +1,7 @@
 name: biopipen
 dependencies:
   - conda-forge::python=3.10
-  - conda-forge::nodejs=20  # for pipen-report
+  - conda-forge::nodejs=22  # for pipen-report
   - conda-forge::curl
   - conda-forge::openssl
   - conda-forge::aria2
