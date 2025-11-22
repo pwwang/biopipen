@@ -79,6 +79,7 @@ dependencies:
   - bioconda::bioconductor-ccplotr
   - bioconda::maxit
   - bioconda::truvari
+  - bioconda::mquad
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
   # - pwwang::r-gglogger
@@ -111,5 +112,4 @@ dependencies:
     - celltypist
     - mygene
     - liana
-    - mquad
     - cyvcf2==0.31.1  # works with numpy v2+
