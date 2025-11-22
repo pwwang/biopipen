@@ -3,6 +3,8 @@ FROM mambaorg/micromamba:2.3.0
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
+
+WORKDIR /biopipen
 # Install dependencies
 RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
     micromamba clean --all --yes && \
