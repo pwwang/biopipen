@@ -13,7 +13,8 @@ RUN micromamba install -y -n base python=3.10 nodejs=22 git poetry procps-ng && 
     poetry config virtualenvs.create false && \
     poetry install -v --all-extras && \
     pipen report update && \
-    rm -rf /opt/conda/pkgs/*
+    rm -rf /opt/conda/pkgs/* && \
+    rm -rf /home/$MAMBA_USER/.cache/*
 
 FROM mambaorg/micromamba:2.3.0
 
