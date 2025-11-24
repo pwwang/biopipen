@@ -22,4 +22,4 @@ envs["randSeed"] = seed
 envs["nproc"] = ncores
 
 cmd = [mquad, *dict_to_cli_args(envs, sep="=")]
-run_command(cmd, fg=True)
+run_command(cmd, fg=True, bufsize=1)

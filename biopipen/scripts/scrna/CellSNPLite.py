@@ -27,4 +27,4 @@ envs["barcodeFile"] = barcodefile
 envs["outDir"] = outdir
 
 cmd = [cellsnp_lite, *dict_to_cli_args(envs)]
-run_command(cmd, fg=True)
+run_command(cmd, fg=True, bufsize=1)
