@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.34.26
+
+- chore(docker): clean up conda package cache after installations
+- chore(docker): update CellRanger base image to version 10.0.0
+- feat(scrna): add CellSNPLite and MQuad processes for single-cell SNP analysis
+- docs(cellranger_pipeline): update documentation for CellRanger pipeline to reflect new version
+- ci: add step to delete cache for space optimization
+- chore(deps): comment out r-immunarch dependency in environment file
+- enh(misc): enable line buffering for stdout/stderr when redirecting to files or pipes
+- chore(deps): add pipen-log2file as an optional dependency
+
 ## 0.34.25
 
 - fix(scrna.PseudoBulkDEG): change default assay from "RNA" to None so that default assay can be used by default

@@ -1,4 +1,4 @@
-FROM biopipen/cellranger:9.0.1 AS cellranger
+FROM biopipen/cellranger:10.0.0 AS cellranger
 FROM biopipen/base:latest
 
 COPY --from=cellranger /cellranger /cellranger
@@ -11,7 +11,8 @@ RUN micromamba env update -n base -f /biopipen/docker/cellranger_pipeline/env.ym
     ln -s /cellranger/cellranger-*/bin/cellranger /opt/conda/bin/cellranger && \
     chmod +x /biopipen/docker/cellranger_pipeline/entry.sh && \
     ln -s /biopipen/docker/cellranger_pipeline/entry.sh /opt/conda/bin/entry.sh && \
-    /opt/conda/bin/cellranger telemetry disable all
+    /opt/conda/bin/cellranger telemetry disable all && \
+    rm -rf /opt/conda/pkgs/*
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 

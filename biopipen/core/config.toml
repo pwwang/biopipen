@@ -10,6 +10,8 @@ bcftools = "bcftools"
 calculate_rmsd = "calculate_rmsd"
 # cellranger
 cellranger = "cellranger"
+# cellsnp-lite
+cellsnp_lite = "cellsnp-lite"
 # Control-FREEC to call cnvs
 freec = "freec"
 # liftover coordinates across genomes
@@ -33,6 +35,8 @@ convert = "convert"
 fimo = "fimo"
 # MAXIT: https://sw-tools.rcsb.org/apps/MAXIT/
 maxit = "maxit"
+# MQuad: https://github.com/single-cell-genetics/MQuad
+mquad = "mquad"
 # wget
 wget = "wget"
 # aria2c

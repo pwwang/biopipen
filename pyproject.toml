@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.34.25"
+version = "0.34.26"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -20,9 +20,11 @@ pipen-deprecated = "^0.0"
 datar = { version = "^0.15.8", extras = ["pandas"] }
 pipen-board = { version = "^0.17", extras = ["report"] }
 pipen-runinfo = { version = "^0.9", optional = true }
+pipen-log2file = { version = "^0.10.2", optional = true }
 
 [tool.poetry.extras]
 runinfo = ["pipen-runinfo"]
+log2file = ["pipen-log2file"]
 
 # [tool.poetry.dev-dependencies]
 

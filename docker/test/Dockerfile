@@ -1,17 +1,18 @@
-FROM biopipen/base:latest AS builder
+FROM mambaorg/micromamba:2.3.0
 
-# in case we have update dependencies
-COPY tests/conda/env_biopipen.yml /biopipen/tests/conda/env_biopipen.yml
-
-# Install dependencies
-RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
-    micromamba clean --all --yes
-
-FROM biopipen/base:latest
-
-COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /opt/conda /opt/conda
+COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
+
+WORKDIR /biopipen
+# Install dependencies
+RUN micromamba env update -n base -f /biopipen/tests/conda/env_biopipen.yml && \
+    micromamba clean --all --yes && \
+    poetry config virtualenvs.create false && \
+    poetry install -v --all-extras && \
+    pipen report update && \
+    rm -rf /opt/conda/pkgs/* && \
+    rm -rf /home/$MAMBA_USER/.cache/*
 
 WORKDIR /workdir
 # Test it by:

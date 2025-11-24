@@ -113,3 +113,5 @@ A sample configuration file is also provided at `/biopipen/docker/cellranger_pip
 
 Note that the docker image was not built with the reference genome. You need to provide the reference genome
 by yourself.
+
+Also note that from biopipen v0.34.26, the docker image has been updated to use CellRanger 10.0.0. If you need to use CellRanger 9.0.1, you can use the previous docker image with the tag `<0.34.26`, e.g., `biopipen/cellranger-pipeline:0.34.20`.

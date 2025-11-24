@@ -177,6 +177,10 @@ def run_command(
     elif kwargs.get("stderr") in ("STDOUT", "stdout"):
         kwargs["stderr"] = STDOUT
 
+    # Enable line buffering for stdout/stderr when redirecting to files or pipes
+    if kwargs.get("bufsize") == 1:
+        kwargs.setdefault("universal_newlines", True)
+
     if fg:
         if kwargs.get("stdout") or kwargs.get("stderr"):
             raise ValueError(
