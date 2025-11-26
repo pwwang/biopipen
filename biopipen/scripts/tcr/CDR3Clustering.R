@@ -295,6 +295,7 @@ run_giana = function() {
     giana_cmd = paste(
         python,
         file.path(giana_srcdir, "GIANA.py"),
+        "-b",  # Verbose output
         "-f", giana_input,
         "-o", giana_outdir,
         "-v", # TRBV mutation not supported
