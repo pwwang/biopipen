@@ -516,7 +516,7 @@ def EncodingCDR3(s, M, n0):
 
 
 def BuildLengthDict(seqs, sIDs, vGene=[], INFO=[]):
-    LLs = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+    LLs = list(range(10, 100))
     LengthD = {}
     SeqD = {}
     VgeneD = {}
