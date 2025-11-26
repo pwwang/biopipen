@@ -2,7 +2,11 @@ import os
 import sys
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
-from biopipen.ns.tcr import CDR3AAPhyschem as CDR3AAPhyschem_, TESSA as TESSA_
+from biopipen.ns.tcr import (
+    CDR3AAPhyschem as CDR3AAPhyschem_,
+    TESSA as TESSA_,
+    CDR3Clustering as CDR3Clustering_,
+)
 from biopipen.core.testing import get_pipeline
 
 conda_exe = os.environ.get("CONDA_EXE", "")
@@ -36,10 +40,21 @@ class DataPreparation(Proc):
 
         # Using combineExpresion()
         scRep_example <- combineExpression(combined, scRep_example)
+        scRep_example$Sample <- scRep_example$orig.ident
 
         # Save the data
         biopipen.utils::save_obj(scRep_example, {{out.datafile | quote}})
     """
+
+
+class CDR3ClusteringClusTCR(CDR3Clustering_):
+    requires = DataPreparation
+    envs = {"tool": "clustcr"}
+
+
+class CDR3ClusteringGIANA(CDR3Clustering_):
+    requires = DataPreparation
+    envs = {"tool": "GIANA"}
 
 
 class CDR3AAPhyschem(CDR3AAPhyschem_):
