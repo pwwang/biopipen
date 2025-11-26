@@ -9,7 +9,7 @@ class TestUtilsMisc(TestCase):
 
     def test_require_package(self):
         # Test with an installed package without version check
-        require_package("math")
+        require_package("pip")
 
         # Test with an installed package with satisfying version
         require_package("pip", ">=0.0.1")
@@ -27,7 +27,7 @@ class TestUtilsMisc(TestCase):
         python_exe = sys.executable
 
         # Test with an installed package without version check
-        require_package("math", python=python_exe)
+        require_package("pip", python=python_exe)
 
         # Test with an installed package with satisfying version
         require_package("pip", version=">=0.0.1", python=python_exe)
@@ -48,7 +48,7 @@ class TestUtilsMisc(TestCase):
         # Test with a non-existent Python interpreter
         with self.assertRaises(ImportError) as cm:
             require_package(
-                "math",
+                "pip",
                 python="/nonexistent/path/to/python"
             )
         self.assertIn("Python interpreter", str(cm.exception))

@@ -39,14 +39,19 @@ def require_package(
         python (str | None): The Python interpreter to use.
     """
     if not python:
-        import importlib
-        from importlib.metadata import version as get_version
+        from importlib.metadata import (
+            version as get_version,
+            distribution,
+            PackageNotFoundError,
+        )
         from packaging.specifiers import SpecifierSet
 
         try:
-            importlib.import_module(package)
-        except ImportError:
-            raise ImportError(f"Package '{package}' is required but not installed.")
+            distribution(package)
+        except PackageNotFoundError:
+            raise PackageNotFoundError(
+                f"Package '{package}' is required but not installed."
+            ) from None
 
         if version:
             installed_version = get_version(package)
@@ -63,7 +68,14 @@ def require_package(
         # Check if package is installed using the specified Python interpreter
         try:
             result = subprocess.run(
-                [python, "-c", f"import {package}"],
+                [
+                    python,
+                    "-c",
+                    (
+                        "from importlib.metadata import distribution; "
+                        f"distribution('{package}')"
+                    ),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=10,
