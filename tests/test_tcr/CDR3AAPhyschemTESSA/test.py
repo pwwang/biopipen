@@ -1,3 +1,8 @@
+"""Test for TCR CDR3AAPhyschem, TESSA, and CDR3Clustering processes.
+
+By default, TESSA and CDR3Clustering are only run if the corresponding
+`--tessa` or `--clustering` flags are provided.
+"""
 import os
 import sys
 from biopipen.core.proc import Proc
@@ -48,17 +53,18 @@ class DataPreparation(Proc):
 
 
 class CDR3ClusteringClusTCR(CDR3Clustering_):
-    requires = DataPreparation
+    if "--clustering" in sys.argv:
+        requires = DataPreparation
     envs = {"tool": "clustcr"}
 
 
 class CDR3ClusteringGIANA(CDR3Clustering_):
-    requires = DataPreparation
+    if "--clustering" in sys.argv:
+        requires = DataPreparation
     envs = {"tool": "GIANA"}
 
 
 class CDR3AAPhyschem(CDR3AAPhyschem_):
-    requires = DataPreparation
     envs = {
         "group": "seurat_clusters",
         "comparison": {
