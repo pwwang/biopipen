@@ -34,8 +34,23 @@ import numpy as np
 import pandas as pd
 import os
 import csv
-from keras.models import load_model
-from keras.models import Model
+
+# Support both Keras v2 and v3
+try:
+    import keras
+    keras_version = keras.__version__
+    print(f"Using Keras version: {keras_version}")
+
+    if keras_version.startswith('3.'):
+        # Keras v3
+        from keras.models import Model
+        from keras.saving import load_model
+    else:
+        # Keras v2
+        from keras.models import load_model, Model
+except ImportError as e:
+    print(f"ERROR: Could not import keras: {e}")
+    sys.exit(1)
 
 # Read data
 args = sys.argv
@@ -141,8 +156,42 @@ with open(aa_dict_dir, "r") as aa:
 TCR_dict = datasetMap(tcr, aa_dict, encode_dim)
 TCR_contigs = np.stack(list(TCR_dict.values()))
 TCR_contigs = TCR_contigs.reshape(-1, encode_dim, 5, 1)
+
 # Model prediction
-TCRencoder = load_model(model_dir)
+print(f"Loading model from {model_dir}...")
+try:
+    # Try loading the model - works for both Keras v2 (.h5) and v3 (.keras)
+    if keras_version.startswith('3.') and model_dir.endswith('.h5'):
+        # For Keras v3 with legacy .h5 files
+        print("Attempting to load legacy .h5 model with Keras v3...")
+        # First, check if a .keras version exists
+        keras_model_path = model_dir.replace('.h5', '.keras')
+        if os.path.exists(keras_model_path):
+            print(f"Found Keras v3 model: {keras_model_path}")
+            TCRencoder = load_model(keras_model_path)
+        else:
+            print("No .keras version found. Attempting legacy load...")
+            try:
+                from keras.src.legacy.saving import legacy_h5_format
+                # Load without compiling to avoid optimizer parameter issues
+                TCRencoder = legacy_h5_format.load_model_from_hdf5(
+                    model_dir,
+                    compile=False
+                )
+            except (ImportError, AttributeError, ValueError):
+                # Fallback to standard load with compile=False
+                TCRencoder = load_model(model_dir, compile=False)
+    else:
+        # Standard loading for Keras v2 or v3 with .keras files
+        TCRencoder = load_model(model_dir)
+
+    print("Model loaded successfully!")
+except Exception as e:
+    print(f"ERROR: Failed to load model: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+
 encoder = Model(TCRencoder.input, TCRencoder.layers[-12].output)
 encoded_mat = encoder.predict(TCR_contigs)
 encoded_mat = pd.DataFrame(encoded_mat, index=tcr["contig_id"])
