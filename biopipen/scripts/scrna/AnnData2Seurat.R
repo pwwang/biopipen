@@ -27,10 +27,14 @@ if (!isFALSE(dotplot_check)) {
     } else if (is.character(dotplot_check)) {
         dotplot_check <- trimws(strsplit(dotplot_check, ",")[[1]])
     }
+    # Error in (function (file = if (onefile) "Rplots.pdf" else "Rplot%03d.pdf",  :
+    #  cannot open file 'Rplots.pdf'
+    pdf(NULL)
     p <- FeatureStatPlot(
         sobj, features = dotplot_check, plot_type = "dot",
         assay = assay
     )
+    dev.off()
     res = 70
     height <- attr(p, "height") * res
     width <- attr(p, "width") * res
