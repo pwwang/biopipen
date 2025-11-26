@@ -20,7 +20,7 @@ outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
 
 over_clustering <- celltypist_args$over_clustering %||% cluster_ident
 
-require_package("celltypist", version = ">=1.7.1", python = celltypist_args$python)
+require_package("celltypist2", version = ">=1.7.1", python = celltypist_args$python)
 
 log <- get_logger()
 
