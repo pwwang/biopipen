@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.34.27
+
+- chore(deps): bump pipen-report to 0.23.15
+- feat(tcr.CDR3Clustering): add verbose output option for GIANA command
+- fix(scrna.AnnData2Seurat): resolve issue with pdf device not opening correctly for dotplot generation
+- fix(scrna.CellTypeAnnotation): update package requirement from celltypist to celltypist2 (a version adopts numpy v2)
+- fix(tcr.GIANA): update length dictionary to allow a wider range of sequence lengths
+- fix(tcr.TESSA): add Keras model migration support for v2 and v3
+- test(tcr.CDR3Clustering): add CDR3Clustering tests for ClusTCR and GIANA tools
+
 ## 0.34.26
 
 - chore(docker): clean up conda package cache after installations
