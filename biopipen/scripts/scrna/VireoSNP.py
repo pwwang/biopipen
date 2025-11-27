@@ -116,7 +116,7 @@ plt.tight_layout()
 plt.savefig(f"{outdir}/model_fitting.png")
 
 # Visualize assignment probability and allele frequency
-raw_col = cm.get_cmap('pink_r', 200)
+raw_col = matplotlib.colormaps.get_cmap('pink_r').resampled(200)
 new_col = np.vstack(
     (raw_col(np.linspace(0, 0.7, 10)), raw_col(np.linspace(0.7, 1, 90)))
 )
@@ -148,7 +148,7 @@ plt.savefig(f"{outdir}/assignment_allele_freq.png")
 
 # Visualize clones
 
-if mtSNP_ids:
+if mtSNP_ids is not None:
     mtSNP_ids = ['mt_variant%d' %x for x in range(ad_data.shape[0])]
 else:
     mtSNP_ids = ['variant%d' %x for x in range(ad_data.shape[0])]
