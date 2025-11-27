@@ -3397,3 +3397,6 @@ class VireoSNP(Proc):
         "max_iter": 100,
     }
     script = "file://../scripts/scrna/VireoSNP.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/VireoSNP.svelte",
+    }

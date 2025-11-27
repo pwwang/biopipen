@@ -76,7 +76,8 @@ if isinstance(n_clones, (tuple, list)):
     second_deltas = np.diff(deltas)
     best_k_index = np.argmax(second_deltas) + 1  # +1 due to diff reducing length by 1
     best_k = n_clones[0] + best_k_index
-    print(f"Selected best n_clones: {best_k} based on ELBO elbow method.")
+    print(f"Selected best n_clones: {best_k}, based on ELBO elbow method.")
+    Path(f"{outdir}/best_n_clones.txt").write_text(str(best_k))
 
     # Visualize the ELBOs
     plt.plot(np.arange(1, len(n_clone_list)+1), np.max(_ELBO_mat, axis=1))
@@ -163,7 +164,7 @@ im = anno_heat(
     (ad_data/dp_data)[var_idx, :], col_anno=cell_label,
     col_order_ids=id_uniq,
     cmap=segpink,
-    yticklabels=mtSNP_ids[var_idx],
+    yticklabels=[mtSNP_ids[idx] for idx in var_idx],
 )
 
 plt.savefig(f"{outdir}/clone_allele_heatmap.png")
