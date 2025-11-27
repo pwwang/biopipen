@@ -8,11 +8,18 @@
     {% if job.out.outdir | joinpath: "best_n_clones.txt" | exists  %}
     <h{{h}}>Identification for a suitable number of clones</h{{h}}>
     <Descr>
+        <p>
         It is generally difficult to identify the number of clones, which is a balance between subclone resolution and analysis reliability. More clones maybe preferred, but there could be higher risk that the subclones are not genuine but rather technical noise.
+        </p>
 
-        Here, we could use ELBO for different number of clones as an indictor for model selection. However, this is still imperfect. One empirical suggestion is to choose the n_clones when ELBO stops increasing dramatically.
+        <p>
+        Here, we could use ELBO for different number of clones as an indictor for model selection. However, this is still imperfect. One empirical solution is to choose the n_clones when ELBO stops increasing dramatically.
+        </p>
 
-        The best n_clones identified based on the ELBO elbow method is {{ job.out.outdir | joinpath: 'best_n_clones.txt' | read }}.
+        <p>
+        The best n_clones identified based on the ELBO elbow method is
+        <code>{{ job.out.outdir | joinpath: 'best_n_clones.txt' | read }}</code>.
+        </p>
     </Descr>
     <Image src="{{ job.out.outdir | joinpath: 'ELBO_n_clones.png' }}" />
     {% endif %}
