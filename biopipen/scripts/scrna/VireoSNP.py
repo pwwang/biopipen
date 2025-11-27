@@ -156,7 +156,7 @@ else:
 cell_label = np.array(['clone%d' %x for x in np.argmax(_model.ID_prob, axis=1)])
 id_uniq = np.unique(cell_label)
 clone_ids = np.argmax(_model.ID_prob, axis=1)
-af_mat = ad_data.A/(dp_data.A + 0.0001)
+af_mat = ad_data.toarray()/(dp_data.toarray() + 0.0001)
 var_idx = np.argsort(af_mat @ (5**(max(clone_ids) - clone_ids)))[::-1]
 
 im = anno_heat(
