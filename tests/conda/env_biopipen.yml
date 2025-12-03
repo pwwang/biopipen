@@ -8,7 +8,7 @@ channels:
   - pytorch  # for ClusTCR
   - svalkiers  # for ClusTCR
 dependencies:
-  - conda-forge::python=3.12
+  - conda-forge::python=3.11
   - conda-forge::nodejs=22  # for pipen-report
   - conda-forge::curl
   - conda-forge::time  # pipen-runinfo
@@ -49,9 +49,9 @@ dependencies:
   - conda-forge::r-tidyseurat
   - conda-forge::r-hgnchelper
   # - conda-forge::r-plotroc
-  - conda-forge::libfaiss-avx2=1.7.2=h1234567_0_cpu
-  - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
-  - conda-forge::faiss-cpu
+  # - conda-forge::libfaiss-avx2=1.7.2=h1234567_0_cpu
+  # - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
+  - pytorch::faiss-cpu
   - conda-forge::pip
   - bioconda::pysam
   - bioconda::bcftools
