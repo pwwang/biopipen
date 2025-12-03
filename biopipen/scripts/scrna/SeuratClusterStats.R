@@ -30,6 +30,11 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
         mutate(!!!lapply(mutaters, parse_expr))
 }
 
+############## dimplots ##############
+dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
+dimplots = {{envs.dimplots | r: todot="-", skip=1}}
+{% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-dimplots.R" %}
+
 ############## clustree ##############
 clustrees_defaults <- {{envs.clustrees_defaults | r: todot="-"}}
 clustrees <- {{envs.clustrees | r: todot="-", skip=1}}
@@ -49,10 +54,5 @@ ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
 features_defaults = {{envs.features_defaults | r: todot="-"}}
 features = {{envs.features | r: todot="-", skip=1}}
 {% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-features.R" %}
-
-############## dimplots ##############
-dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
-dimplots = {{envs.dimplots | r: todot="-", skip=1}}
-{% include biopipen_dir + "/scripts/scrna/SeuratClusterStats-dimplots.R" %}
 
 reporter$save(joboutdir)
