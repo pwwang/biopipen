@@ -1,4 +1,12 @@
 name: biopipen
+channels:
+  - pwwang  # r-ggradar, r-seuratwrappers
+  - conda-forge
+  - r
+  - bioconda
+  - nodefaults
+  - pytorch  # for ClusTCR
+  - svalkiers  # for ClusTCR
 dependencies:
   - conda-forge::python=3.12
   - conda-forge::nodejs=22  # for pipen-report
