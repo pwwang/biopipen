@@ -430,6 +430,13 @@ class SeuratSubClustering(Proc):
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally as the subset object, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
+            You can also specify `features` instead of `dims` to use specific features for UMAP. It can be
+            a list with the following fields: `order` (the order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))", and
+            `n` (the number of total features to use for UMAP, e.g. 30).
+            If `features` is a list, it will run `biopipen.utils::RunSeuratDEAnalysis` to get the markers
+            for each group, and then select the top `n`/`ngroups` features for each group based on the `order` field.
+            If `features` is a numeric value, it will be treated as the `n` field
+            in the list above, with the default `order` being "desc(abs(avg_log2FC))".
             - dims (type=int): The number of PCs to use
             - reduction: The reduction to use for UMAP.
                 If not provided, `sobj@misc$integrated_new_reduction` will be used.
