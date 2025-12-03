@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "biopipen"
-version = "0.34.28"
+version = "0.34.29"
 description = "Bioinformatics processes/pipelines that can be run from `pipen run`"
 authors = ["pwwang <pwwang@pwwang.com>"]
 license = "MIT"
@@ -54,7 +54,7 @@ vcf = "biopipen.ns.vcf"
 web = "biopipen.ns.web"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]

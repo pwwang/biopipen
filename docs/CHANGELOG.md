@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.29
+
+- docs(scrna.CellTypeAnnotation): add support for celltypist in cell type annotations
+- chore(deps): add mscorefonts to conda environment dependencies
+- docs(scrna.SeuratClustering/SeuratSubClusering): add support for specifying features in UMAP arguments
+
 ## 0.34.28
 
 - fix(misc): update require_package to use distribution for package checks
