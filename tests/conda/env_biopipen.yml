@@ -98,7 +98,7 @@ dependencies:
   - pwwang::bioconductor-screpertoire  # required by r-scplotter
   - pwwang::bioconductor-data-packages
   # - pwwang::bioconductor-ggmanh
-  - svalkiers::clustcr
+  - pwwang::clustcr=2025
   # package to specify version to avoid old versions
   - pwwang::bioconductor-ggmanh=1.12
   # - conda-forge::r-globals=0.18
