@@ -110,6 +110,7 @@ dependencies:
   # package to specify version to avoid old versions
   - pwwang::bioconductor-ggmanh=1.12
   # - conda-forge::r-globals=0.18
+  - conda-forge::mscorefonts
   - pip:
     - poetry
     - magic-impute
