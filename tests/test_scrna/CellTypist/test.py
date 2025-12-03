@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from biopipen.core.proc import Proc
+from biopipen.core.config import config
 from biopipen.ns.scrna import (
     CellTypeAnnotation,
     AnnData2Seurat as AnnData2Seurat_,
@@ -23,6 +25,23 @@ class AnnData2Seurat(AnnData2Seurat_):
     envs = {"ident": "cell_type"}
 
 
+class ModifyCellType(Proc):
+    requires = AnnData2Seurat
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.qs"
+    lang = config.lang.rscript
+    script = """
+    library(biopipen.utils)
+    library(Seurat)
+    sobjfile <- {{in.infile | r}}
+    outfile <- {{out.outfile | r}}
+    sobj <- read_obj(sobjfile)
+    sobj$cell_type <- factor(paste0("c", as.integer(as.factor(sobj$cell_type)) + 1))
+    Idents(sobj) <- "cell_type"
+    write_obj(sobj, outfile)
+    """
+
+
 class CellTypeAnnotationAnnData(CellTypeAnnotation):
     requires = DownloadDemoData
     envs = {
@@ -42,7 +61,7 @@ class CellTypeAnnotationAnnDataNoOverClustering(CellTypeAnnotation):
 
 
 class CellTypeAnnotationSeurat(CellTypeAnnotation):
-    requires = AnnData2Seurat
+    requires = ModifyCellType
     envs = {
         "tool": "celltypist",
         "merge": True,
