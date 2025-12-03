@@ -1,5 +1,23 @@
 # Change Log
 
+## 0.34.28
+
+- fix(misc): update require_package to use distribution for package checks
+- feat(scrna.VireoSNP): add VireoSNP process for demultiplexing single-cell RNA-seq data
+- fix(scrna.VireoSNP): update colormap retrieval method for consistency
+- fix(scrna.VireoSNP): correct allele frequency matrix calculation to use dense array representation
+- feat(scrna.VireoSNP): add plugin options for report generation
+- fix(scrna.VireoSNP): correct job output directory reference in report generation
+- fix(scrna.VireoSNP): improve clarity in clone identification description
+- chore(deps): bump pipen, pydantic, varname, werkzeug, and xqute to latest versions
+- chore(deps): update python version to 3.12 and add time dependency for pipen-runinfo
+- chore(scrna.SeuratClusterStats): move dimplots to the front
+- test(scrna.CellTypeAnnotation): add ModifyCellType process for cell type modification in Seurat
+- fix(scrna.CellTypeAnnotation): improve handling of over_clustering assignment from Seurat object for celltypist
+- chore(deps): specify version for clustcr to avoid old versions
+- chore(deps): update conda channels for biopipen environment
+- chore(deps): downgrade python version to 3.11 in biopipen environment
+
 ## 0.34.27
 
 - chore(deps): bump pipen-report to 0.23.15
