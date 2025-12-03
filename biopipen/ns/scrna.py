@@ -3356,3 +3356,47 @@ class MQuad(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/MQuad.py"
+
+
+class VireoSNP(Proc):
+    """Demultiplexing of single-cell RNA-seq data using vireoSNP.
+
+    VireoSNP is a Bayesian method for demultiplexing pooled single-cell RNA-seq data
+    using natural genetic variations (SNPs) without requiring genotype reference.
+
+    Refers to <https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_clones.ipynb> for more details.
+
+    Input:
+        cellsnpout: The output directory from `CellSNPLite` process, which should
+            contain AD and DP sparse matrices (.mtx) or the vcf file.
+            To investigate the clonal substructure using mitochondrial variants, run
+            `MQuad` first to select the informative variants, and then use the
+            filtered vcf file from MQuad as input to this process.
+
+    Output:
+        outdir: The output directory for vireoSNP results.
+
+    Envs:
+        seed (type=int): The seed for the random number generator.
+        n_init (type=int): The number of random initializations to perform.
+        n_clones (type=auto): The number of clones in the pooled single-cell RNA-seq data.
+            (Refered as `n_donor` in vireoSNP documentation.)
+            If a 2-element list of provided, we will try to estimate the best number of clones
+            between the two values using the elbow plot method.
+        min_iter (type=int): The minimum number of iterations to perform.
+        max_iter (type=int): The maximum number of iterations to perform.
+    """  # noqa: E501
+    input = "cellsnpout:dir"
+    output = "outdir:dir:{{in.cellsnpout | stem}}.vireoSNP"
+    lang = config.lang.python
+    envs = {
+        "seed": 8525,
+        "n_init": 50,
+        "n_clones": [2, 10],
+        "min_iter": 30,
+        "max_iter": 100,
+    }
+    script = "file://../scripts/scrna/VireoSNP.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/VireoSNP.svelte",
+    }

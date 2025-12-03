@@ -1143,14 +1143,14 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.17.24"
+version = "0.17.26"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen-0.17.24-py3-none-any.whl", hash = "sha256:30700a6d5a420215dc0ecae0b7e106ea1f2f5f85b6662569b216993652543bc6"},
-    {file = "pipen-0.17.24.tar.gz", hash = "sha256:eb328db2332b7ee16d83233490ec7324765f9bc0b0314179ad9e010997d364ca"},
+    {file = "pipen-0.17.26-py3-none-any.whl", hash = "sha256:5ef65eec3f3c2f98141341ecb87f5ea2b6acf0e5cf4abad18ec46b626054eb73"},
+    {file = "pipen-0.17.26.tar.gz", hash = "sha256:59a14572947cfcb5c0f6bad54eac5f7c2949d5f7e72da8887651a687b4491c09"},
 ]
 
 [package.dependencies]
@@ -1161,7 +1161,7 @@ pandas = ">=2.0,<3.0"
 pipda = ">=0.13,<0.14"
 python-simpleconf = {version = ">=0.7,<0.8", extras = ["toml"]}
 varname = ">=0.15,<0.16"
-xqute = ">=0.10.16,<0.11.0"
+xqute = ">=0.10.19,<0.11.0"
 
 [[package]]
 name = "pipen-annotate"
@@ -1477,14 +1477,14 @@ test = ["pytest", "pytest-instafail", "pytest-subtests", "pytest-xdist", "pywin3
 
 [[package]]
 name = "pydantic"
-version = "2.12.4"
+version = "2.12.5"
 description = "Data validation using Python type hints"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pydantic-2.12.4-py3-none-any.whl", hash = "sha256:92d3d202a745d46f9be6df459ac5a064fdaa3c1c4cd8adcfa332ccf3c05f871e"},
-    {file = "pydantic-2.12.4.tar.gz", hash = "sha256:0f8cb9555000a4b5b617f66bfd2566264c4984b27589d3b845685983e8ea85ac"},
+    {file = "pydantic-2.12.5-py3-none-any.whl", hash = "sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d"},
+    {file = "pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49"},
 ]
 
 [package.dependencies]
@@ -2181,14 +2181,14 @@ test = ["aiohttp (>=3.10.5)", "flake8 (>=6.1,<7.0)", "mypy (>=0.800)", "psutil",
 
 [[package]]
 name = "varname"
-version = "0.15.0"
+version = "0.15.1"
 description = "Dark magics about variable names in python."
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "varname-0.15.0-py3-none-any.whl", hash = "sha256:9ce9d5a4435930b426ebbbc992ef31b10d4350392a28a91fa3c1c1eb02a081a1"},
-    {file = "varname-0.15.0.tar.gz", hash = "sha256:86e66d59adf97ed301169ab0cb9b33a2f08f3184cd9c3b14901a09d1972dbfee"},
+    {file = "varname-0.15.1-py3-none-any.whl", hash = "sha256:291a71ea6f88328a9a2ee2f7badcc9075dd69afa93f1463ccc2657aef54d2ea1"},
+    {file = "varname-0.15.1.tar.gz", hash = "sha256:cf1b9aa38197f4df5ad9bd9db32ce0439aa6b43e24456fe5d20ad352a8014ade"},
 ]
 
 [package.dependencies]
@@ -2229,18 +2229,18 @@ test = ["pytest", "websockets"]
 
 [[package]]
 name = "werkzeug"
-version = "3.1.3"
+version = "3.1.4"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "werkzeug-3.1.3-py3-none-any.whl", hash = "sha256:54b78bf3716d19a65be4fceccc0d1d7b89e608834989dfae50ea87564639213e"},
-    {file = "werkzeug-3.1.3.tar.gz", hash = "sha256:60723ce945c19328679790e3282cc758aa4a6040e4bb330f53d30fa546d44746"},
+    {file = "werkzeug-3.1.4-py3-none-any.whl", hash = "sha256:2ad50fb9ed09cc3af22c54698351027ace879a0b60a3b5edf5730b2f7d876905"},
+    {file = "werkzeug-3.1.4.tar.gz", hash = "sha256:cd3cd98b1b92dc3b7b3995038826c68097dcb16f9baa63abe35f20eafeb9fe5e"},
 ]
 
 [package.dependencies]
-MarkupSafe = ">=2.1.1"
+markupsafe = ">=2.1.1"
 
 [package.extras]
 watchdog = ["watchdog (>=2.3)"]
@@ -2279,14 +2279,14 @@ h11 = ">=0.16.0,<1"
 
 [[package]]
 name = "xqute"
-version = "0.10.17"
+version = "0.10.19"
 description = "A job management system for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "xqute-0.10.17-py3-none-any.whl", hash = "sha256:dc18649a5405a9f00007c9f2f94325dd80bc826013ec0603dbc813201e81e7a6"},
-    {file = "xqute-0.10.17.tar.gz", hash = "sha256:bb5da6f44c75f8a1c2627664ba47d6583fc4c6cc94868d14c527a8047e237271"},
+    {file = "xqute-0.10.19-py3-none-any.whl", hash = "sha256:bdf6202909e29efac20e7dcd878a648e426f3ce9681101616fef6e62c6179c51"},
+    {file = "xqute-0.10.19.tar.gz", hash = "sha256:7f588c500416cfbe2f5aae65c39e1451008107347663561d99327cfe69c6d552"},
 ]
 
 [package.dependencies]

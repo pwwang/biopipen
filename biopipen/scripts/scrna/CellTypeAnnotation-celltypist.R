@@ -1,8 +1,6 @@
 library(rlang)
 library(hdf5r)
 library(dplyr)
-library(Seurat)
-library(biopipen.utils)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
@@ -38,8 +36,7 @@ sobj <- NULL
 ident <- NULL
 if (!endsWith(sobjfile, ".h5ad")) {
     sobj <- read_obj(sobjfile)
-    ident <- GetIdentityColumn(sobj)
-    over_clustering <- over_clustering %||% ident
+    over_clustering <- over_clustering %||% GetIdentityColumn(sobj)
 
     if (!isFALSE(over_clustering)) {
         destfile <- paste0(outprefix, ".", over_clustering, ".h5ad")
@@ -62,6 +59,12 @@ if (!endsWith(sobjfile, ".h5ad")) {
         )
     }
     sobjfile <- destfile
+} else if (is.null(over_clustering)) {
+    f <- hdf5r::H5File$new(sobjfile, mode = "r")
+    if ("active_ident" %in% hdf5r::h5attr_names(f)) {
+        over_clustering <- hdf5r::h5attr(f, "active_ident") %||% NULL
+    }
+    f$close_all()
 }
 
 # sobjfile h5ad ensured
@@ -106,7 +109,7 @@ if (file.exists(celltypist_outfile) &&
         command <- paste(command, "-v")
     }
     log$info("Running celltypist:")
-    # print("- {command}")
+    print(paste0("- ", command))
     log$debug("  {command}")
     rc <- system(command)
     if (rc != 0) {

@@ -1,8 +1,17 @@
 name: biopipen
+channels:
+  - pwwang  # r-ggradar, r-seuratwrappers
+  - conda-forge
+  - r
+  - bioconda
+  - nodefaults
+  - pytorch  # for ClusTCR
+  - svalkiers  # for ClusTCR
 dependencies:
-  - conda-forge::python=3.10
+  - conda-forge::python=3.11
   - conda-forge::nodejs=22  # for pipen-report
   - conda-forge::curl
+  - conda-forge::time  # pipen-runinfo
   - conda-forge::openssl
   - conda-forge::aria2
   # - conda-forge::r-clustree
@@ -40,9 +49,9 @@ dependencies:
   - conda-forge::r-tidyseurat
   - conda-forge::r-hgnchelper
   # - conda-forge::r-plotroc
-  - conda-forge::libfaiss-avx2=1.7.2=h1234567_0_cpu
-  - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
-  - conda-forge::faiss-cpu
+  # - conda-forge::libfaiss-avx2=1.7.2=h1234567_0_cpu
+  # - conda-forge::libfaiss=1.7.2=hde9c08d_1_cpu
+  - pytorch::faiss-cpu
   - conda-forge::pip
   - bioconda::pysam
   - bioconda::bcftools
@@ -97,7 +106,7 @@ dependencies:
   - pwwang::bioconductor-screpertoire  # required by r-scplotter
   - pwwang::bioconductor-data-packages
   # - pwwang::bioconductor-ggmanh
-  - svalkiers::clustcr
+  - pwwang::clustcr=2025
   # package to specify version to avoid old versions
   - pwwang::bioconductor-ggmanh=1.12
   # - conda-forge::r-globals=0.18
