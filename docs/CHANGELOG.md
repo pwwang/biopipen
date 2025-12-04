@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.34.30
+
+- chore(scrna.SeuratPreparing): adjust SCTransform parameters for improved data processing
+
 ## 0.34.29
 
 - docs(scrna.CellTypeAnnotation): add support for celltypist in cell type annotations

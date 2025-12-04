@@ -306,8 +306,8 @@ class SeuratPreparing(Proc):
         "ScaleData": {},
         "RunPCA": {},
         "SCTransform": {
-            "return-only-var-genes": True,
-            "min_cells": 5,
+            "return-only-var-genes": False,
+            "min_cells": 1,
             "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
