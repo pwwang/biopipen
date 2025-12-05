@@ -1,13 +1,6 @@
 library(scCATCH)
-library(Seurat)
-library(biopipen.utils)
 
-sobjfile = {{in.sobjfile | r}}
-outfile = {{out.outfile | r}}
 sccatch_args = {{envs.sccatch_args | r}}
-newcol = {{envs.newcol | r}}
-ident = {{envs.ident | r }}
-merge_same_labels = {{envs.merge | r}}
 
 log <- get_logger()
 
@@ -24,10 +17,13 @@ if (is.integer(sccatch_args$use_method)) {
 log$info("Reading Seurat object...")
 sobj = read_obj(sobjfile)
 ident <- ident %||% GetIdentityColumn(sobj)
-Idents(sobj) <- ident
+if (is.null(ident)) {
+    sobj@meta.data$Identity <- Idents(sobj)
+    ident <- "Identity"
+}
 
 log$info("Running createscCATCH ...")
-obj = createscCATCH(data = GetAssayData(sobj), cluster = as.character(Idents(sobj)))
+obj = createscCATCH(data = GetAssayData(sobj, assay = sccatch_args$assay), cluster = as.character(sobj@meta.data[[ident]]))
 sccatch_args$object = obj
 
 log$info("Running findmarkergene ...")
@@ -50,16 +46,7 @@ names(celltypes) = obj@celltype$cluster
 if (length(celltypes) == 0) {
     log$warn("- No cell types annotated from the database!")
 } else {
-    if (is.null(newcol)) {
-        sobj <- rename_idents(sobj, ident, celltypes)
-    } else {
-        sobj@meta.data[[newcol]] = celltypes[as.character(Idents(sobj))]
-    }
-
-    if (merge_same_labels) {
-        log$info("Merging clusters with the same labels ...")
-        sobj = merge_clusters_with_same_labels(sobj, newcol)
-    }
+    sobj <- RenameSeuratIdents(sobj, celltypes, backup = backup_col, ident = ident, save_as = newcol, merge = merge)
 }
 
 log$info("Saving Seurat object ...")

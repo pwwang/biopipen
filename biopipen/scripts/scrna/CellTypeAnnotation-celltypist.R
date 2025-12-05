@@ -1,14 +1,6 @@
-library(rlang)
 library(hdf5r)
-library(dplyr)
 
-sobjfile <- {{in.sobjfile | r}}
-outfile <- {{out.outfile | r}}
-newcol <- {{envs.newcol | r}}
-cluster_ident <- {{envs.ident | r }}
-merge_same_labels <- {{envs.merge | r}}
 celltypist_args <- {{envs.celltypist_args | r}}
-outtype <- {{envs.outtype | r }}
 if (identical(outtype, "input")) {
     outtype <- tolower(tools::file_ext(outfile))  # rds, h5ad, qs/qs2
 }
@@ -16,7 +8,7 @@ if (identical(outtype, "input")) {
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
 
-over_clustering <- celltypist_args$over_clustering %||% cluster_ident
+over_clustering <- celltypist_args$over_clustering %||% ident
 
 require_package("celltypist2", version = ">=1.7.1", python = celltypist_args$python)
 
@@ -33,10 +25,11 @@ suppressWarnings(file.remove(modelfile))
 file.symlink(normalizePath(celltypist_args$model), modelfile)
 
 sobj <- NULL
-ident <- NULL
+orig_ident <- NULL
 if (!endsWith(sobjfile, ".h5ad")) {
     sobj <- read_obj(sobjfile)
-    over_clustering <- over_clustering %||% GetIdentityColumn(sobj)
+    orig_ident <- biopipen.utils::GetIdentityColumn(sobj)
+    over_clustering <- over_clustering %||% orig_ident
 
     if (!isFALSE(over_clustering)) {
         destfile <- paste0(outprefix, ".", over_clustering, ".h5ad")
@@ -59,12 +52,14 @@ if (!endsWith(sobjfile, ".h5ad")) {
         )
     }
     sobjfile <- destfile
-} else if (is.null(over_clustering)) {
+} else {
     f <- hdf5r::H5File$new(sobjfile, mode = "r")
     if ("active_ident" %in% hdf5r::h5attr_names(f)) {
-        over_clustering <- hdf5r::h5attr(f, "active_ident") %||% NULL
+        orig_ident <- hdf5r::h5attr(f, "active_ident")
     }
     f$close_all()
+
+    over_clustering <- over_clustering %||% orig_ident
 }
 
 # sobjfile h5ad ensured
@@ -118,9 +113,67 @@ if (file.exists(celltypist_outfile) &&
 }
 
 if (outtype == "h5ad") {
-    if (merge_same_labels) {
-        log$warn("- Merging clusters with the same labels is not supported and is ignored for h5ad outfile ...")
+    # Create a Python script to modify the h5ad file
+    modify_h5ad_script <- tempfile(fileext = ".py")
+
+    python_code <- sprintf('
+import anndata as ad
+import re
+
+# Read the h5ad file
+adata = ad.read_h5ad("%s")
+
+# Get parameters
+over_clustering = %s
+backup_col = %s
+newcol = %s
+merge = %s
+output_col = "%s"
+
+# Backup over_clustering column if needed
+if over_clustering and over_clustering in adata.obs.columns and backup_col:
+    adata.obs[backup_col] = adata.obs[over_clustering].astype(str)
+
+# Get the predicted data
+if output_col in adata.obs.columns:
+    predicted_data = adata.obs[output_col].astype(str)
+
+    # Apply merge transformation if needed
+    if merge:
+        predicted_data = predicted_data.str.replace(r"\\.\\d+$", "", regex=True)
+
+    # Write to appropriate column
+    if newcol:
+        adata.obs[newcol] = predicted_data
+    elif over_clustering:
+        adata.obs[over_clustering] = predicted_data
+
+# Save the modified h5ad file
+adata.write_h5ad("%s")
+print("H5AD file modified successfully")
+',
+        celltypist_outfile,
+        if (is.null(over_clustering) || isFALSE(over_clustering)) "None" else paste0('"', over_clustering, '"'),
+        if (is.null(backup_col)) "None" else paste0('"', backup_col, '"'),
+        if (is.null(newcol)) "None" else paste0('"', newcol, '"'),
+        if (merge) "True" else "False",
+        ifelse(isTRUE(celltypist_args$majority_voting), "majority_voting", "predicted_labels"),
+        celltypist_outfile
+    )
+
+    writeLines(python_code, modify_h5ad_script)
+
+    # Run the Python script
+    log$info("Modifying h5ad file using Python ...")
+    rc <- system2(celltypist_args$python, args = modify_h5ad_script)
+
+    # Clean up
+    unlink(modify_h5ad_script)
+
+    if (rc != 0) {
+        stop("Failed to modify h5ad file using Python script")
     }
+
 } else if (outtype == "rds" || outtype == "qs" || outtype == "qs2") {
     if (is.null(sobj)) {
         log$info("Reading H5AD from celltypist ...")
@@ -128,7 +181,7 @@ if (outtype == "h5ad") {
             infile = celltypist_outfile,
             outfile = NULL,
             assay = celltypist_args$assay %||% "RNA",
-            ident = ident,
+            ident = over_clustering,
             log = log
         )
     } else {
@@ -147,38 +200,31 @@ if (outtype == "h5ad") {
         )
     }
 
-    if (celltypist_args$majority_voting) {
-        prediction <- "majority_voting"
+    output_col <- ifelse(
+        isTRUE(celltypist_args$majority_voting),
+        "majority_voting",
+        "predicted_labels"
+    )
 
-        if (!is.null(newcol)) {
-            sobj@meta.data[[newcol]] <- sobj@meta.data[[prediction]]
-        } else if (!isFALSE(over_clustering) && !is.null(over_clustering)) {
-            # save the original over_clustering column as seurat_clusters_id
-            sobj@meta.data$seurat_clusters_id <- sobj@meta.data[[over_clustering]]
-
-            # make a map of original cluster id to new cluster id
-            cluster_map <- data.frame(
-                seurat_clusters_id = sobj@meta.data$seurat_clusters_id,
-                seurat_clusters = sobj@meta.data[[prediction]]
-                ) %>%
-                group_by(seurat_clusters_id) %>%
-                summarise(seurat_clusters = first(seurat_clusters), .groups = "drop") %>%
-                mutate(seurat_clusters = make.unique(seurat_clusters))
-            cluster_map <- split(cluster_map$seurat_clusters, cluster_map$seurat_clusters_id)
-            sobj <- rename_idents(sobj, over_clustering, cluster_map)
-        }
-    } else if (!is.null(newcol)) {
-        sobj@meta.data[[newcol]] <- sobj@meta.data[["predicted_labels"]]
+    if (is.null(over_clustering) || isFALSE(over_clustering)) {
+        # keep as-is, whichever is the output_col
+    } else {
+        mapping <- sobj@meta.data[, c(over_clustering, output_col), drop = FALSE] %>%
+            distinct(!!sym(over_clustering), !!sym(output_col))
+        mapping <- stats::setNames(as.list(mapping[[output_col]]), mapping[[over_clustering]])
+        sobj <- biopipen.utils::RenameSeuratIdents(
+            sobj,
+            ident = over_clustering,
+            merge = merge,
+            save_as = newcol,
+            backup = backup_col,
+            mapping
+        )
     }
 
-    if (merge_same_labels) {
-        log$info("Merging clusters with the same labels ...")
-        sobj <- merge_clusters_with_same_labels(sobj, newcol)
-    }
-
-    if (!is.null(ident)) {
+    if (!is.null(orig_ident)) {
         # restore the original identity
-        Idents(sobj) <- ident
+        Idents(sobj) <- orig_ident
     }
 
     log$info("Saving the object ...")
