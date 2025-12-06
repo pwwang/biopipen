@@ -1268,14 +1268,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-log2file"
-version = "0.10.2"
+version = "0.10.3"
 description = "Add verbosal information in logs for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_log2file-0.10.2-py3-none-any.whl", hash = "sha256:a5e66c4ae48a7872f70bb83d196e899a819993b592f1f2979f1e1e4e580b6a61"},
-    {file = "pipen_log2file-0.10.2.tar.gz", hash = "sha256:bf50c328dae6ebab0e14b217fd9a32cea7cce518c941cd7673babe349db7fd84"},
+    {file = "pipen_log2file-0.10.3-py3-none-any.whl", hash = "sha256:8648c65bb2848925d2dfa51fdf3ce665561c5bf77e412634e6d520127d8fdcfd"},
+    {file = "pipen_log2file-0.10.3.tar.gz", hash = "sha256:94cc355e6c3b305e53d9a8c235bdfdf2858e2a35d8f52b47b242d85a3bc79422"},
 ]
 
 [package.dependencies]
@@ -2344,4 +2344,4 @@ runinfo = ["pipen-runinfo"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "7e1c330dbc71bcfe08619682af8097daaca2d203c92af2fd74ec2d6c4005d7bb"
+content-hash = "a5fb3dda93c09e3d8ff24eb4b9a95f642b0f047d731ae815a3b532aec0c6f746"
