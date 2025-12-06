@@ -1,14 +1,7 @@
-library(rlang)
-library(dplyr)
 library(hitype)
 
-sobjfile = {{in.sobjfile | r}}
-outfile = {{out.outfile | r}}
 tissue = {{envs.hitype_tissue | r}}
 db = {{envs.hitype_db | r}}
-newcol = {{envs.newcol | r}}
-ident = {{envs.ident | r }}
-merge_same_labels = {{envs.merge | r}}
 
 if (is.null(db)) { stop("`envs.hitype_db` is not set") }
 
@@ -16,7 +9,8 @@ log <- get_logger()
 
 log$info("Reading Seurat object...")
 sobj = biopipen.utils::read_obj(sobjfile)
-ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
+orig_ident <- biopipen.utils::GetIdentityColumn(sobj)
+ident <- ident %||% orig_ident
 Idents(sobj) <- ident
 
 # prepare gene sets
@@ -32,20 +26,11 @@ log$info("Running RunHitype...")
 sobj = RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
 
 log$info("Renaming cell types...")
-hitype_labels <- sobj@meta.data %>%
-    distinct(!!sym(ident), hitype)
-hitype_labels <- split(hitype_labels$hitype, hitype_labels[[ident]])
-
-if (is.null(newcol)) {
-    sobj <- rename_idents(sobj, ident, hitype_labels)
-} else {
-    sobj[[newcol]] = sobj$hitype
-}
-
-if (merge_same_labels) {
-    log$info("Merging clusters with the same labels...")
-    sobj = merge_clusters_with_same_labels(sobj, newcol)
-}
+hitype_labels <- sobj@meta.data %>% distinct(!!sym(ident), hitype)
+hitype_labels <- stats::setNames(as.list(hitype_labels$hitype), hitype_labels[[ident]])
+sobj <- RenameSeuratIdents(sobj, mapping = hitype_labels, merge = merge, save_as = newcol, backup = backup_col)
+# restore the original identity
+if (!is.null(orig_ident)) Idents(sobj) <- orig_ident
 
 log$info("Saving Seurat object...")
 biopipen.utils::save_obj(sobj, outfile)

@@ -1,14 +1,4 @@
-library(Seurat)
-library(rlang)
-library(dplyr)
-library(tidyseurat)
-
-sobjfile <- {{in.sobjfile | r}}
-outfile <- {{out.outfile | r}}
 celltypes <- {{envs.cell_types | r}}
-newcol <- {{envs.newcol | r}}
-ident <- {{envs.ident | r }}
-merge_same_labels <- {{envs.merge | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
 log <- biopipen.utils::get_logger()
@@ -19,7 +9,7 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         log$warn("`envs.celltypes` is not given, won't process `envs.more_cell_types`!")
     }
 
-    if (merge_same_labels) {
+    if (merge) {
         log$warn("Ignoring 'envs.merge' because no cell types are given!")
     }
     # create a symbolic link to the input file
@@ -28,8 +18,11 @@ if (is.null(celltypes) || length(celltypes) == 0) {
     log$info("Loading Seurat object ...")
     sobj <- biopipen.utils::read_obj(sobjfile)
     ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
-    Idents(sobj) <- ident
-    idents <- Idents(sobj)
+    if (is.null(ident)) {
+        sobj@meta.data$Identity <- Idents(sobj)
+        ident <- "Identity"
+    }
+    idents <- sobj@meta.data[[ident]]
     if (is.factor(idents)) {
         idents <- levels(idents)
     } else {
@@ -49,8 +42,11 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         for (i in seq_along(ct)) {
             if (ct[i] == "-" || ct[i] == "") {
                 ct[i] <- idents[i]
+            } else if (ct[i] == "NA") {
+                ct[i] <- NA
             }
         }
+        ct <- as.list(ct)
         names(ct) <- idents
         return(ct)
     }
@@ -60,25 +56,12 @@ if (is.null(celltypes) || length(celltypes) == 0) {
             ct <- more_cell_types[[key]]
             ct <- process_celltypes(ct, key)
             log$info(paste0("Adding additional cell type annotation: '", key, "' ..."))
-            sobj@meta.data[[key]] <- ct[as.character(Idents(sobj))]
+            sobj <- RenameSeuratIdents(sobj, mapping = ct, ident = ident, save_as = key, merge = merge)
         }
     }
 
     celltypes <- process_celltypes(celltypes)
-
-    log$info("Renaming cell types ...")
-    if (is.null(newcol)) {
-        sobj <- rename_idents(sobj, ident, celltypes)
-        log$info("Filtering clusters if NA ...")
-        sobj <- filter(sobj, !!sym(ident) != "NA" & !is.na(!!sym(ident)))
-    } else {
-        sobj[[newcol]] <- celltypes[as.character(Idents(sobj))]
-    }
-
-    if (merge_same_labels) {
-        log$info("Merging clusters with the same labels ...")
-        sobj <- merge_clusters_with_same_labels(sobj, newcol)
-    }
+    sobj <- RenameSeuratIdents(sobj, mapping = celltypes, ident = ident, save_as = newcol, merge = merge, backup = backup_col)
 
     log$info("Saving Seurat object ...")
     biopipen.utils::save_obj(sobj, outfile)

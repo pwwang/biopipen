@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.34.31
+
+- fix(scrna.CellTypeAnnotation): streamline identity handling and improve cell type renaming logic
+- chore(deps): bump pipen-log2file to version 0.10.3
+
 ## 0.34.30
 
 - chore(scrna.SeuratPreparing): adjust SCTransform parameters for improved data processing

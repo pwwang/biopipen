@@ -20,48 +20,51 @@ class DownloadDemoData(Download):
     envs = {"tool": "aria2c"}
 
 
-class AnnData2Seurat(AnnData2Seurat_):
-    requires = DownloadDemoData
-    envs = {"ident": "cell_type"}
-
-
 class ModifyCellType(Proc):
-    requires = AnnData2Seurat
+    requires = DownloadDemoData
     input = "infile:file"
-    output = "outfile:file:{{in.infile | stem}}.qs"
-    lang = config.lang.rscript
+    output = "outfile:file:{{in.infile | stem}}.h5ad"
+    lang = config.lang.python
     script = """
-    library(biopipen.utils)
-    library(Seurat)
-    sobjfile <- {{in.infile | r}}
-    outfile <- {{out.outfile | r}}
-    sobj <- read_obj(sobjfile)
-    sobj$cell_type <- factor(paste0("c", as.integer(as.factor(sobj$cell_type)) + 1))
-    Idents(sobj) <- "cell_type"
-    write_obj(sobj, outfile)
+        import scanpy as sc
+        infile = {{in.infile | r}}
+        outfile = {{out.outfile | r}}
+        obj = sc.read_h5ad(infile)
+        obj.obs['cell_type'] = obj.obs['cell_type'].astype('category')
+        old_cats = list(obj.obs['cell_type'].cat.categories)
+        new_cats = [f"c{i+1}" for i in range(len(old_cats))]
+        obj.obs['cell_type'] = obj.obs['cell_type'].cat.rename_categories(new_cats)
+        obj.write_h5ad(outfile)
     """
 
 
+class AnnData2Seurat(AnnData2Seurat_):
+    requires = ModifyCellType
+    envs = {"ident": "cell_type"}
+
+
 class CellTypeAnnotationAnnData(CellTypeAnnotation):
-    requires = DownloadDemoData
+    # No over_clustering, since no active_ident in the input
+    # But majority_voting is default True
+    # prediction will be in 'majority_voting' column
+    requires = ModifyCellType
     envs = {
         "tool": "celltypist",
         "celltypist_args": {"model": MODEL},
     }
 
 
-class CellTypeAnnotationAnnDataNoOverClustering(CellTypeAnnotation):
-    requires = DownloadDemoData
+class CellTypeAnnotationAnnDataOverClustering(CellTypeAnnotation):
+    requires = ModifyCellType
     envs = {
         "tool": "celltypist",
-        "celltypist_args": {
-            "model": MODEL, "over_clustering": False, "majority_voting": False
-        },
+        "ident": "cell_type",
+        "celltypist_args": {"model": MODEL},
     }
 
 
 class CellTypeAnnotationSeurat(CellTypeAnnotation):
-    requires = ModifyCellType
+    requires = AnnData2Seurat
     envs = {
         "tool": "celltypist",
         "merge": True,
@@ -87,6 +90,14 @@ def testing(pipen):
         )
     )
     assert outfile.is_file()
+
+    # CellTypeAnnotationAnnData, because the input as no active_ident,
+    # It is running no over_clustering by default
+    cta_anndata_stdout = (
+        [proc for proc in pipen.procs if proc.name == "CellTypeAnnotationAnnData"][0]
+        .workdir.joinpath("0", "job.stdout")
+    )
+    assert "-c" not in cta_anndata_stdout.read_text()
 
 
 if __name__ == "__main__":
