@@ -40,6 +40,7 @@ if (is.null(celltypes) || length(celltypes) == 0) {
             }
         }
         for (i in seq_along(ct)) {
+            if (is.na(ct[i])) next
             if (ct[i] == "-" || ct[i] == "") {
                 ct[i] <- idents[i]
             } else if (ct[i] == "NA") {
