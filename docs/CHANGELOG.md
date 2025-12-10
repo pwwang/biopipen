@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.34.32
+
+- chore: bump pipen to 0.17.27
+- fix(scrna.CellTypeAnnotation): handle NA values in cell type processing to prevent errors
+- fix(scrna.CellSNPLite): add functionality to fix corrupted Matrix Market files
+
 ## 0.34.31
 
 - fix(scrna.CellTypeAnnotation): streamline identity handling and improve cell type renaming logic
