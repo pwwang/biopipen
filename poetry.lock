@@ -1143,14 +1143,14 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "0.17.27"
+version = "0.17.28"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen-0.17.27-py3-none-any.whl", hash = "sha256:2820a31059c198096116894db570473f4832cce01de57afe201202455af7da20"},
-    {file = "pipen-0.17.27.tar.gz", hash = "sha256:6cd424e3ef7cd96c43f24375879003ad76abc9bb63b166daf98bb2d1c46dc932"},
+    {file = "pipen-0.17.28-py3-none-any.whl", hash = "sha256:9362602dfc27499f402b5fc9964b0eb00640649cc9eb8d488a14ae88e25b77a6"},
+    {file = "pipen-0.17.28.tar.gz", hash = "sha256:231a8daa1c848699572250e1341a1967ffceb3429c5b75257b7828eaa89f6092"},
 ]
 
 [package.dependencies]
@@ -1336,14 +1336,14 @@ pipen = "==0.17.*"
 
 [[package]]
 name = "pipen-verbose"
-version = "0.14.5"
+version = "0.14.6"
 description = "Add verbosal information in logs for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_verbose-0.14.5-py3-none-any.whl", hash = "sha256:0952414f6ca63020b5a8e1491beee6d0131c331d943ca299eb8410389f4f9b9f"},
-    {file = "pipen_verbose-0.14.5.tar.gz", hash = "sha256:edae03d143b666f86441f10ec85551155c3ea023c53358beefdbef1971bfd5ea"},
+    {file = "pipen_verbose-0.14.6-py3-none-any.whl", hash = "sha256:918a4c5aff6a632bf84858db0d2a6a66ca52133d227b08110c0dd56cd0903608"},
+    {file = "pipen_verbose-0.14.6.tar.gz", hash = "sha256:948f7f0b16ecdab52c71f38108f74dadae313c1a6b26c6a516178074256834ca"},
 ]
 
 [package.dependencies]
