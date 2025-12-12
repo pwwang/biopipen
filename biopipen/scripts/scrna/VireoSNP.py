@@ -48,6 +48,33 @@ logger.info("Reading and converting matrices to CSC format...")
 ad_data = mmread(ad_file).tocsc()
 dp_data = mmread(dp_file).tocsc()
 
+if ad_data.shape[0] < 2:
+    logger.warning(
+        f"AD matrix has only {ad_data.shape[0]} variants, "
+        "VireoSNP requires at least 2 variants to run. "
+    )
+    logger.warning("Generating empty output files and exiting...")
+    Path(f"{outdir}/cell_clone_assignment.tsv").write_text("cell_id\tassigned_clone\tassignment_prob\n")
+    Path(f"{outdir}/best_n_clones.txt").write_text("0\n")
+    plt.figure()
+    # Empty ELBO plot, with text: Only {ad_data.shape[0]} variants found
+    plt.text(0.5, 0.5, f"Only {ad_data.shape[0]} variants found,\nVireoSNP requires at least 2 variants to run.",
+             horizontalalignment='center', verticalalignment='center', fontsize=12)
+    plt.savefig(f"{outdir}/ELBO_n_clones.png")
+
+    plt.figure()
+    # Empty model fitting plot
+    plt.text(0.5, 0.5, "No model fitting performed.",
+             horizontalalignment='center', verticalalignment='center', fontsize=12)
+    plt.savefig(f"{outdir}/model_fitting.png")
+
+    plt.figure()
+    # Empty heatmap plot
+    plt.text(0.5, 0.5, "No heatmap generated.",
+             horizontalalignment='center', verticalalignment='center', fontsize=12)
+    plt.savefig(f"{outdir}/clone_allele_heatmap.png")
+    exit(0)
+
 # Check for cell_number_info.txt to get sample information
 cell_number_info_file = crdir / "cell_number_info.txt"
 if cell_number_info_file.exists():
