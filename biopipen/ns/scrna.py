@@ -3373,6 +3373,25 @@ class MQuad(Proc):
     script = "file://../scripts/scrna/MQuad.py"
 
 
+class MQuadMerge(Proc):
+    """Merge multiple MQuad results for multiple samples.
+
+    We will merge the passed_ad.mtx, passed_dp.mtx and passed_variant_names.txt files
+    from multiple samples
+
+    Input:
+        mquaddirs: The output directories from `MQuad` process for multiple samples.
+
+    Output:
+        outdir: The output directory for merged MQuad results.
+            This can be later used as input to `VireoSNP` process.
+    """
+    input = "mquaddirs:dirs"
+    output = "outdir:dir:{{in.mquaddirs | first | stem | append: '-etc'}}.mquadmerged"
+    lang = config.lang.python
+    script = "file://../scripts/scrna/MQuadMerge.py"
+
+
 class VireoSNP(Proc):
     """Demultiplexing of single-cell RNA-seq data using vireoSNP.
 
