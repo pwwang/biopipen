@@ -338,6 +338,15 @@ def anno_heat(X, row_anno=None, col_anno=None, col_anno2=None,
 
 
 logger.info("Generating clone allele heatmap with dual annotations...")
+# Calculate figure size based on number of cells and variants
+n_cells = ad_data.shape[1]
+n_vars = len(var_idx)
+# Width: scale with number of cells (min 10, max 50 inches)
+fig_width = max(10, min(50, n_cells / 200))
+# Height: scale with number of variants (min 8, max 40 inches)
+fig_height = max(8, min(40, n_vars / 50))
+logger.info(f"Heatmap dimensions: {fig_width:.1f}x{fig_height:.1f} inches ({n_cells} cells x {n_vars} variants)")
+
 if sample_label is not None:
     im = anno_heat(
         (ad_data/dp_data)[var_idx, :],
@@ -347,6 +356,7 @@ if sample_label is not None:
         col_order_ids2=sample_uniq,
         cmap=segpink,
         yticklabels=[mtSNP_ids[idx] for idx in var_idx],  # type: ignore
+        figsize=(fig_width, fig_height),
     )
 else:
     im = anno_heat(
@@ -355,9 +365,10 @@ else:
         col_order_ids=id_uniq,
         cmap=segpink,
         yticklabels=[mtSNP_ids[idx] for idx in var_idx],  # type: ignore
+        figsize=(fig_width, fig_height),
     )
 
-plt.savefig(f"{outdir}/clone_allele_heatmap.png")
+plt.savefig(f"{outdir}/clone_allele_heatmap.png", dpi=100, bbox_inches='tight')
 logger.info("Heatmap saved.")
 
 # Save assignments
