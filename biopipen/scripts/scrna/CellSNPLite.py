@@ -207,6 +207,13 @@ def fix_matrix_market_file(input_file):
         print("- No corruption detected; no changes made.")
 
 
+# Make sure cellSNP.base.vcf.gz exists
+vcf_file = Path(outdir) / "cellSNP.base.vcf.gz"
+if not vcf_file.exists():
+    raise FileNotFoundError(
+        f"Expected VCF file not found: {vcf_file}, cellsnp-lite may have failed."
+    )
+
 # Fix known corrupted Matrix Market files
 mtx_files_to_check = [
     os.path.join(outdir, "cellSNP.tag.DP.mtx"),
