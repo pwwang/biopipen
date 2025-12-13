@@ -183,15 +183,45 @@ def fix_matrix_market_file(input_file):
                 num_removed += 1
 
     if num_removed > 0:
+        # Update the header with corrected entry count (3rd column only)
+        print("- Updating header with corrected entry count...")
+
+        # Read what we wrote and rewrite with correct header
+        temp_output = output_file + '.incomplete'
+        os.rename(output_file, temp_output)
+
+        with open(temp_output, 'r') as f_temp, open(output_file, 'w') as f_final:
+            # Write corrected header
+            for h_line in header_lines[:-1]:
+                f_final.write(h_line)
+
+            # Write corrected size line (only update 3rd column - number of entries)
+            size_line = header_lines[-1].split()
+            size_line[2] = str(num_kept)
+            f_final.write(' '.join(size_line) + '\n')
+
+            # Copy data lines (skip header from temp)
+            line_count = 0
+            for line in f_temp:
+                if line_count >= len(header_lines) - 1:
+                    f_final.write(line)
+                line_count += 1
+
+                if line_count % 1_000_000 == 0:
+                    print(f"- Rewritten {line_count - len(header_lines) + 1:,} data lines")
+
+        # Clean up temp file
+        os.remove(temp_output)
+
         print(f"\n{'='*50}")
         print(f"- Summary:")
         print(f"  Matrix dimensions: {nrows} x {ncols}")
         print(f"  Original entries: {nnz:,}")
+        print(f"  Corrected entries: {num_kept:,}")
         print(f"  Lines kept: {num_kept:,}")
         print(f"  Lines removed: {num_removed:,}")
         print(f"  Removal rate: {100*num_removed/(num_kept+num_removed):.2f}%")
         print(f"  Output written to: {output_file}")
-        print(f"  Note: Header size not corrected to keep AD/DP files consistent")
         print(f"{'='*50}")
         # Backup original file
         backup_file = f"{input_file}.bak"
@@ -201,7 +231,6 @@ def fix_matrix_market_file(input_file):
         print(f"- Original file backed up as: {backup_file}")
         print(f"- Fixed file is now at: {input_file}")
     else:
-        print("\n- No corruption detected; no changes made.")
         # No changes needed, remove fixed file
         os.remove(output_file)
         print("- No corruption detected; no changes made.")
