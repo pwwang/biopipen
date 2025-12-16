@@ -32,6 +32,17 @@ def merge_mtx_files(
                         continue
                     items = [int(x) for x in line.strip().split()]
                     if in_header:
+                        if sample in ncells:
+                            o = 1
+                            while f"{sample}_{o}" in ncells:
+                                o += 1
+
+                            logger.warning(
+                                f"{log_head}: Sample {sample} appears multiple times, "
+                                f"rename to {sample}_{o}"
+                            )
+                            sample = f"{sample}_{o}"
+
                         ncells[sample] = items[1]
                         in_header = False
                         continue
