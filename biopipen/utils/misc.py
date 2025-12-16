@@ -8,9 +8,22 @@ from subprocess import Popen
 from typing import List, Callable, Any
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
 
+
+class _FlushStreamHandler(logging.StreamHandler):
+    """A stream handler that flushes after each log record.
+
+    Because this logger is more likely to be used by pipen-poplog,
+    we need to ensure that each log record is flushed immediately.
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        super().emit(record)
+        self.flush()
+
+
 logger = logging.getLogger("biopipen_job")
 logger.setLevel(logging.DEBUG)
-_handler = logging.StreamHandler(sys.stdout)
+_handler = _FlushStreamHandler(sys.stdout)
 # Use same log format as in R
 # {sprintf("%-7s", level)} [{format(time, "%Y-%m-%d %H:%M:%S")}] {msg}
 # so the logs can be populated by pipen-poplog

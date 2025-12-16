@@ -307,7 +307,7 @@ class SeuratPreparing(Proc):
         "RunPCA": {},
         "SCTransform": {
             "return-only-var-genes": False,
-            "min_cells": 1,
+            "min_cells": 3,
             "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
@@ -3371,6 +3371,25 @@ class MQuad(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/MQuad.py"
+
+
+class MQuadMerge(Proc):
+    """Merge multiple MQuad results for multiple samples.
+
+    We will merge the passed_ad.mtx, passed_dp.mtx and passed_variant_names.txt files
+    from multiple samples
+
+    Input:
+        mquaddirs: The output directories from `MQuad` process for multiple samples.
+
+    Output:
+        outdir: The output directory for merged MQuad results.
+            This can be later used as input to `VireoSNP` process.
+    """
+    input = "mquaddirs:dirs"
+    output = "outdir:dir:{{in.mquaddirs | first | stem | append: '-etc'}}.mquadmerged"
+    lang = config.lang.python
+    script = "file://../scripts/scrna/MQuadMerge.py"
 
 
 class VireoSNP(Proc):

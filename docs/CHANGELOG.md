@@ -1,5 +1,22 @@
 # Change Log
 
+## 1.0.0
+
+- chore: bump pipen to 1.0
+- ci(docker): add docker-test-deps job for dependency management and build process
+- ci(docker): add conditional checks for QEMU and Buildx setup based on file changes
+- chore(scrna.SeuratPreparing): update min_cells parameter to require at least 3 cells for SCTransform
+- chore(scrna.VireoSNP): dynamically adjust heatmap dimensions based on number of cells and variants
+- chore(scrna.CellSNPLite): ensure cellSNP.base.vcf.gz exists before processing
+- feat(scrna.MQuadMerge): add MQuadMerge process to merge multiple MQuad results for multiple samples
+- feat(scrna.VireoSNP): enhance VireoSNP analysis with sample information loading and dual annotations
+- feat(scrna.MQuad): add mquad CLI integration and improve error handling for executable path
+- fix(misc): implement flush functionality in custom stream handler for logging
+- fix(scrna.CellSNPLite): remove header update logic to maintain consistency with AD/DP files
+- fix(scrna.VireoSNP): handle cases with insufficient variants in AD matrix
+- fix(scrna.CellSNPLite): correct header entry count in Matrix Market files after removal of corrupted lines
+- fix(scrna.MQuadMerge): handle duplicate sample names by renaming with suffix
+
 ## 0.34.32
 
 - chore: bump pipen to 0.17.27

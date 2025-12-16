@@ -183,8 +183,8 @@ def fix_matrix_market_file(input_file):
                 num_removed += 1
 
     if num_removed > 0:
-        # Now we need to update the header with correct nnz count
-        print("- Updating header with corrected counts...")
+        # Update the header with corrected entry count (3rd column only)
+        print("- Updating header with corrected entry count...")
 
         # Read what we wrote and rewrite with correct header
         temp_output = output_file + '.incomplete'
@@ -195,7 +195,7 @@ def fix_matrix_market_file(input_file):
             for h_line in header_lines[:-1]:
                 f_final.write(h_line)
 
-            # Write corrected size line
+            # Write corrected size line (only update 3rd column - number of entries)
             size_line = header_lines[-1].split()
             size_line[2] = str(num_kept)
             f_final.write(' '.join(size_line) + '\n')
@@ -217,6 +217,7 @@ def fix_matrix_market_file(input_file):
         print(f"- Summary:")
         print(f"  Matrix dimensions: {nrows} x {ncols}")
         print(f"  Original entries: {nnz:,}")
+        print(f"  Corrected entries: {num_kept:,}")
         print(f"  Lines kept: {num_kept:,}")
         print(f"  Lines removed: {num_removed:,}")
         print(f"  Removal rate: {100*num_removed/(num_kept+num_removed):.2f}%")
@@ -230,11 +231,17 @@ def fix_matrix_market_file(input_file):
         print(f"- Original file backed up as: {backup_file}")
         print(f"- Fixed file is now at: {input_file}")
     else:
-        print("\n- No corruption detected; no changes made.")
         # No changes needed, remove fixed file
         os.remove(output_file)
         print("- No corruption detected; no changes made.")
 
+
+# Make sure cellSNP.base.vcf.gz exists
+vcf_file = Path(outdir) / "cellSNP.base.vcf.gz"
+if not vcf_file.exists():
+    raise FileNotFoundError(
+        f"Expected VCF file not found: {vcf_file}, cellsnp-lite may have failed."
+    )
 
 # Fix known corrupted Matrix Market files
 mtx_files_to_check = [
