@@ -3371,6 +3371,9 @@ class MQuad(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/MQuad.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/MQuad.svelte",
+    }
 
 
 class MQuadMerge(Proc):
