@@ -1,5 +1,14 @@
 # Change Log
 
+## 1.0.1
+
+- chore: bump pipen-report to 1.0.2
+- chore(scrna.VireoSNP): adjust heatmap height calculation for better visualization
+- feat(scrna.MQuad): add plugin options for report generation in MQuad process
+- feat(scrna.VireoSNP): add support for multi-core model fitting
+- feat(scrna.VireoSNP): add cell-clone assignment table to report
+- feat(scrna.SeuratMetadataMutater): add support for subsetting cells during metadata mutation
+
 ## 1.0.0
 
 - chore: bump pipen to 1.0

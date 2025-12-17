@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from multiprocessing import Pool
 
 import matplotlib
 matplotlib.use('Agg')
@@ -19,6 +20,7 @@ require_package("vireoSNP", ">=0.5.8")
 
 crdir = Path({{in.cellsnpout | quote}})  # noqa: E999 # pyright: ignore
 outdir: str = {{out.outdir | quote}}  # pyright: ignore
+ncores : int = {{envs.ncores | int}}  # pyright: ignore
 n_init: int = {{envs.n_init | int}}  # pyright: ignore
 n_clones: int | None = {{envs.n_clones | repr}}  # pyright: ignore
 min_iter: int = {{envs.min_iter | int}}  # pyright: ignore
@@ -98,31 +100,37 @@ else:
     cell_to_sample = None
     cell_ids = None
 
+
+def fit_model_for_k(k):
+    """Fit BinomMixtureVB model for a given number of clones."""
+    logger.info(f"Fitting model with {k} clones...")
+    _model = BinomMixtureVB(
+        n_var=ad_data.shape[0],
+        n_cell=ad_data.shape[1],
+        n_donor=k,
+    )
+    _model.fit(
+        ad_data,
+        dp_data,
+        n_init=n_init,
+        min_iter=min_iter,
+        max_iter=max_iter,
+        random_seed=seed,
+    )
+    return _model.ELBO_inits
+
+
 if isinstance(n_clones, (tuple, list)):
     if len(n_clones) != 2:
         raise ValueError(
             "n_clones should be an integer or a list/tuple of two integers for range"
         )
 
-    _ELBO_mat = []
     n_clone_list = np.arange(n_clones[0], n_clones[1] + 1)
-    logger.info(f"Testing n_clones from {n_clones[0]} to {n_clones[1]}...")
-    for k in n_clone_list:
-        logger.info(f"Fitting model with {k} clones...")
-        _model = BinomMixtureVB(
-            n_var=ad_data.shape[0],
-            n_cell=ad_data.shape[1],
-            n_donor=k,
-        )
-        _model.fit(
-            ad_data,
-            dp_data,
-            n_init=n_init,
-            min_iter=min_iter,
-            max_iter=max_iter,
-            random_seed=seed,
-        )
-        _ELBO_mat.append(_model.ELBO_inits)
+    logger.info(f"Testing n_clones from {n_clones[0]} to {n_clones[1]} using {ncores} cores...")
+
+    with Pool(processes=ncores) as pool:
+        _ELBO_mat = pool.map(fit_model_for_k, n_clone_list)
 
     # Select the best K based on the elbow
     mean_ELBOs = [np.mean(elbos) for elbos in _ELBO_mat]
@@ -344,7 +352,7 @@ n_vars = len(var_idx)
 # Width: scale with number of cells (min 10, max 50 inches)
 fig_width = max(10, min(50, n_cells / 200))
 # Height: scale with number of variants (min 8, max 40 inches)
-fig_height = max(8, min(40, n_vars / 50))
+fig_height = max(8, min(40, n_vars / 20))
 logger.info(f"Heatmap dimensions: {fig_width:.1f}x{fig_height:.1f} inches ({n_cells} cells x {n_vars} variants)")
 
 if sample_label is not None:

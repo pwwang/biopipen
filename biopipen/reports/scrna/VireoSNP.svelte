@@ -27,11 +27,17 @@
     <h{{h}}>Model Fitting</h{{h}}>
     <Image src="{{ job.out.outdir | joinpath: 'model_fitting.png' }}" />
 
-    <h{{h}}>Clone Assignment and  allele frequency</h{{h}}>
+    <h{{h}}>Clone Assignment and allele frequency</h{{h}}>
     <Image src="{{ job.out.outdir | joinpath: 'assignment_allele_freq.png' }}" />
 
     <h{{h}}>Clone Visualization with Allele Frequency</h{{h}}>
     <Image src="{{ job.out.outdir | joinpath: 'clone_allele_heatmap.png' }}" />
+
+    <h{{h}}>Cell-Clone Assignment Table</h{{h}}>
+    <DataTable src="{{ job.out.outdir | joinpath: 'cell_clone_assignment.tsv' }}"
+        data={ {{ job.out.outdir | joinpath: 'cell_clone_assignment.tsv' | datatable: sep="\t", nrows=100, header=0, index_col=None }} }
+        pageSize={50}
+     />
 {%- endmacro -%}
 
 {%- macro head_job(job) -%}

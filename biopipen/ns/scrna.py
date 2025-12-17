@@ -1177,6 +1177,8 @@ class SeuratMetadataMutater(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+        subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
+            This will be applied after mutating the metadata.
 
     Requires:
         r-seurat:
@@ -1190,7 +1192,7 @@ class SeuratMetadataMutater(Proc):
     input = "srtobj:file, metafile:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"mutaters": {}}
+    envs = {"mutaters": {}, "subset": None}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
@@ -3371,6 +3373,9 @@ class MQuad(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/MQuad.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/MQuad.svelte",
+    }
 
 
 class MQuadMerge(Proc):
@@ -3412,6 +3417,8 @@ class VireoSNP(Proc):
 
     Envs:
         seed (type=int): The seed for the random number generator.
+        ncores (type=int): The number of cores to use for model fitting for
+            different number of clones.
         n_init (type=int): The number of random initializations to perform.
         n_clones (type=auto): The number of clones in the pooled single-cell RNA-seq data.
             (Refered as `n_donor` in vireoSNP documentation.)
@@ -3425,6 +3432,7 @@ class VireoSNP(Proc):
     lang = config.lang.python
     envs = {
         "seed": 8525,
+        "ncores": config.misc.ncores,
         "n_init": 50,
         "n_clones": [2, 10],
         "min_iter": 30,

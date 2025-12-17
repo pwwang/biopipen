@@ -2,12 +2,15 @@ library(rlang)
 library(tibble)
 library(dplyr)
 library(Seurat)
+library(tidyseurat)
+library(scplotter)
 library(biopipen.utils)
 
 srtobj = {{in.srtobj | r}}
 metafile = {{in.metafile | r}}
-mutaters = {{envs.mutaters | r}}
 outfile = {{out.outfile | r}}
+mutaters = {{envs.mutaters | r}}
+subset = {{envs.subset | r}}
 
 srt = read_obj(srtobj)
 metadata = srt@meta.data
@@ -36,6 +39,10 @@ if (!is.null(expr) && length(expr) > 0) {
     srt@meta.data = mutate(metadata, !!!expr)
 } else {
     srt@meta.data = metadata
+}
+
+if (!is.null(subset)) {
+    srt <- filter(srt, !!parse_expr(subset))
 }
 
 save_obj(srt, outfile)
