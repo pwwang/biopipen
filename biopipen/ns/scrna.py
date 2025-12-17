@@ -1177,6 +1177,8 @@ class SeuratMetadataMutater(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+        subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
+            This will be applied after mutating the metadata.
 
     Requires:
         r-seurat:
@@ -1190,7 +1192,7 @@ class SeuratMetadataMutater(Proc):
     input = "srtobj:file, metafile:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"mutaters": {}}
+    envs = {"mutaters": {}, "subset": None}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 

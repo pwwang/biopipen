@@ -358,6 +358,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
             `{"timepoint": "if_else(treatment == 'control', 'pre', 'post')"}`
             will add a new column `timepoint` to the metadata with values of
             `pre` and `post` based on the `treatment` column.
+        subset (pgarg): Subset the data before analysis.
         ncores (type=int): Number of cores to use for parallelization for
             each process
     """
@@ -367,6 +368,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
         is_seurat=None,
         gmtfile=None,
         mutaters=None,
+        subset=None,
         noimpute=True,
         ncores=config.misc.ncores,
         subset_by=None,
@@ -426,7 +428,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
     @ProcGroup.add_proc  # type: ignore
     def p_mutater(self) -> Type[Proc]:
         """Build SeuratMetadataMutater process"""
-        if not self.opts.mutaters:
+        if not self.opts.mutaters and not self.opts.subset:
             return self.p_clustering  # type: ignore
 
         from .scrna import SeuratMetadataMutater
@@ -437,7 +439,7 @@ class ScrnaMetabolicLandscape(ProcGroup):
                 srtobj=ch.iloc[:, 0],
                 metafile=[None],
             )
-            envs = {"mutaters": self.opts.mutaters}
+            envs = {"mutaters": self.opts.mutaters, "subset": self.opts.subset}
 
         return MetabolicSeuratMetadataMutater
 
