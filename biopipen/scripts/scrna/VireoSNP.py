@@ -344,7 +344,7 @@ n_vars = len(var_idx)
 # Width: scale with number of cells (min 10, max 50 inches)
 fig_width = max(10, min(50, n_cells / 200))
 # Height: scale with number of variants (min 8, max 40 inches)
-fig_height = max(8, min(40, n_vars / 50))
+fig_height = max(8, min(40, n_vars / 20))
 logger.info(f"Heatmap dimensions: {fig_width:.1f}x{fig_height:.1f} inches ({n_cells} cells x {n_vars} variants)")
 
 if sample_label is not None:
