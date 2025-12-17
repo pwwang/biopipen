@@ -3415,6 +3415,8 @@ class VireoSNP(Proc):
 
     Envs:
         seed (type=int): The seed for the random number generator.
+        ncores (type=int): The number of cores to use for model fitting for
+            different number of clones.
         n_init (type=int): The number of random initializations to perform.
         n_clones (type=auto): The number of clones in the pooled single-cell RNA-seq data.
             (Refered as `n_donor` in vireoSNP documentation.)
@@ -3428,6 +3430,7 @@ class VireoSNP(Proc):
     lang = config.lang.python
     envs = {
         "seed": 8525,
+        "ncores": config.misc.ncores,
         "n_init": 50,
         "n_clones": [2, 10],
         "min_iter": 30,
