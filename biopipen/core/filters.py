@@ -8,7 +8,6 @@ from typing import Any, List, Mapping
 
 from argx import Namespace  # pyright: ignore[reportPrivateImportUsage]
 from liquid.filters.manager import FilterManager
-from yunpath import CloudPath
 from pipen_report.filters import register_component, _tag
 
 # from .defaults import BIOPIPEN_DIR
@@ -180,7 +179,7 @@ def r(
         if obj.startswith("r:") or obj.startswith("R:"):
             return str(obj)[2:]
         return repr(str(obj))
-    if isinstance(obj, (Path, CloudPath)):
+    if isinstance(obj, Path):
         return repr(str(obj))
     if isinstance(obj, (list, tuple, set)):
         if any(isinstance(i, dict) for i in obj):

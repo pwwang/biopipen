@@ -12,15 +12,15 @@ generate-setup-file = true
 python = "^3.9"
 # # required by other plugins
 # pipen = "^0.16"
-pipen-filters = "^1.0"
+pipen-filters = "^1.1"
 pipen-cli-run = "^1.0"
-pipen-verbose = "^1.0"
-pipen-poplog = "^1.0"
+pipen-verbose = "^1.1"
+pipen-poplog = "^1.1"
 pipen-deprecated = "^1.0"
 datar = { version = "^0.15.8", extras = ["pandas"] }
-pipen-board = { version = "^1.0", extras = ["report"] }
-pipen-runinfo = { version = "^1.0", optional = true }
-pipen-log2file = { version = "^1.0", optional = true }
+pipen-board = { version = "^1.1", extras = ["report"] }
+pipen-runinfo = { version = "^1.1", optional = true }
+pipen-log2file = { version = "^1.1", optional = true }
 
 [tool.poetry.extras]
 runinfo = ["pipen-runinfo"]
