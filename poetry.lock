@@ -39,14 +39,14 @@ files = [
 
 [[package]]
 name = "argx"
-version = "0.4.1"
+version = "0.4.2"
 description = "Super-charged argparse for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "argx-0.4.1-py3-none-any.whl", hash = "sha256:30eba009c5f4fa67b8024db614f0488ba3c732b726e0b78c1b16357b71c26667"},
-    {file = "argx-0.4.1.tar.gz", hash = "sha256:42e1ba973799071e88ce724220b33009411e97b6c70cbea5220c70f91dbccdd3"},
+    {file = "argx-0.4.2-py3-none-any.whl", hash = "sha256:fd1fdde7b5ae72faa74cd9bce20caa017e4589d69bdf4c33ed57bc4df49ffb3f"},
+    {file = "argx-0.4.2.tar.gz", hash = "sha256:30688135adbf5fa179619731e9525d31fbb1da4db3dd6a8505d475162e93c8f4"},
 ]
 
 [package.dependencies]
@@ -54,6 +54,7 @@ python-simpleconf = ">=0.8,<0.9"
 
 [package.extras]
 anypath = ["panpath (>=0.4,<0.5)"]
+panpath = ["panpath (>=0.4,<0.5)"]
 
 [[package]]
 name = "blessed"
@@ -1104,15 +1105,21 @@ s3 = ["boto3 (>=1.20.0)"]
 
 [[package]]
 name = "pathspec"
-version = "0.12.1"
+version = "1.0.0"
 description = "Utility library for gitignore style pattern matching of file paths."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
-    {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
+    {file = "pathspec-1.0.0-py3-none-any.whl", hash = "sha256:1373719036e64a2b9de3b8ddd9e30afb082a915619f07265ed76d9ae507800ae"},
+    {file = "pathspec-1.0.0.tar.gz", hash = "sha256:9ada63a23541746b0cf7d5672a39ea77eac31dd23a80470be90df83537512131"},
 ]
+
+[package.extras]
+hyperscan = ["hyperscan (>=0.7)"]
+optional = ["typing-extensions (>=4)"]
+re2 = ["google-re2 (>=1.1)"]
+tests = ["pytest (>=9)", "typing-extensions (>=4.15)"]
 
 [[package]]
 name = "pdtypes"
@@ -1226,14 +1233,14 @@ report = ["pipen-report (>=1.1,<2.0)"]
 
 [[package]]
 name = "pipen-cli-run"
-version = "1.0.1"
+version = "1.0.2"
 description = "A pipen cli plugin to run a process or a pipeline"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_cli_run-1.0.1-py3-none-any.whl", hash = "sha256:507d7a032d568b265c290b14755f6bde58607f3bae016369fcbbb9edd0003d0c"},
-    {file = "pipen_cli_run-1.0.1.tar.gz", hash = "sha256:363f4c2459a9b2bc519a7e6a5e237160fe44b937de55003bf0f7824535bc26ed"},
+    {file = "pipen_cli_run-1.0.2-py3-none-any.whl", hash = "sha256:41ab9ebdd5951e66a4ffb10fb7b555ee1f00bf79707178416d0afd0f58961718"},
+    {file = "pipen_cli_run-1.0.2.tar.gz", hash = "sha256:187e41982f482aaa92ff7268563aa79676057110772b27a5e9a316621325a23e"},
 ]
 
 [package.dependencies]
