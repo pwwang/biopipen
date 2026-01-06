@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path, PosixPath  # noqa: F401
+from panpath import LocalPath  # noqa: F401
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 bamfiles: list[Path] = {{in.bamfiles | each: as_path}}  # pyright: ignore # noqa

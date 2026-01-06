@@ -3,6 +3,7 @@ import hashlib
 import shutil
 import re
 from pathlib import Path, PosixPath  # noqa: F401
+from panpath import LocalPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
 fastqs: list[Path] = {{in.fastqs | each: as_path}}  # pyright: ignore  # noqa

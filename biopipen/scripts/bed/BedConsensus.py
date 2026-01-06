@@ -1,6 +1,8 @@
 import sys
 from math import ceil
-from pathlib import Path, PosixPath  # noqa: F401
+from pathlib import Path
+# as_path converts str to PanPath, in our case LocalPath
+from panpath import LocalPath
 
 from biopipen.utils.misc import run_command
 
