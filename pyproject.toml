@@ -12,7 +12,7 @@ generate-setup-file = true
 python = "^3.9"
 # # required by other plugins
 # pipen = "^0.16"
-pipen-filters = "^1.1"
+pipen-filters = "^1.1.2"
 pipen-cli-run = "^1.0"
 pipen-verbose = "^1.1"
 pipen-poplog = "^1.1"
