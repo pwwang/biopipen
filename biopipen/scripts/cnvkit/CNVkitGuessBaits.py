@@ -1,6 +1,7 @@
 import time
 import subprocess
 from shutil import which
+from panpath import LocalPath  # noqa: F401
 from pathlib import Path, PosixPath  # for as_path
 
 from biopipen.utils.misc import run_command, dict_to_cli_args

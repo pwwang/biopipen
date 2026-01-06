@@ -1,3 +1,4 @@
+from panpath import LocalPath  # noqa: F401
 from biopipen.utils.reference import tabix_index
 from biopipen.utils.misc import logger
 from biopipen.scripts.vcf.bcftools_utils import run_bcftools

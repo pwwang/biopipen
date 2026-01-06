@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.1.0
+
+- chore(deps): bump up pipen-filters, pipen-verbose, pipen-poplog, pipen-board, pipen-runinfo, pipen-cli-run and pipen-log2file
+- ci(deps): add numpy dependency with version constraint for compatibility with scanpy for tests
+- test(scrna): handle installation error for pbmc3k dataset gracefully
+- fix: add LocalPath import to fix error with as_path filter in several scripts
+
 ## 1.0.1
 
 - chore: bump pipen-report to 1.0.2
