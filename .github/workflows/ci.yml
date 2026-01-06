@@ -77,6 +77,11 @@ jobs:
             envname=${bname:4}
             echo "::group::Installing biopipen in environment: $envname"
             conda run --no-capture-output -n $envname poetry install -E runinfo -v
+
+            # Numba needs NumPy 2.3 or less. Got NumPy 2.4.
+            # And scanpy requires Numba.
+            conda run --no-capture-output -n $envname poetry run pip install "numpy<2.4"
+
             echo "::endgroup::"
           done
 
