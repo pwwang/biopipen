@@ -28,7 +28,16 @@ class PrepareSeurat(Proc):
         set.seed(8525)
         options(timeout=600)
         library(SeuratData)
-        InstallData("pbmc3k")
+        tryCatch({
+            InstallData("pbmc3k")
+        }, error = function(e) {
+            # https://github.com/satijalab/seurat-data/issues/23#issuecomment-1227111059
+            install.packages(
+                "pbmc3k.SeuratData",
+                repos = "http://seurat.nygenome.org/",
+                type = "source"
+            )
+        })
         pbmc3k <- Seurat::UpdateSeuratObject(pbmc3k)
         pbmc3k$Sample <- paste0("S", sample(1:12, nrow(pbmc3k), replace = TRUE))
         saveRDS(pbmc3k, {{out.outfile | quote}})
