@@ -2060,7 +2060,7 @@ class ClonalStats(Proc):
             - abundance: The abundance of the clones using [`ClonalAbundancePlot`](https://pwwang.github.io/scplotter/reference/ClonalAbundancePlot.html)
             - length: The length of the CDR3 sequences using [`ClonalLengthPlot`](https://pwwang.github.io/scplotter/reference/ClonalLengthPlot.html)
             - residency: The residency of the clones using [`ClonalResidencyPlot`](https://pwwang.github.io/scplotter/reference/ClonalResidencyPlot.html)
-            - stats: The stats of the clones using [`ClonalStatsPlot`](https://pwwang.github.io/scplotter/reference/ClonalStatsPlot.html)
+            - stat: The stats of the clones using [`ClonalStatPlot`](https://pwwang.github.io/scplotter/reference/ClonalStatPlot.html)
             - composition: The composition of the clones using [`ClonalCompositionPlot`](https://pwwang.github.io/scplotter/reference/ClonalCompositionPlot.html)
             - overlap: The overlap of the clones using [`ClonalOverlapPlot`](https://pwwang.github.io/scplotter/reference/ClonalOverlapPlot.html)
             - diversity: The diversity of the clones using [`ClonalDiversityPlot`](https://pwwang.github.io/scplotter/reference/ClonalDiversityPlot.html)

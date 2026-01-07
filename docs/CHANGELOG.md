@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.1
+
+- docs(tcr.ClonalStats): correct typo in documentation for ClonalStatsPlot reference
+- chore: bump xqute to 2.0.4
+
 ## 1.1.0
 
 - chore(deps): bump up pipen-filters, pipen-verbose, pipen-poplog, pipen-board, pipen-runinfo, pipen-cli-run and pipen-log2file
