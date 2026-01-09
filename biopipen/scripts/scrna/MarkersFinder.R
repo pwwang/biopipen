@@ -350,6 +350,7 @@ process_markers <- function(markers, info, case) {
             if (length(case$enrich_plots) > 0) {
                 for (db in case$dbs) {
                     plots <- list()
+                    db = sub("\\.gmt$", "", db)
                     for (plotname in names(case$enrich_plots)) {
                         plotargs <- extract_vars(case$enrich_plots[[plotname]], "descr", allow_nonexisting = TRUE)
                         plotargs$data <- enrich[enrich$Database == db, , drop = FALSE]
