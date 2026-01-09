@@ -437,6 +437,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
 
     for (db in dbs) {
         plots <- list()
+        db = sub("\\.gmt$", "", db)
         for (plotname in names(plotcases)) {
             log$info("  {plotname} ({db}) ...")
             plotargs <- plotcases[[plotname]]
