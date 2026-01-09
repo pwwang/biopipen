@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.3
+
+- fix(scrna.MarkersFinder): remove file extension from database names in enrichment processing
+
 ## 1.1.2
 
 - fix(scrna.MarkersFinder): correct database name formatting in enrichment plot processing
