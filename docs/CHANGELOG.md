@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.2
+
+- fix(scrna.MarkersFinder): correct database name formatting in enrichment plot processing
+
 ## 1.1.1
 
 - docs(tcr.ClonalStats): correct typo in documentation for ClonalStatsPlot reference
