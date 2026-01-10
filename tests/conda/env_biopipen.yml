@@ -36,7 +36,7 @@ dependencies:
   - bioconda::pysam
   - bioconda::bcftools
   - bioconda::mygene
-  - bioconda::meme>5.5  #=5.5.5
+  - bioconda::meme>5.5
   - bioconda::tabix
   - bioconda::seqkit
   - bioconda::plink
