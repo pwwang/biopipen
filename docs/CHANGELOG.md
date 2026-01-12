@@ -8,6 +8,10 @@
 - ci(docker): set fetch-depth to 2 for actions/checkout so that changes can be detected properly
 - chore: bump pipen to 1.1.4
 
+## 1.1.3
+
+- fix(scrna.MarkersFinder): remove file extension from database names in enrichment processing
+
 ## 1.1.2
 
 - fix(scrna.MarkersFinder): correct database name formatting in enrichment plot processing
