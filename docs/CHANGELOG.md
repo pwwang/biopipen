@@ -6,7 +6,7 @@
 - fix(scrna.PseudoBulkDEG): update database handling in enrichment plots to use unique databases in case gmt files were used
 - chore(deps): clean up commented dependencies in env_biopipen.yml
 - ci(docker): set fetch-depth to 2 for actions/checkout so that changes can be detected properly
-- chore: bump pipen to 1.1.4
+- chore: bump pipen to 1.1.5
 
 ## 1.1.3
 
