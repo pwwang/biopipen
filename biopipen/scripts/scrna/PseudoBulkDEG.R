@@ -370,8 +370,9 @@ process_markers <- function(markers, info, case) {
             )
 
             # Visualize enriched terms
+            dbs <- unique(as.character(enrich$Database))
             if (length(case$enrich_plots) > 0) {
-                for (db in case$dbs) {
+                for (db in dbs) {
                     plots <- list()
                     for (plotname in names(case$enrich_plots)) {
                         plotargs <- case$enrich_plots[[plotname]]

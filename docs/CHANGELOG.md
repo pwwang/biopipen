@@ -1,5 +1,13 @@
 # Change Log
 
+## 1.1.4
+
+- fix(scrna.MarkersFinder): update database handling in enrichment plots in case it is from gmt files
+- fix(scrna.PseudoBulkDEG): update database handling in enrichment plots to use unique databases in case gmt files were used
+- chore(deps): clean up commented dependencies in env_biopipen.yml
+- ci(docker): set fetch-depth to 2 for actions/checkout so that changes can be detected properly
+- chore: bump pipen to 1.1.6
+
 ## 1.1.3
 
 - fix(scrna.MarkersFinder): remove file extension from database names in enrichment processing
