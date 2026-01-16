@@ -2055,6 +2055,11 @@ class ClonalStats(Proc):
             The keys are the names of the new variables, and the values are the expressions.
             When it is a `Seurat` object, typically an output of `scRepertoire::combineExpression()`,
             the mutaters will be applied to the `meta.data`.
+        cache (type=auto): Whether to cache the plots.
+            Currently only plots for features are supported, since creating the those
+            plots can be time consuming.
+            If `True`, the plots will be cached in the job output directory, which will
+            be not cleaned up when job is rerunning.
         viz_type (choice): The type of visualization to generate.
             - volume: The volume of the clones using [`ClonalVolumePlot`](https://pwwang.github.io/scplotter/reference/ClonalVolumePlot.html)
             - abundance: The abundance of the clones using [`ClonalAbundancePlot`](https://pwwang.github.io/scplotter/reference/ClonalAbundancePlot.html)
@@ -2099,6 +2104,7 @@ class ClonalStats(Proc):
     lang = config.lang.rscript
     envs = {
         "mutaters": {},
+        "cache": config.path.tmpdir,
         "subset": None,
         "viz_type": None,
         "devpars": {"width": None, "height": None, "res": 100},

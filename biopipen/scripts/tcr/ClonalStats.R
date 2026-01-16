@@ -10,8 +10,12 @@ joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r: todot="-"}}
 mutaters <- envs$mutaters
 cases <- envs$cases
+cache <- envs$cache
 envs$mutaters <- NULL
 envs$cases <- NULL
+envs$cache <- NULL
+
+if (isTRUE(cache)) { cache = joboutdir }
 
 log <- get_logger()
 reporter <- get_reporter()
@@ -431,33 +435,59 @@ cases <- list_rename(cases, function(name, case) {
 do_case <- function(name, case) {
     log$info("- Case: {name}")
     info <- case_info(name, outdir, is_dir = FALSE, create = TRUE)
-
     case <- extract_vars(case, "viz_type", "descr", "devpars", "more_formats", "save_code", "save_data", subset_ = "subset")
 
-    if (!is.null(subset_)) {
-        case$data <- ScRepSubset(screp, subset_)
-    } else {
-        case$data <- screp
-    }
-    fnname <- tools::toTitleCase(viz_type)
-    if (fnname == "Geneusage") {
-        fnname <- "GeneUsage"
-    }
-    plot_fn <- paste0("Clonal", fnname, "Plot")
-    plot_fn <- utils::getFromNamespace(plot_fn, "scplotter")
-    if (is.null(plot_fn)) {
-        stop("Error: Unknown visualization type: ", viz_type)
-    }
+    caching <- Cache$new(
+        c(case, list(viz_type, descr, devpars, more_formats, save_code, save_data, subset_)),
+        prefix = "biopipen.tcr.ClonalStats",
+        cache_dir = cache,
+        kind = "prefix",
+        path = info$prefix
+    )
 
-    p <- do_call(plot_fn, case)
-    save_plot(p, info$prefix, devpars, formats = unique(c("png", more_formats)))
+    if (caching$is_cached()) {
+        log$info("  Using cached results.")
+        caching$restore()
+    } else {
+        if (!is.null(subset_)) {
+            case$data <- ScRepSubset(screp, subset_)
+        } else {
+            case$data <- screp
+        }
+        fnname <- tools::toTitleCase(viz_type)
+        if (fnname == "Geneusage") {
+            fnname <- "GeneUsage"
+        }
+        plot_fn <- paste0("Clonal", fnname, "Plot")
+        plot_fn <- utils::getFromNamespace(plot_fn, "scplotter")
+        if (is.null(plot_fn)) {
+            stop("Error: Unknown visualization type: ", viz_type)
+        }
+
+        p <- do_call(plot_fn, case)
+        save_plot(p, info$prefix, devpars, formats = unique(c("png", more_formats)))
+
+        if (isTRUE(save_code)) {
+            save_plotcode(
+                p,
+                setup = c('library(scplotter)', '', 'load("data.RData")'),
+                prefix = info$prefix,
+                "case"
+            )
+        }
+
+        if (save_data) {
+            pdata <- attr(p, "data") %||% p$data
+            if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
+                stop("'save_data = TRUE' is not supported for viz_type: ", viz_type, " and plot_type: ", case$plot_type)
+            }
+            write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+        }
+
+        caching$save(info$prefix)
+    }
 
     if (save_data) {
-        pdata <- attr(p, "data") %||% p$data
-        if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
-            stop("'save_data = TRUE' is not supported for viz_type: ", viz_type, " and plot_type: ", case$plot_type)
-        }
-        write.table(pdata, paste0(info$prefix, ".data.txt"), sep="\t", quote=FALSE, row.names=FALSE)
         reporter$add2(
             list(
                 name = "Plot",
@@ -504,12 +534,6 @@ do_case <- function(name, case) {
         }
 
         if (isTRUE(save_code)) {
-            save_plotcode(
-                p,
-                setup = c('library(scplotter)', '', 'load("data.RData")'),
-                prefix = info$prefix,
-                "case"
-            )
             report$download <- c(report$download, list(list(
                 src = paste0(info$prefix, ".code.zip"),
                 tip = "Download the code to reproduce the plot",
