@@ -29,6 +29,18 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         idents <- as.character(unique(idents))
     }
     process_celltypes <- function(ct, key = NULL) {
+        if (is.list(ct)) {
+            nonexisting <- setdiff(names(ct), idents)
+            if (length(nonexisting) > 0) {
+                if (is.null(key)) {
+                    log$warn(paste0("The following clusters do not exist: ", paste(nonexisting, collapse = ", ")))
+                } else {
+                    log$warn(paste0("The following clusters for '", key, "' do not exist: ", paste(nonexisting, collapse = ", ")))
+                }
+                ct <- ct[setdiff(names(ct), nonexisting)]
+            }
+            return(ct)
+        }
         if (length(ct) < length(idents)) {
             ct <- c(ct, idents[(length(ct) + 1):length(idents)])
         } else if (length(ct) > length(idents)) {

@@ -8,7 +8,7 @@ channels:
   - pytorch  # for ClusTCR
   - svalkiers  # for ClusTCR
 dependencies:
-  - conda-forge::python=3.11
+  - conda-forge::python=3.11  # truvari on bioconda not avai for python3.12 yet
   - conda-forge::nodejs=22  # for pipen-report
   - conda-forge::curl
   - conda-forge::time  # pipen-runinfo
@@ -24,13 +24,14 @@ dependencies:
   - conda-forge::r-broom.mixed  # tcr.CDR3AAPhyschem
   - conda-forge::r-gtools
   - conda-forge::r-matrixeqtl
-  - conda-forge::r-matrixstats=1.1.0
+  - conda-forge::r-matrixstats  #=1.1.0
   - conda-forge::r-rmagic
   - conda-forge::r-snow
   - conda-forge::r-upsetr
   - conda-forge::r-vegan
   - conda-forge::r-tidyseurat
   - conda-forge::r-hgnchelper
+  - conda-forge::r-harmony
   - pytorch::faiss-cpu
   - conda-forge::pip
   - bioconda::pysam
@@ -73,7 +74,6 @@ dependencies:
   - pwwang::r-gsea_r
   - pwwang::r-seuratwrappers
   - pwwang::r-sccatch
-  - pwwang::r-harmony
   - pwwang::r-aneuploidyscore
   - pwwang::r-biopipen.utils  # R utilities for biopipen
   - pwwang::bioconductor-data-packages

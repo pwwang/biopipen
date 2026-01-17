@@ -130,7 +130,7 @@ class CellTypeAnnotationDirect(CellTypeAnnotation_):
         "tool": "direct",
         "cell_types": [
             "Naive CD4+ T",
-            "B",
+            "NA",
             "Memory CD4+",
             "Naive CD4+ T",
             "DC",
@@ -140,6 +140,19 @@ class CellTypeAnnotationDirect(CellTypeAnnotation_):
             "FCFR3A+ Mono",
             "CD8+ T",
         ],
+        "merge": True,
+    }
+
+
+class CellTypeAnnotationDirect2(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "direct",
+        "cell_types": {
+            "c1": "Naive CD4+ T",
+            "c2": "NA",
+            "c5": "B"
+        },
         "merge": True,
     }
 

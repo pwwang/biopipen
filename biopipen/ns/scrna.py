@@ -1870,6 +1870,9 @@ class ScFGSEA(Proc):
     Envs:
         ncores (type=int): Number of cores for parallelization
             Passed to `nproc` of `fgseaMultilevel()`.
+        cache (type=auto): Where to cache the results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
@@ -1946,6 +1949,7 @@ class ScFGSEA(Proc):
     envs = {
         "mutaters": {},
         "ncores": config.misc.ncores,
+        "cache": config.path.tmpdir,
         "assay": None,
         "group_by": None,
         "ident_1": None,
@@ -2052,14 +2056,13 @@ class CellTypeAnnotation(Proc):
             Compatible with `sctype_db`.
             See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
-        cell_types (list): The cell types to use for direct annotation.
-            You can use `"-"` or `""` as the placeholder for the clusters that
-            you want to keep the original cell types.
-            If the length of `cell_types` is shorter than the number of
-            clusters, the remaining clusters will be kept as the original cell
-            types.
+        cell_types (type=auto): The cell types to use for direct annotation.
+            If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
+            you want to keep the original cell types. If the length of `cell_types` is shorter than the number of
+            clusters, the remaining clusters will be kept as the original cell types.
             You can also use `NA` to remove the clusters from downstream analysis. This
             only works when `envs.newcol` is not specified.
+            If given as a dict (map), the keys are the original cluster names and the values are the new cell types.
 
             /// Note
             If `tool` is `direct` and `cell_types` is not specified or an empty list,
