@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.1.5
+
+- fix(scrna.CellTypeAnnotation): ensure at least 2 clusters for cell type annotation for scCATCH
+- feat(tcr.ClonalStats): add caching functionality for plots
+- feat(scrna.ScFGSEA): add caching functionality for GSEA results
+- feat(scrna.CellTypeAnnotation): enhance cell type annotation functionality to support dict input for direct annotations
+
 ## 1.1.4
 
 - fix(scrna.MarkersFinder): update database handling in enrichment plots in case it is from gmt files
