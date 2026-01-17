@@ -22,6 +22,12 @@ if (is.null(ident)) {
     ident <- "Identity"
 }
 
+# Check if there is less than 2 clusters
+num_clusters <- length(unique(sobj@meta.data[[ident]]))
+if (num_clusters < 2) {
+    stop("The number of clusters is less than 2. Sccatch requires at least 2 clusters to perform cell type annotation.")
+}
+
 log$info("Running createscCATCH ...")
 obj = createscCATCH(data = GetAssayData(sobj, assay = sccatch_args$assay), cluster = as.character(sobj@meta.data[[ident]]))
 sccatch_args$object = obj
