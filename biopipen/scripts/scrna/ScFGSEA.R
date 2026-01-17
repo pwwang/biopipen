@@ -24,6 +24,7 @@ alleach_plots <- {{envs.alleach_plots | r}}  #
 ncores <- {{envs.ncores | r}}  # nolint
 rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
+cache <- {{envs.cache | r}}  # nolint
 
 log <- get_logger()
 reporter <- get_reporter()
@@ -227,16 +228,30 @@ do_case <- function(name) {
         }
     }
 
-    allclasses <- sobj@meta.data[, case$group_by, drop = TRUE]
-    if (is.null(case$ident_2)) {
-        case$ident_2 <- "Other"
-        allclasses[allclasses != case$ident_1] <- "Other"
-    }
-    exprs <- GetAssayData(sobj, layer = "data", assay = case$assay)
+    rest <- case$rest %||% list()
+    case$rest <- NULL
 
-    # get preranks
-    log$info("  Getting preranks...")
-    ranks <- RunGSEAPreRank(exprs, allclasses, case$ident_1, case$ident_2, case$method)
+    caching <- Cache$new(
+        c(case, list(sobj)),
+        prefix = "biopipen.scrna.ScFGSEA.RunGSEAPreRank",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("  Using cached ranks ...")
+        ranks <- caching$restore()
+    } else {
+        allclasses <- sobj@meta.data[, case$group_by, drop = TRUE]
+        if (is.null(case$ident_2)) {
+            case$ident_2 <- "Other"
+            allclasses[allclasses != case$ident_1] <- "Other"
+        }
+        exprs <- GetAssayData(sobj, layer = "data", assay = case$assay)
+
+        # get preranks
+        log$info("  Getting preranks...")
+        ranks <- RunGSEAPreRank(exprs, allclasses, case$ident_1, case$ident_2, case$method)
+        caching$save(ranks)
+    }
     write.table(
         as.data.frame(ranks),
         file.path(info$prefix, "fgsea.rank.txt"),
@@ -259,16 +274,27 @@ do_case <- function(name) {
     }
 
     # run fgsea
-    log$info("  Running fgsea...")
-    case$rest$ranks <- ranks
-    case$rest$genesets <- ParseGMT(case$gmtfile)
-    case$rest$minSize <- case$rest$minSize %||% case$rest$minsize %||% case$minsize
-    case$rest$maxSize <- case$rest$maxSize %||% case$rest$maxsize %||% case$maxsize
-    case$rest$eps <- case$eps
-    case$rest$nproc <- case$ncores
-    case$rest$minsize <- NULL
-    case$rest$maxsize <- NULL
-    result <- do_call(RunGSEA, case$rest)
+    caching <- Cache$new(
+        c(rest, list(ranks)),
+        prefix = "biopipen.scrna.ScFGSEA.RunGSEA",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("  Using cached fgsea results ...")
+        result <- caching$restore()
+    } else {
+        log$info("  Running fgsea...")
+        rest$ranks <- ranks
+        rest$genesets <- ParseGMT(case$gmtfile)
+        rest$minSize <- rest$minSize %||% rest$minsize %||% case$minsize
+        rest$maxSize <- rest$maxSize %||% rest$maxsize %||% case$maxsize
+        rest$eps <- case$eps
+        rest$nproc <- case$ncores
+        rest$minsize <- NULL
+        rest$maxsize <- NULL
+        result <- do_call(RunGSEA, rest)
+        caching$save(result)
+    }
     write.table(
         result,
         file.path(info$prefix, "fgsea.tsv"),

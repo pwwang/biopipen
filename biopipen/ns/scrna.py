@@ -1870,6 +1870,9 @@ class ScFGSEA(Proc):
     Envs:
         ncores (type=int): Number of cores for parallelization
             Passed to `nproc` of `fgseaMultilevel()`.
+        cache (type=auto): Where to cache the results.
+            If `True`, cache to `outdir` of the job. If `False`, don't cache.
+            Otherwise, specify the directory to cache to.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
@@ -1946,6 +1949,7 @@ class ScFGSEA(Proc):
     envs = {
         "mutaters": {},
         "ncores": config.misc.ncores,
+        "cache": config.path.tmpdir,
         "assay": None,
         "group_by": None,
         "ident_1": None,
