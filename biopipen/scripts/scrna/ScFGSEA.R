@@ -72,14 +72,15 @@ expand_each <- function(name, case) {
 
         outcases[[name]] <- case
     } else {
-        eachs <- if (!is.null(case$subset)) {
-            srtobj@meta.data %>%
-                filter(!!parse_expr(case$subset)) %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+        meta <- if (!is.null(case$subset)) {
+            srtobj@meta.data %>% filter(!!parse_expr(case$subset))
         } else {
-            srtobj@meta.data %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+            srtobj@meta.data
         }
+        if (!is.factor(meta[[case$each]])) {
+            meta[[case$each]] <- as.factor(meta[[case$each]])
+        }
+        eachs <- levels(droplevels(meta[[case$each]]))
 
         if (length(cases) == 0 && name == "GSEA") {
             prefix <- case$each
