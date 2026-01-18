@@ -148,14 +148,17 @@ post_casing <- function(name, case) {
 
         outcases[[name]] <- case
     } else {  # !no_each
-        eachs <- if (!is.null(case$subset)) {
+        meta <- if (!is.null(case$subset)) {
             srtobj@meta.data %>%
-                filter(!!parse_expr(case$subset)) %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+                filter(!!parse_expr(case$subset))
         } else {
-            srtobj@meta.data %>%
-                pull(case$each) %>% na.omit() %>% unique() %>% as.vector()
+            srtobj@meta.data
         }
+        if (!is.factor(meta[[case$each]])) {
+            meta[[case$each]] <- as.factor(meta[[case$each]])
+        }
+        eachs <- levels(droplevels(meta[[case$each]]))
+
         if (length(case$overlaps) > 0 && is.null(case$ident_1)) {
             stop("Cannot perform 'overlaps' analysis with 'each' and without 'ident_1' in case '", name, "'")
         }
