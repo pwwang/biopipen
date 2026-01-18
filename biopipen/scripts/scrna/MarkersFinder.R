@@ -149,8 +149,7 @@ post_casing <- function(name, case) {
         outcases[[name]] <- case
     } else {  # !no_each
         meta <- if (!is.null(case$subset)) {
-            srtobj@meta.data %>%
-                filter(!!parse_expr(case$subset))
+            srtobj@meta.data %>% filter(!!parse_expr(case$subset))
         } else {
             srtobj@meta.data
         }
