@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.1.6
+
+- fix(scrna.MarkersFinder): ensure proper handling of metadata and factor conversion in case processing to keep order of "each"
+- fix(scrna.PseudoBulkDEG): ensure proper handling of metadata and factor conversion in case processing to keep order of "each"
+- fix(scrna.ScFGSEA): ensure proper factor conversion for 'each' variable in case processing to keep order
+- fix(scrna.TopExpressingGenes): ensure proper factor conversion for 'each' variable in case processing to keep order
+
 ## 1.1.5
 
 - fix(scrna.CellTypeAnnotation): ensure at least 2 clusters for cell type annotation for scCATCH
