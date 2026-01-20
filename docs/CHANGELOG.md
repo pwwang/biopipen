@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.7
+
+- feat(scrna_metabolic_landscape): support multiple subset_by columns in Seurat object expansion
+- chore: bump pipen-runinfo to 1.1.2
+
 ## 1.1.6
 
 - fix(scrna.MarkersFinder): ensure proper handling of metadata and factor conversion in case processing to keep order of "each"
