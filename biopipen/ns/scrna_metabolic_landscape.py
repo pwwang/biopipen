@@ -47,11 +47,13 @@ class MetabolicPathwayActivity(Proc):
             Defaults to `ScrnaMetabolicLandscape.ncores`
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        subset_by (pgarg;readonly): Subset the data by the given column in the
+        subset_by (pgarg;type=auto;readonly): Subset the data by the given column in the
             metadata. For example, `Response`.
             `NA` values will be removed in this column.
             Defaults to `ScrnaMetabolicLandscape.subset_by`
             If None, the data will not be subsetted.
+            Multiple columns can be provided as a list, which is helpful when
+            subsets have overlapping cells.
         group_by (pgarg;readonly): Group the data by the given column in the
             metadata. For example, `cluster`.
             Defaults to `ScrnaMetabolicLandscape.group_by`
@@ -152,11 +154,13 @@ class MetabolicFeatures(Proc):
             - log2_ratio_of_classes: Log2 ratio of class means
         gmtfile (pgarg): The GMT file with the metabolic pathways.
             Defaults to `ScrnaMetabolicLandscape.gmtfile`
-        subset_by (pgarg;readonly): Subset the data by the given column in the
+        subset_by (pgarg;type=auto;readonly): Subset the data by the given column in the
             metadata. For example, `Response`.
             `NA` values will be removed in this column.
             Defaults to `ScrnaMetabolicLandscape.subset_by`
             If None, the data will not be subsetted.
+            Multiple columns can be provided as a list, which is helpful when
+            subsets have overlapping cells.
         group_by (pgarg;readonly): Group the data by the given column in the
             metadata. For example, `cluster`.
             Defaults to `ScrnaMetabolicLandscape.group_by`
@@ -250,11 +254,13 @@ class MetabolicPathwayHeterogeneity(Proc):
             the enriched pathways
         ncores (type=int;pgarg): Number of cores to use for parallelization
             Defaults to `ScrnaMetabolicLandscape.ncores`
-        subset_by (pgarg;readonly): Subset the data by the given column in the
+        subset_by (pgarg;type=auto;readonly): Subset the data by the given column in the
             metadata. For example, `Response`.
             `NA` values will be removed in this column.
             Defaults to `ScrnaMetabolicLandscape.subset_by`
             If None, the data will not be subsetted.
+            Multiple columns can be provided as a list, which is helpful when
+            subsets have overlapping cells.
         group_by (pgarg;readonly): Group the data by the given column in the
             metadata. For example, `cluster`.
             Defaults to `ScrnaMetabolicLandscape.group_by`
@@ -346,10 +352,12 @@ class ScrnaMetabolicLandscape(ProcGroup):
             You can also provide a URL to the GMT file.
             For example, from
             <https://download.baderlab.org/EM_Genesets/current_release/Human/symbol/>.
-        subset_by (pgarg;readonly): Subset the data by the given column in the
+        subset_by (pgarg;type=auto;readonly): Subset the data by the given column in the
             metadata. For example, `Response`.
             `NA` values will be removed in this column.
             If None, the data will not be subsetted.
+            Multiple columns can be provided as a list, which is helpful when
+            subsets have overlapping cells.
         group_by (pgarg;readonly): Group the data by the given column in the
             metadata. For example, `cluster`.
         mutaters (type=json): Add new columns to the metadata for

@@ -2,6 +2,7 @@ library(rlang)
 library(Seurat)
 library(biopipen.utils)
 library(enrichit)
+library(dplyr)
 library(tidyseurat)
 
 sobjfile <- {{ in.sobjfile | r }}
@@ -23,6 +24,48 @@ reporter <- get_reporter()
 
 log$info("Loading Seurat object ...")
 sobj <- read_obj(sobjfile)
+
+# Support multiple subset_by
+# This requires each subset_by to be a column in the metadata and
+# the values in these columns are NA and the non-NA values, where the non-NA values
+# should be distinct across different subset_by columns.
+# And in each subset_by column, the non-NA values should be a single value.
+# For example:
+#   subset_by_A: col1, col2
+#   metadata:
+#     cell    col1    col2
+#     c1      A       NA
+#     c2      A       NA
+#     c3      A       B
+#     c4      NA      B
+#     c5      NA      B
+#   This will be expanded to:
+#     cell    .Subsets
+#     c1_1    A
+#     c2_1    A
+#     c3_1    A
+#     c3_2    B
+#     c4_2    B
+#     c5_2    B
+if (length(subset_by) > 1) {
+    log$info("Expanding multiple subset_by columns: {paste(subset_by, collapse = ', ')} ...")
+    sobj <- Reduce(
+        merge,
+        lapply(subset_by, function(col) {
+            sobj_sub <- tryCatch(
+                filter(sobj, !is.na(!!sym(col))),
+                error = function(e) NULL
+            )
+            if (is.null(sobj_sub) || ncol(sobj_sub) == 0) {
+                log$warn("  ! No cells found for subset_by column: {col}, skipping ...")
+                return(NULL)
+            }
+            mutate(sobj_sub, .Subsets = as.character(!!sym(col)))
+        })
+    )
+    subset_by <- ".Subsets"
+    log$info("  Expanded Seurat object has {ncol(sobj)} cells.")
+}
 
 defaults <- list(
     prerank_method = prerank_method,
