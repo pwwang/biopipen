@@ -20,15 +20,17 @@ do_one_dimplot = function(name) {
     # Normalize arguments
     reduction <- if (reduction %in% c("dim", "auto")) DefaultDimReduc(srtobj) else reduction
     devpars <- list_update(dimplots_defaults$devpars, devpars)
-    key <- paste0("sub_umap_", case$group_by)
+    case$group_by <- case$group_by %||% GetIdentityColumn(srtobj)
+    # key <- paste0("sub_umap_", case$group_by)
+    subcluster_key <- paste0(case$group_by, ".", reduction)
 
     if (!is.null(subset)) {
         case$object <- srtobj %>% filter(!!parse_expr(subset))
     } else {
         case$object <- srtobj
     }
-    if (key %in% names(case$object@reductions) && is.null(reduction)) {
-        case$reduction = key
+    if (subcluster_key %in% names(case$object@reductions)) {
+        case$reduction = subcluster_key
     } else {
         case$reduction = reduction
     }

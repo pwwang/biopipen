@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.8
+
+- fix(scrna.SeuratClusterStats): fix dimplots for clusters from subclustering
+
 ## 1.1.7
 
 - feat(scrna_metabolic_landscape): support multiple subset_by columns in Seurat object expansion
