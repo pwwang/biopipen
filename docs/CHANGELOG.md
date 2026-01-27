@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.9
+
+- fix(scrna.SeuratSubClustering): correct argument references in RunSeuratSubClustering function
+- fix(scrna.SeuratClusterStats): handle reduction assignment for subclustering based on plot type and identity
+
 ## 1.1.8
 
 - fix(scrna.SeuratClusterStats): fix dimplots for clusters from subclustering
