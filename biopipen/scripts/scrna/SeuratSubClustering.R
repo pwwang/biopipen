@@ -51,10 +51,10 @@ for (name in names(cases)) {
         object = object,
         subset = case$subset,
         name = name,
-        RunPCAArgs = case$RunPCAArgs,
-        RunUMAPArgs = case$RunUMAPArgs,
-        FindNeighborsArgs = case$FindNeighborsArgs,
-        FindClustersArgs = case$FindClustersArgs,
+        RunPCAArgs = case$RunPCA,
+        RunUMAPArgs = case$RunUMAP,
+        FindNeighborsArgs = case$FindNeighbors,
+        FindClustersArgs = case$FindClusters,
         log = log,
         cache = cache
     )

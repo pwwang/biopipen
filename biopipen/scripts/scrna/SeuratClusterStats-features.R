@@ -107,6 +107,17 @@ do_one_features <- function(name) {
         caching$restore()
     } else {
         case$features <- .get_features(features, case$object)
+        if (identical(case$plot_type, "dim") && !is.null(case$ident)) {
+            # get the reduction like "subcluster.umap" in case of subclustering
+            reduction <- case$reduction %||% DefaultDimReduc(case$object)
+            subcluster_key <- paste0(case$ident, ".", reduction)
+            if (subcluster_key %in% names(case$object@reductions)) {
+                case$reduction = subcluster_key
+            } else {
+                case$reduction = reduction
+            }
+        }
+
         p <- tryCatch({
             do_call(gglogger::register(FeatureStatPlot), case)
         }, error = function(e) {
