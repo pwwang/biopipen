@@ -1,5 +1,14 @@
 # Change Log
 
+
+## 1.1.10
+
+- fix(stats.MetaPvalue): adjust p-value adjustment calculation to use distinct records
+- fix(stats.MetaPvalue1): adjust p-value adjustment calculation to use distinct id records
+- feat(plot): add DensityPlot class for generating density plots
+- feat: add version update functionality to Makefile
+- fix(scrna.SeuratClusterStats): ensure either 'group_by' or 'ident' is specified in dimplots, not both
+
 ## 1.1.9
 
 - fix(scrna.SeuratSubClustering): correct argument references in RunSeuratSubClustering function
