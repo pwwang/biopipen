@@ -16,11 +16,14 @@ do_one_dimplot = function(name) {
     subset <- case$subset; case$subset <- NULL
     reduction <- case$reduction; case$reduction <- NULL
     devpars <- case$devpars; case$devpars <- NULL
+    stopifnot("Either 'group_by' or 'ident' should be specified in dimplots, not both." =
+        is.null(case$group_by) || is.null(case$ident) || identical(case$group_by, case$ident))
 
     # Normalize arguments
     reduction <- if (reduction %in% c("dim", "auto")) DefaultDimReduc(srtobj) else reduction
     devpars <- list_update(dimplots_defaults$devpars, devpars)
-    case$group_by <- case$group_by %||% GetIdentityColumn(srtobj)
+
+    case$group_by <- case$group_by %||% case$ident %||% GetIdentityColumn(srtobj)
     # key <- paste0("sub_umap_", case$group_by)
     subcluster_key <- paste0(case$group_by, ".", reduction)
 

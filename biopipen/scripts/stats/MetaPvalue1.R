@@ -66,8 +66,10 @@ outdata <- outdata %>% arrange(MetaPval)
 
 if (padj != "none") {
     log$info("Calculating adjusted p-values ...")
-    outdata$MetaPadj <- p.adjust(outdata$MetaPval, method = padj)
-
+    pdata <- outdata %>% distinct(!!!syms(id_cols), MetaPval)
+    pdata$MetaPadj <- p.adjust(pdata$MetaPval, method = padj)
+    outdata <- outdata %>%
+        left_join(pdata %>% select(!!!syms(id_cols), MetaPadj), by = id_cols)
 }
 
 log$info("Writing output ...")

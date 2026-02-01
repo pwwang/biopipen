@@ -417,3 +417,34 @@ class Scatter(Proc):
         "stats": {},
     }
     script = "file://../scripts/plot/Scatter.R"
+
+
+class DensityPlot(Proc):
+    """Generate density plot using plotthis.
+
+    Input:
+        infile: The input file for data
+            It should contain at least one column for values.
+            Header is required.
+
+    Output:
+        outfile: The output figure file
+
+    Envs:
+        val_col: The column for values
+            An integer (1-based) or a string indicating the column name.
+        devpars (ns): The parameters for `png()`
+            - res (type=int): The resolution
+            - width (type=int): The width
+            - height (type=int): The height
+        <more>: Additional arguments for `plotthis::DensityPlot()`
+            See <https://pwwang.github.io/plotthis/reference/densityhistoplot.html>.
+    """
+    input = "infile:file"
+    output = "outfile:file:{{in.infile | stem}}.density.png"
+    lang = config.lang.rscript
+    envs = {
+        "val_col": 1,
+        "devpars": {"res": 100, "width": 800, "height": 600},
+    }
+    script = "file://../scripts/plot/DensityPlot.R"
