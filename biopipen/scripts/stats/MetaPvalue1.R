@@ -1,6 +1,7 @@
 library(metap)
 library(rlang)
 library(dplyr)
+library(data.table)
 library(biopipen.utils)
 
 infile <- {{in.infile | r}}
@@ -26,19 +27,19 @@ if (length(id_cols) == 1) {
 }
 
 log$info("Reading input and performing meta-analysis ...")
-outdata <- read.table(
-        infile, header = TRUE, sep = "\t", row.names = NULL, check.names = FALSE
-    ) %>%
-    group_by(!!!syms(id_cols)) %>%
-    summarise(
-        N = n(),
-        .pvals = list(!!sym(pval_col)),
-        .groups = "drop"
-    )
+dt <- fread(infile, sep = "\t", header = TRUE, check.names = FALSE)
+outdata <- dt[, list(N = .N, .pvals = list(get(pval_col))), by = id_cols]
+outdata <- as.data.frame(outdata)
 
-metaps <- c()
-ns <- c()
-for (ps in outdata$.pvals) {
+# Pre-allocate result vectors for maximum performance
+n_rows <- nrow(outdata)
+metaps <- numeric(n_rows)
+ns <- integer(n_rows)
+
+# Single-pass computation with pre-allocated vectors
+for (i in seq_len(n_rows)) {
+    ps <- outdata$.pvals[[i]]
+
     if (na == -1) {
         ps <- ps[!is.na(ps)]
     } else {
@@ -46,30 +47,37 @@ for (ps in outdata$.pvals) {
     }
 
     if (length(ps) == 0) {
-        metaps <- c(metaps, NA)
-        ns <- c(ns, NA)
+        metaps[i] <- NA_real_
+        ns[i] <- NA_integer_
     } else if (length(ps) == 1 && keep_single) {
-        metaps <- c(metaps, ps)
-        ns <- c(ns, 1)
+        metaps[i] <- ps
+        ns[i] <- 1L
     } else if (any(ps == 0)) {
-        metaps <- c(metaps, 0)
-        ns <- c(ns, length(ps))
+        metaps[i] <- 0
+        ns[i] <- length(ps)
     } else {
-        metaps <- c(metaps, do.call(method, list(ps))$p)
-        ns <- c(ns, length(ps))
+        metaps[i] <- do.call(method, list(ps))$p
+        ns[i] <- length(ps)
     }
 }
+
 outdata$MetaPval <- metaps
 outdata$N <- ns
 outdata$.pvals <- NULL
-outdata <- outdata %>% arrange(MetaPval)
+
+# Sort by MetaPval
+outdata <- setorder(as.data.table(outdata), MetaPval)
+outdata <- as.data.frame(outdata)
 
 if (padj != "none") {
     log$info("Calculating adjusted p-values ...")
-    pdata <- outdata %>% distinct(!!!syms(id_cols), MetaPval)
+    # Calculate adjusted p-values only on unique id_cols combinations
+    dt <- as.data.table(outdata)
+    pdata <- unique(dt, by = id_cols)[, c(id_cols, "MetaPval"), with = FALSE]
     pdata$MetaPadj <- p.adjust(pdata$MetaPval, method = padj)
-    outdata <- outdata %>%
-        left_join(pdata %>% select(!!!syms(id_cols), MetaPadj), by = id_cols)
+    setkeyv(dt, id_cols)
+    setkeyv(pdata, id_cols)
+    outdata <- as.data.frame(dt[pdata[, c(id_cols, "MetaPadj"), with = FALSE]])
 }
 
 log$info("Writing output ...")
