@@ -154,6 +154,8 @@ class SeuratPreparing(Proc):
             to calculate the cell cycle scores and regress them out in the following transformation step.
             Otherwise if this is empty, cell cycle scoring and the normalization before cell cycle scoring will be skipped.
             - trans_args (ns): Arguments for `RunSeuratTransformation()` to normalize the data before cell cycle scoring.
+                `use_sct` will be `FALSE` by default (not using `envs.use_sct`).
+                See <https://github.com/satijalab/seurat/issues/7694>.
                 - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.html>.
             - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.html>.
 

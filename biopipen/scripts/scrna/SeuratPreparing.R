@@ -73,8 +73,11 @@ if (
     )
 ) {
     envs$ccs_args$trans_args <- envs$ccs_args$trans_args %||% list()
-    # Use the same transformation method as the main transformation step for the normalization before cell cycle scoring
-    envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% envs$use_sct
+    # Using SCTransform with cell cycle score calculation is easily to cause error:
+    # Error in cut_number(): Insufficient data values to produce 24 bins
+    # occurs inside AddModuleScore → cut_number
+    # So we set use_sct to FALSE by default to use log-normalization for cell cycle score calculation
+    envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% FALSE
 }
 
 sobj <- LoadSeuratAndPerformQC(
