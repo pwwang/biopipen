@@ -83,6 +83,28 @@ class SeuratPreparing(SeuratPreparing_):
     envs = {
         "cell_qc": "runif(n()) < 0.5",
         "IntegrateLayers": {"method": "rpca", "k-weight": 30},
+        "use_sct": True,
+        "SCTransform": {"vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"]},
+        "ccs_args": {
+            # Insufficient data values to produce 24 bins when using sct
+            "trans_args": {"use_sct": False},
+            # pbmc3k doesn't have enough cell cycle genes,
+            # so just use some random genes for testing
+            "s-features": [
+                'CAMK1D', 'RFX5', 'TBC1D1', 'IPCEF1', 'CHMP2B', 'LSM2', 'COX6A1',
+                'GMPPA', 'ADRM1', 'SBF1', 'ARPC1A', 'VPS29', 'MARCH2', 'PSMC6',
+                'MTCH1', 'CDKN2AIP', 'ELMSAN1', 'SIK1', 'RPS15', 'FTSJ2', 'NAB1',
+                'UBE2M', 'TRABD', 'SH3BGRL', 'SRBD1', 'RPL23A', 'LY86', 'TNFRSF4',
+                'IL4R', 'PUF60',
+            ],
+            "g2m-features": [
+                'CCDC88C', 'GBP3', 'GPX7', 'BCL2', 'LCMT1', 'TSHZ2', 'CASP4', 'PPTC7',
+                'FAM60A', 'SF3A3', 'TSG101', 'VPS13A', 'CYLD', 'CCT6A', 'FAM211A',
+                'HLA-DRB5', 'SMARCAL1', 'NIFK', 'STOM', 'ZNF706', 'CNFN', 'LSM4',
+                'FAM172A', 'WIPI1', 'NRIP1', 'DUSP5', 'SH3BP2', 'SNAPC2',
+                'TPRKB', 'MRPL44',
+            ],
+        },
     }
 
 

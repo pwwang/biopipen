@@ -65,12 +65,25 @@ if (!"RNAData" %in% meta_cols && !is_seurat) {
 qcdir = file.path(joboutdir, "qc")
 dir.create(qcdir, showWarnings = FALSE, recursive = TRUE)
 
+if (
+    length(envs$ccs_args) > 0 ||
+    (
+        (envs$use_sct && any(c("S.Score", "G2M.Score") %in% envs$SCTransform$vars.to.regress)) ||
+        (!envs$use_sct && any(c("S.Score", "G2M.Score") %in% envs$ScaleData$vars.to.regress))
+    )
+) {
+    envs$ccs_args$trans_args <- envs$ccs_args$trans_args %||% list()
+    # Use the same transformation method as the main transformation step for the normalization before cell cycle scoring
+    envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% envs$use_sct
+}
+
 sobj <- LoadSeuratAndPerformQC(
     metadata,
     min_cells = envs$min_cells,
     min_features = envs$min_features,
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
+    ccs_args = envs$ccs_args,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
@@ -171,12 +184,6 @@ for (pname in names(envs$qc_plots)) {
 
 log$info("Filtering with QC criteria ...")
 sobj <- FinishSeuratQC(sobj)
-
-# Add cell cycle scores so that scaling/transformation can regress out cell cycle effects if needed
-# Is it possible to check if we are with human or mouse data?
-sobj <- RunSeuratCellCycleScoring(sobj, log = log)
-
-sobj <- CellCycleScoring(sobj, s.features = cc.genes$s.genes, g2m.features = cc.genes$g2m.genes, set.ident = FALSE)
 
 sobj <- RunSeuratTransformation(
     sobj,
