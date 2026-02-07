@@ -103,6 +103,21 @@ get_contig_dir <- function(input, sample, fmt) {
         stop(paste0("Input path does not exist for sample: ", sample, ": ", input))
     }
     if (dir.exists(input)) {
+        # scRepertoire::loadContigs() only recognizes filtered_contig_annotations.csv for 10X format
+        # In case we only have all_contig_annotations.csv, filtered_contig_annotations.csv.gz or all_contig_annotations.csv.gz,
+        # we will try to find them and link to the filedir
+        if (!file.exists(file.path(input, "filtered_contig_annotations.csv"))) {
+            if (file.exists(file.path(input, "all_contig_annotations.csv"))) {
+                return(get_contig_dir(file.path(input, "all_contig_annotations.csv"), sample, fmt))
+            }
+            if (file.exists(file.path(input, "filtered_contig_annotations.csv.gz"))) {
+                return(get_contig_dir(file.path(input, "filtered_contig_annotations.csv.gz"), sample, fmt))
+            }
+            if (file.exists(file.path(input, "all_contig_annotations.csv.gz"))) {
+                return(get_contig_dir(file.path(input, "all_contig_annotations.csv.gz"), sample, fmt))
+            }
+        }
+
         return(list(input, fmt))
     }
     # file
@@ -118,7 +133,9 @@ get_contig_dir <- function(input, sample, fmt) {
 
     fmt <- fmt %||% get_format(basename(input))
     filename <- get_file_name(fmt)
-    file.symlink(input, file.path(filedir, filename))
+    if (input != file.path(filedir, filename)) {
+        file.symlink(input, file.path(filedir, filename))
+    }
 
     return(list(filedir, fmt))
 }
