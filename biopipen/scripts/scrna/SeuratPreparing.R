@@ -172,6 +172,12 @@ for (pname in names(envs$qc_plots)) {
 log$info("Filtering with QC criteria ...")
 sobj <- FinishSeuratQC(sobj)
 
+# Add cell cycle scores so that scaling/transformation can regress out cell cycle effects if needed
+# Is it possible to check if we are with human or mouse data?
+sobj <- RunSeuratCellCycleScoring(sobj, log = log)
+
+sobj <- CellCycleScoring(sobj, s.features = cc.genes$s.genes, g2m.features = cc.genes$g2m.genes, set.ident = FALSE)
+
 sobj <- RunSeuratTransformation(
     sobj,
     use_sct = envs$use_sct,
