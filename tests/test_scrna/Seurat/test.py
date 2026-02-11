@@ -146,6 +146,15 @@ class CellTypeAnnotation(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationScType(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "sctype",
+        "sctype_tissue": "Immune system",
+        "sctype_db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+    }
+
+
 class CellTypeAnnotationDirect(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {

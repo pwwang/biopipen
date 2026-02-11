@@ -83,7 +83,7 @@ for (i in seq_along(gs_list)) {
 }
 
 if (length(cell_types_list) == 1) {
-    celltypes = cell_types_list[[1]]
+    celltypes = as.list(cell_types_list[[1]])
 } else {
     log$info("Merging cell types at all levels ...")
     celltypes = list()
