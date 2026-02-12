@@ -148,6 +148,17 @@ class SeuratPreparing(Proc):
             will keep genes that are expressed in at least 3 cells.
             ///
 
+        ccs_args (ns): Arguments for `RunSeuratCellCycleScoring()`.
+            When "S.Score" and/or "G2M.Score" are specified in `envs.SCTransform.vars-to-regress` when `envs.use_sct = TRUE`
+            or in `envs.ScaleData.vars-to-regress` when `envs.use_sct = FALSE`, this will be automatically enabled
+            to calculate the cell cycle scores and regress them out in the following transformation step.
+            Otherwise if this is empty, cell cycle scoring and the normalization before cell cycle scoring will be skipped.
+            - trans_args (ns): Arguments for `RunSeuratTransformation()` to normalize the data before cell cycle scoring.
+                `use_sct` will be `FALSE` by default (not using `envs.use_sct`).
+                See <https://github.com/satijalab/seurat/issues/7694>.
+                - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.html>.
+            - <more>: See <https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.html>.
+
         qc_plots (type=json): The plots for QC metrics.
             It should be a json (or python dict) with the keys as the names of the plots and
             the values also as dicts with the following keys:
@@ -277,6 +288,7 @@ class SeuratPreparing(Proc):
         "min_features": 0,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "gene_qc": {"min_cells": 0, "excludes": []},
+        "ccs_args": {},
         "qc_plots": {
             "Violin Plots": {
                 "kind": "cell",

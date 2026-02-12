@@ -65,12 +65,28 @@ if (!"RNAData" %in% meta_cols && !is_seurat) {
 qcdir = file.path(joboutdir, "qc")
 dir.create(qcdir, showWarnings = FALSE, recursive = TRUE)
 
+if (
+    length(envs$ccs_args) > 0 ||
+    (
+        (envs$use_sct && any(c("S.Score", "G2M.Score") %in% envs$SCTransform$vars.to.regress)) ||
+        (!envs$use_sct && any(c("S.Score", "G2M.Score") %in% envs$ScaleData$vars.to.regress))
+    )
+) {
+    envs$ccs_args$trans_args <- envs$ccs_args$trans_args %||% list()
+    # Using SCTransform with cell cycle score calculation is easily to cause error:
+    # Error in cut_number(): Insufficient data values to produce 24 bins
+    # occurs inside AddModuleScore → cut_number
+    # So we set use_sct to FALSE by default to use log-normalization for cell cycle score calculation
+    envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% FALSE
+}
+
 sobj <- LoadSeuratAndPerformQC(
     metadata,
     min_cells = envs$min_cells,
     min_features = envs$min_features,
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
+    ccs_args = envs$ccs_args,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)

@@ -103,6 +103,37 @@ get_contig_dir <- function(input, sample, fmt) {
         stop(paste0("Input path does not exist for sample: ", sample, ": ", input))
     }
     if (dir.exists(input)) {
+        # scRepertoire::loadContigs() only recognizes filtered_contig_annotations.csv for 10X format
+        # In case we only have all_contig_annotations.csv, filtered_contig_annotations.csv.gz or all_contig_annotations.csv.gz,
+        # we will try to find them and link to the filedir
+        if (!file.exists(file.path(input, "filtered_contig_annotations.csv"))) {
+            if (file.exists(file.path(input, "filtered_contig_annotations.csv.gz"))) {
+                return(get_contig_dir(file.path(input, "filtered_contig_annotations.csv.gz"), sample, fmt))
+            }
+            variant_file <- Sys.glob(file.path(input, "*filtered_contig_annotations.*"))
+            if (length(variant_file) > 1) {
+                warning(paste0("Multiple filtered contig annotation files found for sample: ", sample, ". Using the first one: ", variant_file[1]), immediate. = TRUE)
+                variant_file <- variant_file[1]
+            }
+            if (length(variant_file) == 1) {
+                return(get_contig_dir(variant_file, sample, fmt))
+            }
+            if (file.exists(file.path(input, "all_contig_annotations.csv"))) {
+                return(get_contig_dir(file.path(input, "all_contig_annotations.csv"), sample, fmt))
+            }
+            if (file.exists(file.path(input, "all_contig_annotations.csv.gz"))) {
+                return(get_contig_dir(file.path(input, "all_contig_annotations.csv.gz"), sample, fmt))
+            }
+            variant_file <- Sys.glob(file.path(input, "*all_contig_annotations.*"))
+            if (length(variant_file) > 1) {
+                warning(paste0("Multiple all contig annotation files found for sample: ", sample, ". Using the first one: ", variant_file[1]), immediate. = TRUE)
+                variant_file <- variant_file[1]
+            }
+            if (length(variant_file) == 1) {
+                return(get_contig_dir(variant_file, sample, fmt))
+            }
+        }
+
         return(list(input, fmt))
     }
     # file
@@ -118,7 +149,9 @@ get_contig_dir <- function(input, sample, fmt) {
 
     fmt <- fmt %||% get_format(basename(input))
     filename <- get_file_name(fmt)
-    file.symlink(input, file.path(filedir, filename))
+    if (input != file.path(filedir, filename)) {
+        file.symlink(input, file.path(filedir, filename))
+    }
 
     return(list(filedir, fmt))
 }

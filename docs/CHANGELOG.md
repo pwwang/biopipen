@@ -1,6 +1,18 @@
 # Change Log
 
 
+## 1.1.11
+
+- refactor(stats.MetaPvalue1): optimize meta-analysis computation and improve performance
+- feat(tcr.ScRepLoading): improve handling of contig file formats for 10X data
+- feat(scrna.SeuratPreparing): add cell cycle scoring functionality to Seurat object preparation
+- feat(scrna.SeuratPreparing): add cell cycle scoring arguments to SeuratPreparing
+- feat(scrna.SeuratPreparing): set use_sct to FALSE by default for cell cycle scoring
+- fix(scrna.MarkersFinder): improve plot argument handling for subset by group and plot types
+- feat(tcr.ScRepLoading): support loading from prefixed contig files
+- fix(scrna.CellTypeAnnotation): fix sctype not working
+
+
 ## 1.1.10
 
 - fix(stats.MetaPvalue): adjust p-value adjustment calculation to use distinct records
