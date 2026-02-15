@@ -169,6 +169,13 @@ load_contig <- function(input, sample, fmt) {
         x$X <- NULL
     }
 
+    if (type == "TCR") {
+        # Remove records with IG? chain, as it causes error in combineTCR()
+        x <- x[!grepl("^IG[HKL]", x$chain), , drop = FALSE]
+    } else if (type == "BCR") {
+        # Remove records with TR? chain, as it causes error in combineBCR()
+        x <- x[!grepl("^TR[ABDG]", x$chain), , drop = FALSE]
+    }
     x
 }
 
