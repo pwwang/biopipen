@@ -150,16 +150,16 @@ do_one_features <- function(name) {
         "{if (!is.null(case$group_by)) glue(', grouped by \"{case$group_by}\"') else ''}",
         "{if (!is.null(case$split_by)) glue(', and split by \"{case$split_by}\"') else ''}. ",
         "The plot type is '{case$plot_type}', ",
-        "{if (case$plot_type == 'dim') 'displaying the features on a dimensional reduction embedding' ",
-        " else if (case$plot_type == 'heatmap') 'arranged as a heatmap by rows_name and other grouping variables' ",
-        " else if (case$plot_type %in% c('violin', 'box', 'ridge')) 'showing the distribution of feature values by the grouping variables' ",
-        " else if (case$plot_type == 'cor') 'showing the correlation between features' ",
+        "{if (identical(case$plot_type, 'dim')) 'displaying the features on a dimensional reduction embedding' ",
+        " else if (identical(case$plot_type, 'heatmap')) 'arranged as a heatmap by rows_name and other grouping variables' ",
+        " else if (!is.null(case$plot_type) && case$plot_type %in% c('violin', 'box', 'ridge')) 'showing the distribution of feature values by the grouping variables' ",
+        " else if (identical(case$plot_type, 'cor')) 'showing the correlation between features' ",
         " else 'showing aggregated feature values by the grouping variables'}. ",
         "{if (!is.null(case$facet_by)) glue('Plots are further faceted by \"{case$facet_by}\". ') else ''}",
-        "{if (case$plot_type == 'dim') glue('The reduction used is \"{if (!is.null(case$reduction)) case$reduction else DefaultDimReduc(case$object)}\"') else ''}",
-        "{if (case$plot_type == 'dim' && !is.null(case$graph)) glue(', with graph \"{case$graph}\" drawn to show cell neighbor edges') else ''}",
-        "{if (case$plot_type == 'dim' && !is.null(case$bg_cutoff) && case$bg_cutoff > 0) glue(', and a background cutoff of {case$bg_cutoff}') else ''}",
-        "{if (case$plot_type == 'dim') glue(', using dimensions {paste(case$dims %||% 1:2, collapse = \",\")}') else ''}"
+        "{if (identical(case$plot_type, 'dim')) glue('The reduction used is \"{if (!is.null(case$reduction)) case$reduction else DefaultDimReduc(case$object)}\"') else ''}",
+        "{if (identical(case$plot_type, 'dim') && !is.null(case$graph)) glue(', with graph \"{case$graph}\" drawn to show cell neighbor edges') else ''}",
+        "{if (identical(case$plot_type, 'dim') && !is.null(case$bg_cutoff) && case$bg_cutoff > 0) glue(', and a background cutoff of {case$bg_cutoff}') else ''}",
+        "{if (identical(case$plot_type, 'dim')) glue(', using dimensions {paste(case$dims %||% 1:2, collapse = \",\")}') else ''}"
     )
     if (!is.null(case$comparisons)) {
         default_descr <- paste0(
