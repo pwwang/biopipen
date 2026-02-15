@@ -1,6 +1,13 @@
 # Change Log
 
 
+## 1.1.12
+
+- fix(scrna.SeuratClusterStats): improve plot description handling when plot_type is not given
+- chore(scrna.SeuratClusterStats): set default options for pies plot for stats
+- fix(tcr.ScRepLoading): remove records with IG? or TR? chains to prevent errors in combineTCR and combineBCR
+
+
 ## 1.1.11
 
 - refactor(stats.MetaPvalue1): optimize meta-analysis computation and improve performance

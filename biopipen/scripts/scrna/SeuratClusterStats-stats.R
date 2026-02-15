@@ -5,8 +5,6 @@ log$info("stats:")
 odir <- file.path(outdir, "stats")
 dir.create(odir, recursive=TRUE, showWarnings=FALSE)
 
-
-
 do_one_stats <- function(name) {
     log$info("- Case: {name}")
 
@@ -24,6 +22,16 @@ do_one_stats <- function(name) {
         for (g in groupings) {
             case$object <- filter(case$object, !is.na(!!sym(g)))
         }
+    }
+    if (identical(case$plot_type, "pies")) {
+        case$show_row_names <- case$show_row_names %||% TRUE
+        case$show_column_names <- case$show_column_names %||% TRUE
+        case$add_reticle <- case$add_reticle %||% TRUE
+        case$pie_palette <- case$pie_palette %||% "Paired"
+        case$rows_palette <- case$rows_palette %||% "Set3"
+        case$columns_palette <- case$columns_palette %||% "Set1"
+        case$pie_size <- case$pie_size %||% "sqrt"
+        case$pie_values <- case$pie_values %||% "sum"
     }
 
     info <- case_info(name, odir, is_dir = FALSE, create = TRUE)
