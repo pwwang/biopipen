@@ -16,6 +16,9 @@ RunUMAPArgs <- {{envs.RunUMAP | r: todot = "-"}}
 FindNeighborsArgs <- {{envs.FindNeighbors | r: todot = "-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot = "-"}}
 cases <- {{envs.cases | r}}
+python <- {{envs.python | r}}
+
+Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
 
 options(future.globals.maxSize = Inf)
 plan(strategy = "multicore", workers = ncores)
