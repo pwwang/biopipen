@@ -15,6 +15,9 @@ RunUMAPArgs <- {{envs.RunUMAP | r: todot="-"}}
 ident <- {{envs.ident | r }}
 cache <- {{envs.cache | r}}
 ncores <- {{envs.ncores | r}}
+python <- {{envs.python | r}}
+
+Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
 
 FindClustersArgs$cluster.name <- FindClustersArgs$cluster.name %||% ident %||% "seurat_clusters"
 

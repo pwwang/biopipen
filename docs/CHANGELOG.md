@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.13
+
+- chore(deps): add umap-learn for Seurat's RunUMAP functionality in conda yml file
+- feat(scrna.Seurat[Sub]Clustering): add python executable path for RunUMAP
+- Merge remote-tracking branch 'origin/master' into dev
 
 ## 1.1.12
 

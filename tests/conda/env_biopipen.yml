@@ -93,3 +93,4 @@ dependencies:
     - mygene
     - liana
     - cyvcf2==0.31.1  # works with numpy v2+
+    - umap-learn  # for Seurat's RunUMAP with umap.method="umap-learn"

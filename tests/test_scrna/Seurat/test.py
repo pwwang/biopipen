@@ -132,6 +132,7 @@ class SeuratClustering(SeuratClustering_):
     requires = SeuratPreparing
     envs = {
         "ncores": 1,
+        "RunUMAP": {"umap.method": "umap-learn"},
         "FindNeighbors": {"dims": 5},
         "FindClusters": {"resolution": "0.1:1,.8"},
     }
@@ -204,6 +205,7 @@ class SeuratSubClustering(SeuratSubClustering_):
             },
             "dc_subcluster": {
                 "subset": "seurat_clusters == 'c2'",
+                "RunUMAP": {"umap.method": "umap-learn"},
                 "FindClusters": {"resolution": "0.1:0.8,0.2"},
             },
         },

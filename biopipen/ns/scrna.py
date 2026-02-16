@@ -352,6 +352,8 @@ class SeuratClustering(Proc):
             See also: <https://satijalab.org/seurat/articles/future_vignette.html>
         ident: The name in the metadata to save the cluster labels.
             A shortcut for `envs["FindClusters"]["cluster.name"]`.
+        python: The path to the python executable where `umap-learn` is installed.
+            Needed for `RunUMAP` when `umap.method` is set to `umap-learn`.
         RunUMAP (ns): Arguments for [`RunUMAP()`](https://satijalab.org/seurat/reference/runumap).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             `dims=N` will be expanded to `dims=1:N`; The maximal value of `N` will be the minimum of `N` and the number of columns - 1 for each sample.
@@ -400,6 +402,7 @@ class SeuratClustering(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "ident": "seurat_clusters",
+        "python": config.lang.python,
         "RunPCA": {},
         "RunUMAP": {},
         "FindNeighbors": {},
@@ -432,6 +435,8 @@ class SeuratSubClustering(Proc):
         ncores (type=int;order=-100): Number of cores to use.
             Used in `future::plan(strategy = "multicore", workers = <ncores>)`
             to parallelize some Seurat procedures.
+        python: The path to the python executable where `umap-learn` is installed.
+            Needed for `RunUMAP` when `umap.method` is set to `umap-learn`.
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
         subset: An expression to subset the cells, will be passed to
@@ -486,6 +491,7 @@ class SeuratSubClustering(Proc):
     envs = {
         "ncores": config.misc.ncores,
         "mutaters": {},
+        "python": config.lang.python,
         "subset": None,
         "RunPCA": {},
         "RunUMAP": {},
