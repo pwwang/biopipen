@@ -1,5 +1,12 @@
 # Change Log
 
+
+## 1.1.14
+
+- feat(scrna.SeuratClusterStats): support 3D dimplots
+- chore: bump pipen-report to 1.1.1
+- enh(scrna.SeuratClusterStats): improve dimensionality reduction plot description to include default identity context
+
 ## 1.1.13
 
 - chore(deps): add umap-learn for Seurat's RunUMAP functionality in conda yml file
