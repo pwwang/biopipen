@@ -132,7 +132,7 @@ class SeuratClustering(SeuratClustering_):
     requires = SeuratPreparing
     envs = {
         "ncores": 1,
-        "RunUMAP": {"umap.method": "umap-learn"},
+        "RunUMAP": {"umap.method": "umap-learn", "n.components": 3},
         "FindNeighbors": {"dims": 5},
         "FindClusters": {"resolution": "0.1:1,.8"},
     }
@@ -354,6 +354,7 @@ class SeuratClusterStats(SeuratClusterStats_):
             "Heatmap": {"plot_type": "heatmap"},
         },
         "dimplots": {
+            "3d": {"dims": [1, 2, 3], "label": True},
             "seurat_clusters": {"group_by": "seurat_clusters"},
             "nk_subcluster": {
                 "group_by": "mono_subcluster",
