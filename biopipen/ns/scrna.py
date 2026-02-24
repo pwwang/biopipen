@@ -845,6 +845,9 @@ class SeuratClusterStats(Proc):
         features (type=json): The plots for features, include gene expressions, and columns from metadata.
             Keys are the titles of the cases and values are the dicts inherited from `env.features_defaults`.
         dimplots_defaults (ns): The default parameters for `dimplots`.
+            You can also set `dims` to `[1, 2, 3]` to make a 3D dimensional reduction plot.
+            Note that the default `n.components` for `RunUMAP` is 2, so if you want to make a 3D UMAP plot,
+            you need to set `n.components` to 3 in `RunUMAP` parameters in `SeuratSubClustering` or `SeuratClustering`.
             - group_by: The identity to use.
                 If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
                 is set to `dim` or `auto`.
