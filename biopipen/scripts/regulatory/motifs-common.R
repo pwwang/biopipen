@@ -307,13 +307,13 @@ plot_variant_motifs <- function(results, variant, devpars, outdir) {
         stop(sprintf("Variant %s not found in results", variant))
     }
     devpars$res <- devpars$res %||% 100
-    devpars$height <- get_worh(2.4 * devpars$res + length(res) * 1.2 * devpars$res, devpars$height)
+    devpars$height <- biopipen.utils:::get_worh(2.4 * devpars$res + length(res) * 1.2 * devpars$res, devpars$height)
     if (is.null(devpars$width)) {
         left <- min(sapply(res$motifPos, `[`, 1))
         right <- max(sapply(res$motifPos, `[`, 2))
         width <- 1.5 * devpars$res + (right - left) * 0.3 * devpars$res
         width <- max(devpars$width, 5 * devpars$res)
-        devpars$width <- get_worh(width, devpars$width)
+        devpars$width <- biopipen.utils:::get_worh(width, devpars$width)
     }
 
     plotfile <- file.path(plotdir, sprintf("%s.png", slugify(variant)))
