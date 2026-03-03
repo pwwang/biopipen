@@ -157,7 +157,7 @@ if (doplot) {
     callrate.sample[callrate.sample.fail, "Status"] <- "Fail"
     callrate.sample$Status <- factor(callrate.sample$Status, levels = c("Fail", "Pass"))
 
-    p_callrate_file <- paste0(output, '.samplecr.png')
+    p_callrate_file <- paste0(output, '.samplecr')
     p_callrate <- Histogram(
         callrate.sample,
         x = "Callrate",
@@ -168,18 +168,13 @@ if (doplot) {
         alpha = 0.8,
         bins = 50
     )
-    res <- 70
-    height <- attr(p_callrate, "height") * res
-    width <- attr(p_callrate, "width") * res
-    png(p_callrate_file, width = width, height = height, res = res)
-    print(p_callrate)
-    dev.off()
+    save_plot(p_callrate, prefix = p_callrate_file, devpars = devpars)
 
     vmiss$Status <- "Pass"
     vmiss[which(vmiss$Callrate < varcr), "Status"] <- "Fail"
     vmiss$Status <- factor(vmiss$Status, levels = c("Fail", "Pass"))
 
-    p_varcr_file <- paste0(output, '.varcr.png')
+    p_varcr_file <- paste0(output, '.varcr')
     p_varcr <- Histogram(
         vmiss,
         x = "Callrate",
@@ -190,10 +185,6 @@ if (doplot) {
         alpha = 0.8,
         bins = 50
     )
-    res <- 70
-    height <- attr(p_varcr, "height") * res
-    width <- attr(p_varcr, "width") * res
-    png(p_varcr_file, width = width, height = height, res = res)
-    print(p_varcr)
-    dev.off()
+    # Use a different devpars?
+    save_plot(p_varcr, prefix = p_varcr_file, devpars = devpars)
 }

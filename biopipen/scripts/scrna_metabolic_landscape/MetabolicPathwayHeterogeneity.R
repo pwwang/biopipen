@@ -239,14 +239,7 @@ do_subset <- function(object, caseinfo, subset_by, subset_val, group_by, plots, 
         plotargs$devpars$width <- plotargs$devpars$width %||% (attr(p, "width") * plotargs$devpars$res) %||% 800
         plotargs$devpars$height <- plotargs$devpars$height %||% (attr(p, "height") * plotargs$devpars$res) %||% 600
         plotargs$devpars$height <- max(plotargs$devpars$height, plotargs$devpars$width / 1.5)
-        png(
-            filename = paste0(plotprefix, ".png"),
-            width = plotargs$devpars$width,
-            height = plotargs$devpars$height,
-            res = plotargs$devpars$res
-        )
-        print(p)
-        dev.off()
+        save_plot(p, prefix = plotprefix, devpars = plotargs$devpars)
 
         reporter$add(
             list(

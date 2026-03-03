@@ -61,17 +61,7 @@ if (doplot) {
         ylab = "Count",
         palette = "Set1"
     )
-    res <- 70
-    height <- attr(p, "height") * res
-    width <- attr(p, "width") * res
-    png(
-        filename = paste0(output, '.hardy.png'),
-        width = width,
-        height = height,
-        res = res
-    )
-    print(p)
-    dev.off()
+    save_plot(p, prefix = paste0(output, '.hardy'), devpars = devpars)
 }
 
 cmd <- c(

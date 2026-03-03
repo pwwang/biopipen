@@ -386,9 +386,7 @@ do_subset <- function(
         }
 
         plotprefix <- paste0(prefix, slugify(plotname))
-        png(paste0(plotprefix, ".png"), res = devpars$res, width = devpars$width, height = devpars$height)
-        print(p)
-        dev.off()
+        save_plot(p, prefix = plotprefix, devpars = devpars)
 
         descr <- plotargs$descr %||% paste0(
             plotname, " a ", plotargs$plot_type, " plot of pathway activity for ", group_by, ". "
@@ -518,9 +516,7 @@ do_case <- function(casename) {
         devpars$height <- devpars$height %||% (attr(p, "height") * devpars$res) %||% 1000
 
         prefix <- file.path(caseinfo$prefix, paste0(slugify(plotname), ".merged_heatmap"))
-        png(paste0(prefix, ".png"), res = devpars$res, width = devpars$width, height = devpars$height)
-        print(p)
-        dev.off()
+        save_plot(p, prefix = prefix, devpars = devpars)
 
         descr <- plotargs$descr %||% "Merged Heatmaps for Pathway Activity of all subsets."
 
