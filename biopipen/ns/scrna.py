@@ -994,6 +994,9 @@ class ModuleScoreCalculator(Proc):
                 - min: The min of the expression levels
                 - var: The variance of the expression levels
                 - sd: The standard deviation of the expression levels
+            - <more>: Other arguments passed to `Seurat::AddModuleScore()` or `Seurat::CellCycleScoring()`.
+                See <https://satijalab.org/seurat/reference/addmodulescore> and
+                <https://satijalab.org/seurat/reference/cellcyclescoring>
         modules (type=json): The modules to calculate the scores.
             Keys are the names of the expression programs and values are the
             dicts inherited from `env.defaults`.
