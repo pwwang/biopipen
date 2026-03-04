@@ -84,16 +84,37 @@ for (key in names(modules)) {
     }
 
     module$object <- sobj
-    if (length(module$features) == 1 && module$features == "cc.genes") {
+    if (identical(module$features, "cc.genes")) {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes$s.genes
         module$g2m.features <- cc.genes$g2m.genes
-    } else if (length(module$features) == 1 && module$features == "cc.genes.updated.2019") {
+    } else if (identical(module$features, "cc.genes.updated.2019")) {
         is_cc <- TRUE
         module$features <- NULL
         module$s.features <- cc.genes.updated.2019$s.genes
         module$g2m.features <- cc.genes.updated.2019$g2m.genes
+    } else if (identical(module$features, "cc.genes.mouse")) {
+        is_cc <- TRUE
+
+        s.genes.mouse <- c(
+            "Mcm5", "Pcna", "Tyms", "Fen1", "Mcm7", "Mcm4", "Rrm1", "Ung", "Gins2", "Mcm6",
+            "Cdca7", "Dtl", "Prim1", "Uhrf1", "Cenpu", "Hells", "Rfc2", "Polr1b", "Nasp",
+            "Rad51ap1", "Gmnn", "Wdr76", "Slbp", "Ccne2", "Ubr7", "Msh2", "Rad51", "Rrm2",
+            "Cdc45", "Cdc6", "Exo1", "Tipin", "Dscc1", "Blm", "Casp8ap2", "Usp1", "Clspn",
+            "Pola1", "Chaf1b", "Mrpl36", "E2f8"
+        )
+        g2m.genes.mouse <- c(
+            "Hmgb2", "Cdk1", "Nusap1", "Ube2c", "Birc5", "Tpx2", "Top2a", "Ndc80", "Cks2",
+            "Nuf2", "Cks1b", "Mki67", "Tmpo", "Cenpf", "Tacc3", "Pimreg", "Smc4", "Ccnb2",
+            "Ckap2l", "Ckap2", "Aurkb", "Bub1", "Kif11", "Anp32e", "Tubb4b", "Gtse1",
+            "Kif20b",  "Hjurp", "Cdca3", "Jpt1", "Cdc20", "Ttk", "Cdc25c", "Kif2c", "Rangap1",
+            "Ncapd2", "Dlgap5", "Cdca2", "Cdca8", "Ect2", "Kif23",  "Hmmr", "Aurka", "Psrc1",
+            "Anln", "Lbr", "Ckap5", "Cenpe", "Ctcf", "Nek2", "G2e3", "Gas2l3", "Cbx5", "Cenpa"
+        )
+        module$features <- NULL
+        module$s.features <- s.genes.mouse
+        module$g2m.features <- g2m.genes.mouse
     } else {
         module$name <- key
         if (length(module$features) == 1) {

@@ -1002,6 +1002,7 @@ class ModuleScoreCalculator(Proc):
             dicts inherited from `env.defaults`.
             Here are some examples -
             >>> {
+            >>>     "CellCycleMouse": {"features": "cc.genes.mouse"},
             >>>     "CellCycle": {"features": "cc.genes.updated.2019"},
             >>>     "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
             >>>     "Activation": {"features": "IFNG"},
