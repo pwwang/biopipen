@@ -41,6 +41,8 @@ mquad = "mquad"
 wget = "wget"
 # aria2c
 aria2c = "aria2c"
+# pipseeker
+pipseeker = "pipseeker"
 # plink
 plink = "plink"
 # plink2
@@ -83,6 +85,8 @@ liftover_chain = ""
 ref_cellranger_gex = ""
 # The reference for cellranger vdj
 ref_cellranger_vdj = ""
+# The reference for pipseeker
+ref_pipseeker = ""
 # The reference genome
 reffa = ""
 # The directory with reference for each chromosome
