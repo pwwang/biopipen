@@ -15,7 +15,7 @@ class PipseekerFull(Proc):
     Tested with pipseeker v3.3.0
 
     Input:
-        fastqfile: The input fastq file
+        fastqs: The input fastq file
 
     Output:
         outdir: The output directory
@@ -79,7 +79,7 @@ class PipseekerSummary(Proc):
         indirs: The input directories containing the output of pipseeker full command.
 
     Output:
-        outfile: The summarized output file
+        outdir: The summarized output directory
 
     Envs:
         sensitivity (type=list): A list of level3 of sensitivity to use for
