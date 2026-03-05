@@ -101,7 +101,7 @@ class PipseekerSummary(Proc):
     script = "file://../scripts/pipseeker/PipseekerSummary.R"
     envs = {"sensitivity": [3], "group": None}
     plugin_opts = {
-        "report": "file://../reports/pipseeker/PipseekerSummary.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 
