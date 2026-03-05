@@ -1153,14 +1153,14 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "1.1.9"
+version = "1.1.10"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen-1.1.9-py3-none-any.whl", hash = "sha256:3bf1fdd1a02dc70fe9039112329040f185165ba99f5fcadaf2d9e9f52ba3efe8"},
-    {file = "pipen-1.1.9.tar.gz", hash = "sha256:564bbc9ed7fcf1678d41d19540f24ac31bd78fa43ea4c4962bdd042f61f44cd5"},
+    {file = "pipen-1.1.10-py3-none-any.whl", hash = "sha256:8e466fef1f3c9ee1a8ffedd61f38ce71916434de45f2397a6a080e99fde988b5"},
+    {file = "pipen-1.1.10.tar.gz", hash = "sha256:290305a7a36e92440c11e95970bc0ba59f84d7b14468a65019727f4e7e9a2c22"},
 ]
 
 [package.dependencies]
@@ -1380,15 +1380,15 @@ type = ["mypy (>=1.14.1)"]
 
 [[package]]
 name = "platformdirs"
-version = "4.9.2"
+version = "4.9.4"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "python_version >= \"3.11\""
 files = [
-    {file = "platformdirs-4.9.2-py3-none-any.whl", hash = "sha256:9170634f126f8efdae22fb58ae8a0eaa86f38365bc57897a6c4f781d1f5875bd"},
-    {file = "platformdirs-4.9.2.tar.gz", hash = "sha256:9a33809944b9db043ad67ca0db94b14bf452cc6aeaac46a88ea55b26e2e9d291"},
+    {file = "platformdirs-4.9.4-py3-none-any.whl", hash = "sha256:68a9a4619a666ea6439f2ff250c12a853cd1cbd5158d258bd824a7df6be2f868"},
+    {file = "platformdirs-4.9.4.tar.gz", hash = "sha256:1ec356301b7dc906d83f371c8f487070e99d3ccf9e501686456394622a01a934"},
 ]
 
 [[package]]
