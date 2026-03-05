@@ -57,7 +57,7 @@ def convert_seurat_to_anndata(
             temp_script_path = temp_script.name
 
         cmd = [rscript, temp_script_path]
-        ident_col = run_command(cmd, stdout="RETURN").strip()
+        ident_col = run_command(cmd, stdout="RETURN").strip()  # type: ignore
         return ident_col
 
 

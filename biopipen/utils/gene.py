@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import contextlib
 import pandas as pd
-from mygene import MyGeneInfo
+from mygene import MyGeneInfo  # type: ignore
 
 mygene = MyGeneInfo()
 

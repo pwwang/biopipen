@@ -1,4 +1,4 @@
-from cyvcf2 import VCF, Writer, Variant
+from cyvcf2 import VCF, Writer, Variant  # type: ignore
 
 infile: str = {{in.invcf | quote}}  # pyright: ignore  # noqa: E999
 outfile: str = {{out.outfile | quote}}  # pyright: ignore

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from functools import lru_cache
 
 import pandas
-from diot import Diot
+from diot import Diot  # type: ignore
 from datar.tibble import tibble
 from pipen.utils import mark, is_loading_pipeline
 from biopipen.core.proc import Proc
@@ -208,7 +208,7 @@ class CNVkitPipeline(ProcGroup):
             self.__class__.DEFAULTS.metacols,
         )
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_metafile(self):
         """Build MetaFile process"""
         from .misc import File2Proc
@@ -232,14 +232,14 @@ class CNVkitPipeline(ProcGroup):
 
         return MetaFile
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_access(self):
         """Build CNVkitAccess process"""
         if self.opts.get("accfile"):
             from .misc import File2Proc
 
             @mark(board_config_hidden=True)
-            class CNVkitAccess(File2Proc):
+            class CNVkitAccess(File2Proc):  # type: ignore
                 """Pass by the access file to the next process."""
                 input_data = [self.opts.accfile]
         else:
@@ -249,8 +249,8 @@ class CNVkitPipeline(ProcGroup):
             if not isinstance(excludes, (list, tuple)):
                 excludes = [excludes]
 
-            @annotate.format_doc(indent=4)
-            class CNVkitAccess(CNVkitAccess):
+            @annotate.format_doc(indent=4)  # type: ignore
+            class CNVkitAccess(CNVkitAccess):  # type: ignore
                 """{{Summary}}
 
                 **When group argument `accfile` is provided, the arguments won't
@@ -271,14 +271,14 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitAccess
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_guessbaits(self):
         """Build CNVkitGuessBaits process"""
         from .cnvkit import CNVkitGuessBaits
 
         if (
-            not self.opts.guessbaits and
-            not is_loading_pipeline("-h", "-h+", "--help", "--help+")
+            not self.opts.guessbaits
+            and not is_loading_pipeline("-h", "-h+", "--help", "--help+")
         ):
             return None
 
@@ -301,7 +301,7 @@ class CNVkitPipeline(ProcGroup):
                 | (guess_baits == "YES")
                 | (guess_baits == "Yes"),
                 self.col.bam,
-            ].tolist()
+            ].tolist()  # type: ignore
 
         if self.opts.guessbaits_guided:
             if not self.opts.baitfile:
@@ -311,8 +311,8 @@ class CNVkitPipeline(ProcGroup):
                     "https://cnvkit.readthedocs.io/en/stable/scripts.html"
                 )
 
-            @annotate.format_doc(indent=4)
-            class CNVkitGuessBaits(CNVkitGuessBaits):
+            @annotate.format_doc(indent=4)  # type: ignore
+            class CNVkitGuessBaits(CNVkitGuessBaits):  # type: ignore
                 """{{Summary}}
 
                 Envs:
@@ -340,8 +340,8 @@ class CNVkitPipeline(ProcGroup):
                     "guided": True,
                 }
         else:  # unguided
-            @annotate.format_doc(indent=4)
-            class CNVkitGuessBaits(CNVkitGuessBaits):
+            @annotate.format_doc(indent=4)  # type: ignore
+            class CNVkitGuessBaits(CNVkitGuessBaits):  # type: ignore
                 """{{Summary}}
 
                 Envs:
@@ -371,13 +371,13 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitGuessBaits
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_autobin(self):
         """Build CNVkitAutobin process"""
         from .cnvkit import CNVkitAutobin
 
-        @annotate.format_doc(indent=3)
-        class CNVkitAutobin(CNVkitAutobin):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitAutobin(CNVkitAutobin):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -460,19 +460,19 @@ class CNVkitPipeline(ProcGroup):
             ref (pgarg=reffa): {{Envs.ref.help | indent: 16}}.
                 Defaults to group argument `reffa`.
         """
-        return annotate.format_doc(indent=2)(p)
+        return annotate.format_doc(indent=2)(p)  # type: ignore
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_coverage_target(self):
         """Build CNVkitCoverageTarget process"""
         return self._p_cnvkit_coverage(anti=False)
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_coverage_antitarget(self):
         """Build CNVkitCoverageAntiTarget process"""
         return self._p_cnvkit_coverage(anti=True)
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_reference(self):
         """Build CNVkitReference process"""
         from .cnvkit import CNVkitReference
@@ -508,8 +508,8 @@ class CNVkitPipeline(ProcGroup):
                 sample_sex=sample_sex,
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitReference(CNVkitReference):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitReference(CNVkitReference):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -545,7 +545,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitReference
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_fix(self):
         """Build CNVkitFix process"""
         from .cnvkit import CNVkitFix
@@ -571,8 +571,8 @@ class CNVkitPipeline(ProcGroup):
                 sample_id=metadf["Sample"][tumor_masks],
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitFix(CNVkitFix):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitFix(CNVkitFix):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -601,7 +601,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitFix
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_segment(self):
         """Build CNVkitSegment process"""
         from .cnvkit import CNVkitSegment
@@ -632,8 +632,8 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitSegment(CNVkitSegment):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitSegment(CNVkitSegment):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -666,7 +666,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitSegment
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_scatter(self):
         """Build CNVkitScatter process"""
         from .cnvkit import CNVkitScatter
@@ -698,8 +698,8 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitScatter(CNVkitScatter):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitScatter(CNVkitScatter):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -721,7 +721,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitScatter
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_diagram(self):
         """Build CNVkitDiagram process"""
         from .cnvkit import CNVkitDiagram
@@ -743,8 +743,8 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitDiagram(CNVkitDiagram):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitDiagram(CNVkitDiagram):  # type: ignore
             """{{Summary}}
 
             Envs:
@@ -766,7 +766,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitDiagram
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_heatmap_cns(self):
         """Build CNVkitHeatmapCns process"""
         from .cnvkit import CNVkitHeatmap
@@ -789,7 +789,7 @@ class CNVkitPipeline(ProcGroup):
                 sample_sex=sample_sex,
             )
 
-        @annotate.format_doc(indent=3)
+        @annotate.format_doc(indent=3)  # type: ignore
         class CNVkitHeatmapCns(CNVkitHeatmap):
             """Generate heatmaps of segment-level signals of multiple samples
 
@@ -814,7 +814,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitHeatmapCns
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_heatmap_cnr(self):
         """Build CNVkitHeatmapCnr process"""
         from .cnvkit import CNVkitHeatmap
@@ -840,7 +840,7 @@ class CNVkitPipeline(ProcGroup):
                 sample_sex=sample_sex,
             )
 
-        @annotate.format_doc(indent=3)
+        @annotate.format_doc(indent=3)  # type: ignore
         class CNVkitHeatmapCnr(CNVkitHeatmap):
             """Heatmap of bin-level signals of multiple samples
 
@@ -863,7 +863,7 @@ class CNVkitPipeline(ProcGroup):
 
         return CNVkitHeatmapCnr
 
-    @ProcGroup.add_proc
+    @ProcGroup.add_proc  # type: ignore
     def p_cnvkit_call(self):
         """Build CNVkitCall process"""
         from .cnvkit import CNVkitCall
@@ -905,8 +905,8 @@ class CNVkitPipeline(ProcGroup):
                 ),
             )
 
-        @annotate.format_doc(indent=3)
-        class CNVkitCall(CNVkitCall):
+        @annotate.format_doc(indent=3)  # type: ignore
+        class CNVkitCall(CNVkitCall):  # type: ignore
             """{{Summary}}
 
             Envs:

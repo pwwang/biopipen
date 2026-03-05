@@ -142,8 +142,10 @@ class PAGA_tree(PAGA):
         if isinstance(self.end_key, str) and self.end_key in self._adata.obs.keys():
             set_row_csr(vgraph, rows=np.where(self._adata.obs[self.end_key] > lb)[0])
         if isinstance(self.root_key, str) and self.root_key in self._adata.obs.keys():
-            vgraph[:, np.where(self._adata.obs[self.root_key] > lb)[0]] = 0
-            vgraph.eliminate_zeros()
+            vgraph[  # type: ignore
+                :, np.where(self._adata.obs[self.root_key] > lb)[0]
+            ] = 0
+            vgraph.eliminate_zeros()  # type: ignore
 
         membership = self._adata.obs[self.groups].cat.codes.values
         g = get_igraph_from_adjacency(vgraph, directed=True)
@@ -205,8 +207,8 @@ def paga(
     """PAGA graph with velocity-directed edges.
 
     Mapping out the coarse-grained connectivity structures of complex manifolds
-    :cite:p:`Wolf19`. By quantifying the connectivity of partitions (groups, clusters) of the
-    single-cell graph, partition-based graph abstraction (PAGA) generates a much
+    :cite:p:`Wolf19`. By quantifying the connectivity of partitions (groups, clusters)
+    of the single-cell graph, partition-based graph abstraction (PAGA) generates a much
     simpler abstracted graph (*PAGA graph*) of partitions, in which edge weights
     represent confidence in the presence of connections.
 

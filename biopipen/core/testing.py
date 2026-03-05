@@ -1,9 +1,10 @@
 """Provide utilities for testing."""
-import tempfile
+# import tempfile
+from typing import Callable
 from functools import wraps
 from pathlib import Path
 
-from pipen import Pipen
+from pipen import Pipen  # type: ignore
 
 TESTING_INDEX_INIT = 1
 TESTING_PARENT_DIR = Path(__file__).parent.parent.parent.joinpath("tests", "running")
@@ -85,7 +86,7 @@ def _run_rcode(rcode: str) -> str:
     return out.decode().strip()
 
 
-def r_test(mem: callable) -> callable:
+def r_test(mem: Callable) -> Callable:
     """A decorator to test R code"""
     @wraps(mem)
     def decorator(self, *args, **kwargs):

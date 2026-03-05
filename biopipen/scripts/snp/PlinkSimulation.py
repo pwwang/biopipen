@@ -1,7 +1,7 @@
 from pathlib import Path
 from multiprocessing import Pool
 from slugify import slugify
-from simpleconf import Config
+from simpleconf import Config  # type: ignore
 from biopipen.utils.misc import logger, run_command, dict_to_cli_args
 
 configfile: str = {{in.configfile | quote}}  # pyright: ignore # noqa: E999
