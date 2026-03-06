@@ -156,6 +156,8 @@ class PipseekerPipeline(ProcGroup):
         """Build PipseekerSummary process"""
 
         class _PipseekerSummary(PipseekerSummary):
+            name = "PipseekerSummary"
+
             requires = self.p_pipseeker_full
             input_data = lambda ch: [list(ch.iloc[:, 0])]
 
