@@ -41,11 +41,11 @@ version:
 	echo "Updating version to $$NEW_VERSION"; \
 	sed -i "s/^version = .*/version = \"$$NEW_VERSION\"/" pyproject.toml; \
 	sed -i "s/^__version__ = .*/__version__ = \"$$NEW_VERSION\"/" biopipen/__init__.py; \
-	LAST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
-	if [ -z "$$LAST_TAG" ]; then \
+	MERGE_COMMIT=$$(git log --grep="Merge remote-tracking branch 'origin/master' into dev" --pretty=format:"%H" -1 2>/dev/null || echo ""); \
+	if [ -z "$$MERGE_COMMIT" ]; then \
 		COMMITS=$$(git log --pretty=format:"- %s" HEAD); \
 	else \
-		COMMITS=$$(git log --pretty=format:"- %s" $$LAST_TAG..HEAD); \
+		COMMITS=$$(git log --pretty=format:"- %s" $$MERGE_COMMIT..HEAD); \
 	fi; \
 	if [ -n "$$COMMITS" ]; then \
 		printf "\n## %s\n\n%s\n\n" "$$NEW_VERSION" "$$COMMITS" | cat - <(tail -n +3 docs/CHANGELOG.md) > docs/CHANGELOG.md.tmp; \
