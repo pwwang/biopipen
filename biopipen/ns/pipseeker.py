@@ -1,7 +1,7 @@
 """Pipseeker processes"""
 from __future__ import annotations
 from typing import Type
-from diot import Diot  # pyright: ignore
+from diot import Diot  # type: ignore
 from pipen.utils import is_loading_pipeline
 from pipen_args.procgroup import ProcGroup
 
