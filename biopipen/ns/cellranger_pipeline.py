@@ -4,14 +4,14 @@ Primarily cellranger process plus summary for summarizing the metrics for
 multiple samples.
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
-from diot import Diot
+from diot import Diot  # type: ignore
 from pipen.utils import is_loading_pipeline
 from pipen_args.procgroup import ProcGroup
 
 if TYPE_CHECKING:
-    from pipen import Proc
+    from pipen import Proc  # type: ignore
 
 
 class CellRangerCountPipeline(ProcGroup):
@@ -45,8 +45,8 @@ class CellRangerCountPipeline(ProcGroup):
                 for x in self.opts.input
             ]
 
-    @ProcGroup.add_proc
-    def p_cellranger_count(self) -> Proc:
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_count(self) -> Type[Proc]:
         """Build CellRangerCount process"""
         from .cellranger import CellRangerCount as _CellRangerCount
 
@@ -58,8 +58,8 @@ class CellRangerCountPipeline(ProcGroup):
 
         return CellRangerCount
 
-    @ProcGroup.add_proc
-    def p_cellranger_count_summary(self) -> Proc:
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_count_summary(self) -> Type[Proc]:
         """Build CellRangerCountSummary process"""
         from .cellranger import CellRangerSummary
 
@@ -101,8 +101,8 @@ class CellRangerVdjPipeline(ProcGroup):
                 for x in self.opts.input
             ]
 
-    @ProcGroup.add_proc
-    def p_cellranger_vdj(self) -> Proc:
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_vdj(self) -> Type[Proc]:
         """Build CellRangerVdj process"""
         from .cellranger import CellRangerVdj as _CellRangerVdj
 
@@ -114,8 +114,8 @@ class CellRangerVdjPipeline(ProcGroup):
 
         return CellRangerVdj
 
-    @ProcGroup.add_proc
-    def p_cellranger_vdj_summary(self) -> Proc:
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_vdj_summary(self) -> Type[Proc]:
         """Build CellRangerVdjSummary process"""
         from .cellranger import CellRangerSummary
 

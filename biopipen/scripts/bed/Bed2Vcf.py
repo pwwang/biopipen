@@ -1,9 +1,9 @@
 from datetime import date
 from pathlib import Path
 
-from diot import Diot, OrderedDiot
+from diot import Diot, OrderedDiot  # type: ignore
 import numpy as np
-from cyvcf2 import VCF, Writer
+from cyvcf2 import VCF, Writer  # type: ignore
 from pysam import FastaFile
 
 from biopipen.utils.misc import run_command

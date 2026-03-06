@@ -117,12 +117,7 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
                     ylab = "Count",
                     palette = "Set1"
                 )
-                res <- 70
-                height <- attr(p, "height") * res
-                width <- attr(p, "width") * res
-                png(paste0(output, suffix, ".", metric_col, ".png"), width = width, height = height, res = res)
-                print(p)
-                dev.off()
+                save_plot(p, prefix = paste0(output, suffix, ".", metric_col), devpars = devpars)
             }
         } else {
             iter_dir <- file.path(outdir, paste0(metric_col, "_filtered"))
@@ -163,12 +158,7 @@ post_process <- function(suffix, snp_col = "ID", sep = "\t", modifier = NULL) {
                     ylab = "Count",
                     palette = "Set1"
                 )
-                res <- 70
-                height <- attr(p, "height") * res
-                width <- attr(p, "width") * res
-                png(paste0(output, suffix, ".", metric_col, ".png"), width = width, height = height, res = res)
-                print(p)
-                dev.off()
+                save_plot(p, prefix = paste0(output, suffix, ".", metric_col), devpars = devpars)
             }
 
             filter_cmd <- c(

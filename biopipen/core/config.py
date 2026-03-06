@@ -4,8 +4,8 @@ from typing import Any
 from pathlib import Path
 from tempfile import gettempdir
 
-from diot import Diot
-from simpleconf import Config
+from diot import Diot  # type: ignore
+from simpleconf import Config  # type: ignore
 
 from .defaults import BIOPIPEN_DIR
 

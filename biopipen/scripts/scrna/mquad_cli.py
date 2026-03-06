@@ -10,23 +10,23 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from collections import Counter
-from scipy.io import mmread
-from scipy.io import mmwrite
+import matplotlib.pyplot as plt  # noqa: E402
+import seaborn as sns  # noqa: E402
+from collections import Counter  # noqa: E402
+from scipy.io import mmread  # noqa: E402
+from scipy.io import mmwrite  # noqa: E402
 
 # from scipy import sparse
-from scipy.sparse import csc_matrix, csr_matrix
-from optparse import OptionParser, OptionGroup
+from scipy.sparse import csc_matrix, csr_matrix  # noqa: E402
+from optparse import OptionParser, OptionGroup  # noqa: E402
 
-from mquad.version import __version__
-from vireoSNP.utils.io_utils import read_cellSNP, read_sparse_GeneINFO
-from vireoSNP.utils.vcf_utils import load_VCF
+from mquad.version import __version__  # noqa: E402
+from vireoSNP.utils.io_utils import read_cellSNP, read_sparse_GeneINFO  # noqa: E402
+from vireoSNP.utils.vcf_utils import load_VCF  # noqa: E402
 
-from mquad.mquad import Mquad
-from mquad.mquad_utils import findKnee
-from mquad.mquad_batch_mixbin import MquadSparseMixBin, fit_batch
+from mquad.mquad import Mquad  # noqa: E402
+from mquad.mquad_utils import findKnee  # noqa: E402
+from mquad.mquad_batch_mixbin import MquadSparseMixBin, fit_batch  # noqa: E402
 
 START_TIME = time.time()
 
@@ -178,7 +178,7 @@ def selectInformativeVariants(
             plt.legend()
             plt.ylabel("\u0394BIC")
             plt.xlabel("Cumulative probability")
-            plt.savefig(out_dir + "/deltaBIC_cdf.pdf")
+            plt.savefig(out_dir + "/deltaBIC_cdf.pdf")  # type: ignore
 
             # make a PASS/FAIL column in self.df for easier subsetting
             print("deltaBIC cutoff = ", cutoff)
@@ -191,8 +191,8 @@ def selectInformativeVariants(
             )
 
             self.final_df = self.sorted_df[
-                (self.sorted_df.PASS_KP == True)
-                & (self.sorted_df.PASS_MINCELLS == True)
+                (self.sorted_df.PASS_KP == True)  # noqa: E712
+                & (self.sorted_df.PASS_MINCELLS == True)  # noqa: E712
             ]
             # print(self.final_df.head())
 
@@ -234,28 +234,31 @@ def selectInformativeVariants(
             best_dp = self.dp[[]]
             passed_variants = []
 
-    self.sorted_df.to_csv(out_dir + "/BIC_params.csv", index=False)
+    self.sorted_df.to_csv(out_dir + "/BIC_params.csv", index=False)  # type: ignore
     # fname = by + '_' + str(threshold) + '_'
 
     if self.variants is not None:
         # best_vars = np.array(self.variants)[idx]
         renamed_vars = []
-        for var in passed_variants:
+        for var in passed_variants:  # type: ignore
             renamed_vars.append(
                 (var.split("_")[1] + var.split("_")[2] + ">" + var.split("_")[3])
             )
 
-        with open(out_dir + "/passed_variant_names.txt", "w+") as var_file:
+        with open(
+            out_dir + "/passed_variant_names.txt",  # type: ignore
+            "w+"
+        ) as var_file:
             var_file.write("\n".join(str(var) for var in renamed_vars))
 
     if export_heatmap is True:
-        af = best_ad / best_dp
+        af = best_ad / best_dp  # type: ignore
         # print(af.shape)
         # af = af.fillna(0)
         fig, ax = plt.subplots(figsize=(15, 10))
         plt.title("Allele frequency of top variants")
         plt.style.use("seaborn-v0_8-dark")
-        if self.variants and renamed_vars:
+        if self.variants and renamed_vars:  # type: ignore
             sns.heatmap(af, cmap="Greens", yticklabels=renamed_vars)
         else:
             # sns.heatmap(af, cmap="Greens")
@@ -270,14 +273,14 @@ def selectInformativeVariants(
             )
             plt.axis("off")
 
-        plt.savefig(out_dir + "/top variants heatmap.pdf")
+        plt.savefig(out_dir + "/top variants heatmap.pdf")  # type: ignore
 
     # export ad dp mtx out for vireo
     if export_mtx is True:
-        mmwrite(out_dir + "/passed_ad.mtx", csr_matrix(best_ad))
-        mmwrite(out_dir + "/passed_dp.mtx", csr_matrix(best_dp))
+        mmwrite(out_dir + "/passed_ad.mtx", csr_matrix(best_ad))  # type: ignore
+        mmwrite(out_dir + "/passed_dp.mtx", csr_matrix(best_dp))  # type: ignore
 
-    return best_ad, best_dp
+    return best_ad, best_dp  # type: ignore
 
 
 MquadSparseMixBin.fit_deltaBIC = fit_deltaBIC  # type: ignore

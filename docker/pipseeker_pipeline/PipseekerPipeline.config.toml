@@ -1,0 +1,19 @@
+
+[plugin_opts]
+report_no_collapse_pgs=true
+
+[PipseekerPipeline]
+input=[
+    [
+        "example-data/Sample1_Sub_R1.fastq.gz",
+        "example-data/Sample1_Sub_R2.fastq.gz",
+    ],
+    [
+        "example-data/Sample2_Sub_R1.fastq.gz",
+        "example-data/Sample2_Sub_R2.fastq.gz",
+    ],
+]
+ids = ["SampleX", "SampleY"]
+
+[PipseekerFull.envs]
+ref="example-data/pipseeker-gex-reference"

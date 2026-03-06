@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from typing import Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -67,9 +66,9 @@ def classifier_init(
                     f"🛑 The number of cells in {cell_file} does not match the number "
                     f"of cells in {self.filename}"
                 )
-            self.adata.var_names = genes_mtx
-            self.adata.obs_names = cells_mtx
-        if not float(self.adata.X[:1000].max()).is_integer():
+            self.adata.var_names = genes_mtx  # type: ignore
+            self.adata.obs_names = cells_mtx  # type: ignore
+        if not float(self.adata.X[:1000].max()).is_integer():  # type: ignore
             logger.warn(
                 "⚠️ Warning: the input file seems not a raw count matrix. The "
                 "prediction result may not be accurate"
@@ -107,7 +106,8 @@ def classifier_init(
         # 2. if adata.raw.var_names has intersection with model genes
         # 3. if adata.X is not in the expected range
         use_raw = self.adata.raw and (
-            self.adata.X[:1000].min() < 0 or self.adata.X[:1000].max() > 9.22
+            self.adata.X[:1000].min() < 0  # type: ignore
+            or self.adata.X[:1000].max() > 9.22  # type: ignore
         ) and np.isin(
             self.adata.raw.var_names, self.model.classifier.features
         ).sum() > 0
@@ -118,8 +118,8 @@ def classifier_init(
                     "🛑 Invalid expression matrix in `.X`, expect log1p normalized "
                     "expression to 10000 counts per cell"
                 )
-            elif (self.adata.raw.X[:1000].min() < 0) or (
-                self.adata.raw.X[:1000].max() > 9.22
+            elif (self.adata.raw.X[:1000].min() < 0) or (  # type: ignore
+                self.adata.raw.X[:1000].max() > 9.22  # type: ignore
             ):
                 raise ValueError(
                     "🛑 Invalid expression matrix in both `.X` and `.raw.X`, expect "
@@ -137,7 +137,7 @@ def classifier_init(
             self.indata = self.adata.X
             self.indata_genes = self.adata.var_names
             self.indata_names = self.adata.obs_names
-        if np.abs(np.expm1(self.indata[0]).sum() - 10000) > 1:
+        if np.abs(np.expm1(self.indata[0]).sum() - 10000) > 1:  # type: ignore
             logger.warn(
                 "⚠️ Warning: invalid expression matrix, expect ALL genes and log1p "
                 "normalized expression to 10000 counts per cell. The prediction result "
@@ -150,8 +150,8 @@ def classifier_init(
         )
 
     logger.info(
-        f"🔬 Input data has {self.indata.shape[0]} cells and {len(self.indata_genes)} "
-        "genes"
+        f"🔬 Input data has {self.indata.shape[0]} cells "  # type: ignore
+        f"and {len(self.indata_genes)} genes"
     )
 
 

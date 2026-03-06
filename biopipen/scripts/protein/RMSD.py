@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import which
-from diot import Diot  # noqa: F401
+from diot import Diot  # noqa: F401 # type: ignore
 from biopipen.utils.misc import run_command, dict_to_cli_args
 
 infile1: str = {{in.infile1 | quote}}  # pyright: ignore # noqa

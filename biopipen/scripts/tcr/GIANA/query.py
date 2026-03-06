@@ -1,25 +1,27 @@
-## Query mode of GIANA, to be loaded by GIANA, cannot run alone
+# Query mode of GIANA, to be loaded by GIANA, cannot run alone
 
 import shelve
 import subprocess as sp
 import pandas as pd
-from GIANA4 import *
+from GIANA4 import *  # noqa # type: ignore
 
 
 def CreateReference(rFile, outdir="./", Vgene=True, ST=3):
-    ## convert input reference file into a python workplace
+    # convert input reference file into a python workplace
     h = open(rFile)
     alines = h.readlines()
     ww = alines[0].strip().split("\t")
     if not ww[0].startswith("C"):
-        ## header line
+        # header line
         hline = alines[0]
         alines = alines[1:]
     elif "CDR3" in ww[0]:
         hline = alines[0]
         alines = alines[1:]
     else:
-        hline = "CDR3\t" + "\t".join(["Info" + str(x) for x in range(len(ww) - 1)])
+        hline = "CDR3\t" + "\t".join(  # noqa # type: ignore
+            ["Info" + str(x) for x in range(len(ww) - 1)]
+        )
     seqs = []
     vgs = []
     infoList = []
@@ -38,10 +40,10 @@ def CreateReference(rFile, outdir="./", Vgene=True, ST=3):
         else:
             infoList.append("\t".join(ww[1:]))
         count += 1
-    LD, VD, ID, SD = BuildLengthDict(
+    LD, VD, ID, SD = BuildLengthDict(  # noqa # type: ignore
         seqs, vGene=vgs, INFO=infoList, sIDs=[x for x in range(len(seqs))]
     )
-    LDu_r, VDu_r, IDu_r, SDu_r = CollapseUnique(LD, VD, ID, SD)
+    LDu_r, VDu_r, IDu_r, SDu_r = CollapseUnique(LD, VD, ID, SD)  # noqa # type: ignore
     flagLD_r = {}
     dMD_r = {}
     for kk in LDu_r:
@@ -49,19 +51,19 @@ def CreateReference(rFile, outdir="./", Vgene=True, ST=3):
         vInfo = IDu_r[kk]
         flagL = [len(x) - 1 for x in vInfo]
         flagLD_r[kk] = flagL
-        dM = np.array([EncodingCDR3(x[ST:-2], M6, n0) for x in vss])
+        dM = np.array([EncodingCDR3(x[ST:-2], M6, n0) for x in vss])  # noqa # type: ignore
         dM = dM.astype("float32")
         dMD_r[kk] = dM
-    ##    ff0=re.sub('.txt','',rFile)
-    ##    outfile=outdir+ff0+'_giana_ref.shelve'
-    ##    giana_shelf = shelve.open(outfile, 'n')
-    ##    giana_shelf['flagLD']=flagLD_r
-    ##    giana_shelf['dMD']=dMD_r
-    ##    giana_shelf['LDu']=LDu_r
-    ##    giana_shelf['VDu']=VDu_r
-    ##    giana_shelf['IDu']=IDu_r
-    ##    giana_shelf['SDu']=SDu_r
-    ##    giana_shelf.close()
+    #    ff0=re.sub('.txt','',rFile)
+    #    outfile=outdir+ff0+'_giana_ref.shelve'
+    #    giana_shelf = shelve.open(outfile, 'n')
+    #    giana_shelf['flagLD']=flagLD_r
+    #    giana_shelf['dMD']=dMD_r
+    #    giana_shelf['LDu']=LDu_r
+    #    giana_shelf['VDu']=VDu_r
+    #    giana_shelf['IDu']=IDu_r
+    #    giana_shelf['SDu']=SDu_r
+    #    giana_shelf.close()
     return [LDu_r, VDu_r, IDu_r, SDu_r, dMD_r]
 
 
@@ -72,9 +74,9 @@ def MakeQuery(qFile, rData=[], dbFile=None, Vgene=True, thr=7, ST=3, thr_s=3.3):
                 globals()[key] = db[key]
     else:
         if len(rData) == 0:
-            raise ("Need to provide either a reference file or a shelve")
-        LDu_r = rData[0]
-        VDu_r = rData[1]
+            raise ValueError("Need to provide either a reference file or a shelve")
+        LDu_r = rData[0]  # noqa # type: ignore
+        VDu_r = rData[1]  # noqa # type: ignore
         IDu_r = rData[2]
         SDu_r = rData[3]
         dMD_r = rData[4]
@@ -82,14 +84,16 @@ def MakeQuery(qFile, rData=[], dbFile=None, Vgene=True, thr=7, ST=3, thr_s=3.3):
     alines = h.readlines()
     ww = alines[0].strip().split("\t")
     if not ww[0].startswith("C"):
-        ## header line
+        # header line
         hline = alines[0]
         alines = alines[1:]
     elif "CDR3" in ww[0]:
         hline = alines[0]
         alines = alines[1:]
     else:
-        hline = "CDR3\t" + "\t".join(["Info" + str(x) for x in range(len(ww) - 1)])
+        hline = "CDR3\t" + "\t".join(  # noqa # type: ignore
+            ["Info" + str(x) for x in range(len(ww) - 1)]
+        )
     seqs = []
     vgs = []
     infoList = []
@@ -108,32 +112,32 @@ def MakeQuery(qFile, rData=[], dbFile=None, Vgene=True, thr=7, ST=3, thr_s=3.3):
         else:
             infoList.append("\t".join(ww[1:]))
         count += 1
-    LD, VD, ID, SD = BuildLengthDict(
+    LD, VD, ID, SD = BuildLengthDict(  # noqa # type: ignore
         seqs, vGene=vgs, INFO=infoList, sIDs=[x for x in range(len(seqs))]
     )
-    LDu, VDu, IDu, SDu = CollapseUnique(LD, VD, ID, SD)
+    LDu, VDu, IDu, SDu = CollapseUnique(LD, VD, ID, SD)  # noqa # type: ignore
     tmpFile = "tmp_query.txt"
     g = open(tmpFile, "w")
     for kk in LDu:
         vss = SDu[kk]
         vInfo = IDu[kk]
-        vss_r = SDu_r[kk]
-        vInfo_r = IDu_r[kk]
+        vss_r = SDu_r[kk]  # noqa # type: ignore
+        vInfo_r = IDu_r[kk]  # noqa # type: ignore
         flagL = [len(x) - 1 for x in vInfo]
-        dM_r = dMD_r[kk]
-        dM = np.array([EncodingCDR3(x[ST:-2], M6, n0) for x in vss])
+        dM_r = dMD_r[kk]  # noqa # type: ignore
+        dM = np.array([EncodingCDR3(x[ST:-2], M6, n0) for x in vss])  # noqa # type: ignore
         dM = dM.astype("float32")
         nq = dM.shape[0]
-        nr = dM_r.shape[0]
+        nr = dM_r.shape[0]  # noqa # type: ignore
         vssc = vss + vss_r
         vInfoc = vInfo + vInfo_r
-        dMc = np.concatenate((dM, dM_r))
-        index = faiss.IndexFlatL2(Ndim * 6)
+        dMc = np.concatenate((dM, dM_r))  # noqa # type: ignore
+        index = faiss.IndexFlatL2(Ndim * 6)  # noqa # type: ignore
         index.add(dMc)
-        D, I = index.search(dM, 2)
-        vv = np.where((D[0:nq, 1] <= thr))[0]
-        flagL = np.array(flagL)
-        vv0 = np.where((D[0:nq, 1] > thr) & (flagL > 0))[0]
+        D, I = index.search(dM, 2)  # noqa # type: ignore
+        vv = np.where((D[0:nq, 1] <= thr))[0]  # noqa # type: ignore
+        flagL = np.array(flagL)  # noqa # type: ignore
+        vv0 = np.where((D[0:nq, 1] > thr) & (flagL > 0))[0]  # noqa # type: ignore
         curList = []
         for v in vv0:
             for ii in range(len(vInfoc[v])):
@@ -170,8 +174,8 @@ def MakeQuery(qFile, rData=[], dbFile=None, Vgene=True, thr=7, ST=3, thr_s=3.3):
     g.close()
     cmd = "python3 GIANA4.1.py -f tmp_query.txt -S " + str(
         thr_s
-    )  ## updated to GIANA4.1
-    p = sp.run(cmd, shell=True)
+    )  # updated to GIANA4.1
+    p = sp.run(cmd, shell=True)  # noqa # type: ignore
 
 
 def MergeExist(
@@ -180,9 +184,11 @@ def MergeExist(
     queryClusterFile="tmp_query--RotationEncodingBL62.txt",
     direction="q",
 ):
-    ## This function compare the query file with ref cluster file and merge the two based on shared TCRs
-    ## If direction is 'q', the overlapping clusters will be added to the query file
-    ## If direction is 'r', the overlapping and non-overlapping clusters will be added to the reference file
+    # This function compare the query file with ref cluster file and merge the two based
+    # on shared TCRs
+    # If direction is 'q', the overlapping clusters will be added to the query file
+    # If direction is 'r', the overlapping and non-overlapping clusters will be added to
+    # the reference file
     refT = pd.read_table(refClusterFile, skiprows=2, delimiter="\t", header=None)
     queryT = pd.read_table(queryClusterFile, skiprows=2, delimiter="\t", header=None)
     nq = queryT.shape[1]
@@ -191,36 +197,36 @@ def MergeExist(
         print("ERROR: Make sure reference and the query samples have the same columns!")
         print("No query file is generated.")
         return
-    gn = np.unique(queryT[1])
+    gn = np.unique(queryT[1])  # noqa # type: ignore
     queryTs = pd.DataFrame([], columns=queryT.columns)
     for nn in gn:
-        tmp_ddq = queryT.loc[np.where(queryT[1] == nn)[0], :]
-        cls_lab = np.unique(tmp_ddq[nq - 1])
+        tmp_ddq = queryT.loc[np.where(queryT[1] == nn)[0], :]  # noqa # type: ignore
+        cls_lab = np.unique(tmp_ddq[nq - 1])  # noqa # type: ignore
         if len(cls_lab) == 1:
             if cls_lab[0] == "ref":
                 continue
-        queryTs = queryTs.append(tmp_ddq)
-    queryTs.index = range(queryTs.shape[0])
+        queryTs = queryTs.append(tmp_ddq)  # noqa # type: ignore
+    queryTs.index = range(queryTs.shape[0])  # noqa # type: ignore
     keyr = refT[0] + "_" + refT[2]
     keyq = queryTs[0] + "_" + queryTs[2]
-    vvr = np.where(queryTs[nq - 1] == "ref")[0]
-    vvr_in = np.where(keyr.isin(keyq[vvr]))[0]
+    vvr = np.where(queryTs[nq - 1] == "ref")[0]  # noqa # type: ignore
+    vvr_in = np.where(keyr.isin(keyq[vvr]))[0]  # noqa # type: ignore
     gn_r = list(refT.loc[vvr_in, 1].drop_duplicates())
     ddo = pd.DataFrame([], columns=refT.columns)
     for nn in gn_r:
-        tmp_dd = refT.loc[np.where(refT[1] == nn)[0], :]
+        tmp_dd = refT.loc[np.where(refT[1] == nn)[0], :]  # noqa # type: ignore
         tmpkey = tmp_dd[0] + "_" + tmp_dd[2]
-        vv = np.where(keyq.isin(tmpkey))[0][0]
+        vv = np.where(keyq.isin(tmpkey))[0][0]  # noqa # type: ignore
         gq = queryTs[1][vv]
         tmp_dd[1] = gq
-        ddo = ddo.append(tmp_dd)
+        ddo = ddo.append(tmp_dd)  # noqa # type: ignore
     if direction == "q":
         ddo[nq - 1] = "ref"
-        ## remove groups that contain only ref group
-        queryTs = queryTs.append(ddo)
+        # remove groups that contain only ref group
+        queryTs = queryTs.append(ddo)  # noqa # type: ignore
         queryTs = queryTs.drop_duplicates()
         queryTs.to_csv(outFile, sep="\t", header=False, index=False)
     #    queryTs.index=range(queryTs.shape[0])
     if direction == "r":
-        ## to be developed
+        # to be developed
         pass

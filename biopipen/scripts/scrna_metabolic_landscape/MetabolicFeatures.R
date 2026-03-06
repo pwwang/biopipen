@@ -209,14 +209,7 @@ do_comparison <- function(object, caseinfo, subset_by, subset_val, group_by, gro
             plotprefix <- file.path(odir, slugify(plot))
             plotargs$devpars$width <- plotargs$devpars$width %||% (attr(p, "width") * plotargs$devpars$res) %||% 800
             plotargs$devpars$height <- plotargs$devpars$height %||% (attr(p, "height") * plotargs$devpars$res) %||% 600
-            png(
-                filename = paste0(plotprefix, ".png"),
-                width = plotargs$devpars$width,
-                height = plotargs$devpars$height,
-                res = plotargs$devpars$res
-            )
-            print(p)
-            dev.off()
+            save_plot(p, prefix = plotprefix, devpars = plotargs$devpars)
 
             reporter$add(
                 list(
@@ -246,14 +239,9 @@ do_comparison <- function(object, caseinfo, subset_by, subset_val, group_by, gro
                 devpars$height <- devpars$height %||% (attr(p, "height") * devpars$res) %||% 600
                 prefix <- paste0(plotprefix, ".", slugify(pname))
                 images[[length(images) + 1]] <- reporter$image(prefix, c(), FALSE, kind = "table_image")
-                png(
-                    filename = paste0(prefix, ".png"),
-                    width = devpars$width,
-                    height = devpars$height,
-                    res = devpars$res
-                )
-                print(p)
-                dev.off()
+
+                save_plot(p, prefix = prefix, devpars = devpars)
+
             }
 
             reporter$add(
@@ -380,14 +368,7 @@ do_subset <- function(object, caseinfo, subset_by, subset_val, group_by, compari
             plotprefix <- file.path(odir, slugify(plot))
             plotargs$devpars$width <- plotargs$devpars$width %||% (attr(p, "width") * plotargs$devpars$res) %||% 800
             plotargs$devpars$height <- plotargs$devpars$height %||% (attr(p, "height") * plotargs$devpars$res) %||% 600
-            png(
-                filename = paste0(plotprefix, ".png"),
-                width = plotargs$devpars$width,
-                height = plotargs$devpars$height,
-                res = plotargs$devpars$res
-            )
-            print(p)
-            dev.off()
+            save_plot(p, prefix = plotprefix, devpars = plotargs$devpars)
 
             reporter$add(
                 list(kind = "descr", content = plotargs$descr %||% plot),
@@ -494,14 +475,7 @@ do_case <- function(casename) {
             plotprefix <- file.path(caseinfo$prefix, slugify(plot))
             plotargs$devpars$width <- plotargs$devpars$width %||% (attr(p, "width") * plotargs$devpars$res) %||% 800
             plotargs$devpars$height <- plotargs$devpars$height %||% (attr(p, "height") * plotargs$devpars$res) %||% 600
-            png(
-                filename = paste0(plotprefix, ".png"),
-                width = plotargs$devpars$width,
-                height = plotargs$devpars$height,
-                res = plotargs$devpars$res
-            )
-            print(p)
-            dev.off()
+            save_plot(p, prefix = plotprefix, devpars = plotargs$devpars)
 
             reporter$add(
                 list(kind = "descr", content = plotargs$descr %||% plot),

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from diot import Diot
+from diot import Diot  # type: ignore
 
 from biopipen.utils.misc import run_command, dict_to_cli_args
 

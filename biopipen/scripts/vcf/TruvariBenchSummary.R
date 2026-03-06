@@ -2,6 +2,7 @@ library(rjson)
 library(rlang)
 library(dplyr)
 library(plotthis)
+library(biopipen.utils)
 
 indirs = {{in.indirs | r}}
 outdir = {{out.outdir | r}}
@@ -34,7 +35,7 @@ get_devpars = function() {
 }
 
 plot_summary = function(col) {
-    outfile = file.path(outdir, paste0(col, ".png"))
+    outfile = file.path(outdir, col)
     p <- plotthis::BarPlot(
         summaries,
         x = "Sample",
@@ -42,14 +43,7 @@ plot_summary = function(col) {
         x_text_angle = 90
     )
     devpars <- get_devpars()
-    png(
-        filename = outfile,
-        width = devpars$width,
-        height = devpars$height,
-        res = devpars$res
-    )
-    print(p)
-    dev.off()
+    save_plot(p, prefix = outfile, devpars = devpars)
 }
 
 main = function() {

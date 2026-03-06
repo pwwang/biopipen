@@ -181,16 +181,5 @@ if (doplot) {
 		column_annotation = column_annotation
 	)
 
-	res <- 100
-	height <- attr(p, "height") * res
-	width <- attr(p, "width") * res
-	png(
-		filename = paste0(output, '.ibd.png'),
-		width = width,
-		height = height,
-		res = res
-	)
-	print(p)
-	dev.off()
-
+	save_plot(p, prefix = paste0(output, '.ibd'), devpars = devpars)
 }

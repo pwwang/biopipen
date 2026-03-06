@@ -1,6 +1,19 @@
 # Change Log
 
 
+## 1.2.0
+
+- chore: update commit log retrieval to use merge commit instead of last tag
+- chore: bump pipen-report to 1.1.2
+- style(tcr): clean up code style for python scripts
+- chore: bump pipen to 1.1.10
+- feat: add pipseeker pipeline with full and summary processes
+- feat(scrna.ModuleScoreCalculator): add support for mouse cell cycle genes in module scoring
+- docs(scrna.ModuleScoreCalculator): add additional arguments description for AddModuleScore and CellCycleScoring
+- fix(regulatory): correct function calls to use biopipen.utils for height and width calculations in plot_variant_motifs
+- feat: support relative devpars width/height for saving plots
+
+
 ## 1.1.14
 
 - feat(scrna.SeuratClusterStats): support 3D dimplots

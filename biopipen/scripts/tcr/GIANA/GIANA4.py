@@ -1,42 +1,47 @@
 #! usr/bin/python3
-## Isometric distance alignment algorithm to process ~100M CDR3 sequences
-## Ultra-fast alignment with Blosum62 scoring
-## Key algorithm: convert each CDR3 with length L into a L-dimensional space with PCA encoding
-## Use approximate nearest neighbor search to remove sequences without any close neighbor
-## Apply pairwise comparison to the remaining CDR3s to identify clusters
-## updated on May 27, 2020. Added V gene and SW alignment
-## Remaining issues:
-##  1. Different lengths will group together with larger thr_iso values (>11)
-##  2. V gene and SW score matrix may fall into smaller cliques that require dps.
-## updated on May 29, 2020. Change SW alignment into k-mer guided to accelerate
-## updated on Jun 2, 2020. Add variable gene clustering unit to solve the 2nd remaining issue
-## Future improvement:
-##  1. rewrite in c++
-##  2. find a better isometric representation of blosum62
-##  3. find a solution to process gap
+# Isometric distance alignment algorithm to process ~100M CDR3 sequences
+# Ultra-fast alignment with Blosum62 scoring
+# Key algorithm: convert each CDR3 with length L into a L-dimensional space with PCA
+# encoding
+# Use approximate nearest neighbor search to remove sequences without any close neighbor
+# Apply pairwise comparison to the remaining CDR3s to identify clusters
+# updated on May 27, 2020. Added V gene and SW alignment
+# Remaining issues:
+#  1. Different lengths will group together with larger thr_iso values (>11)
+#  2. V gene and SW score matrix may fall into smaller cliques that require dps.
+# updated on May 29, 2020. Change SW alignment into k-mer guided to accelerate
+# updated on Jun 2, 2020. Add variable gene clustering unit to solve the 2nd remaining
+# issue
+# Future improvement:
+#  1. rewrite in c++
+#  2. find a better isometric representation of blosum62
+#  3. find a solution to process gap
 
-## updated on Jun 29, 2020. Collapse identical TCRs.
+# updated on Jun 29, 2020. Collapse identical TCRs.
 
-## July 16, 2020: Change name into GIANA: Geometric Isometry based ANtigen-specific tcr Alignment
-## Aug 24, 2020: Add GPU option
-## Sep 26, 2020: Find a bug in identical CDR3 handling when V genes are different
+# July 16, 2020: Change name into GIANA: Geometric Isometry based ANtigen-specific tcr
+# Alignment
+# Aug 24, 2020: Add GPU option
+# Sep 26, 2020: Find a bug in identical CDR3 handling when V genes are different
 
-import sys, os, re, resource
+import sys, os, re, resource  # noqa # type: ignore
 from os import path
 import numpy as np
 import time
 from time import gmtime, strftime
 from operator import itemgetter
 from itertools import chain
-from random import shuffle
+from random import shuffle  # noqa # type: ignore
 from optparse import OptionParser
 from collections import Counter
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA  # noqa # type: ignore
 from sklearn.manifold import MDS
-import faiss
-from query import *
+import faiss  # noqa # type: ignore
+from query import *  # noqa # type: ignore
+
 try:
-    from Bio.Align import substitution_matrices
+    from Bio.Align import substitution_matrices  # noqa # type: ignore
+
     blosum62 = substitution_matrices.load("BLOSUM62")
     _tmp = {}
     for ab1 in blosum62.alphabet:
@@ -44,7 +49,7 @@ try:
             _tmp[(ab1, ab2)] = int(blosum62[(ab1, ab2)])
     blosum62 = _tmp
 except ModuleNotFoundError:
-    from Bio.SubsMat.MatrixInfo import blosum62
+    from Bio.SubsMat.MatrixInfo import blosum62  # noqa # type: ignore
 
 AAstring = "ACDEFGHIKLMNPQRSTVWY"
 AAstringList = list(AAstring)
@@ -126,7 +131,7 @@ for ii in range(len(AAstringList)):
     CODE = [0] * (ii) + [1] + [0] * (20 - ii)
     AAencodingDict[aa] = np.array(CODE)
 
-Ndim = 16  ## optimized for isometric embedding
+Ndim = 16  # optimized for isometric embedding
 n0 = Ndim * 6
 # M0=np.concatenate((np.concatenate((ZERO,M1),axis=1),np.concatenate((M1, ZERO),axis=1)))
 ZERO = np.zeros((Ndim, Ndim))
@@ -138,7 +143,7 @@ M0 = np.concatenate(
         np.concatenate((ZERO, II, ZERO), axis=1),
     )
 )
-## Construct 6-th order cyclic group
+# Construct 6-th order cyclic group
 ZERO45 = np.zeros((Ndim * 3, Ndim * 3))
 M6 = np.concatenate(
     (np.concatenate((ZERO45, M0), axis=1), np.concatenate((M0, ZERO45), axis=1))
@@ -539,7 +544,7 @@ def BuildLengthDict(seqs, sIDs, vGene=[], INFO=[]):
         ssAA = set(list(ss))
         TMP = list(ssAA | AAs)
         if len(TMP) > NAs:
-            ## CDR3 containing non amino acid letter
+            # CDR3 containing non amino acid letter
             # print('Warning: CDR3: '+ss + ' contains non amino acid letter!')
             cNAs += 1
             continue
@@ -554,16 +559,16 @@ def BuildLengthDict(seqs, sIDs, vGene=[], INFO=[]):
             LengthD[L] = [ID]
             SeqD[L] = [ss]
             if len(vGene) > 0:
-                VgeneD[L] = [vv]
+                VgeneD[L] = [vv]  # noqa # type: ignore
             if len(INFO) > 0:
-                InfoD[L] = [info]
+                InfoD[L] = [info]  # noqa # type: ignore
         else:
             LengthD[L].append(ID)
             SeqD[L].append(ss)
             if len(vGene) > 0:
-                VgeneD[L].append(vv)
+                VgeneD[L].append(vv)  # noqa # type: ignore
             if len(INFO) > 0:
-                InfoD[L].append(info)
+                InfoD[L].append(info)  # noqa # type: ignore
     if cNAs > 0:
         print("Warning: Skipped %d sequences with non AA letter!" % (cNAs))
     return LengthD, VgeneD, InfoD, SeqD
@@ -619,12 +624,13 @@ def CollapseUnique(LD, VD, ID, SD):
 
 class CDR3:
     def __init__(self, s, sID, KS, st, ed):
-        ## initialize with an input sequence
-        ## s: input CDR3 sequence starting from C and ending with the first F in FGXG
-        ## sID: unique identifier (increasing integers) given to each CDR3 sequence. Even identical CDR3s should have distinct sIDs
-        ## KS: Kmer size
-        ## st: the first 0:(st-1) amino acids will not be included in K-merization
-        ## ed: the last L-ed amino acids will be skipped
+        # initialize with an input sequence
+        # s: input CDR3 sequence starting from C and ending with the first F in FGXG
+        # sID: unique identifier (increasing integers) given to each CDR3 sequence.
+        # Even identical CDR3s should have distinct sIDs
+        # KS: Kmer size
+        # st: the first 0:(st-1) amino acids will not be included in K-merization
+        # ed: the last L-ed amino acids will be skipped
         self.s = s
         self.ID = sID
         L = len(s)
@@ -636,12 +642,15 @@ class CDR3:
 
 
 class KmerSet:
-    ## Kmer set for fast read searching based on mismatch-allowed Kmer index
+    # Kmer set for fast read searching based on mismatch-allowed Kmer index
     def __init__(self, Seqs, sIDs, KS, st, ed):
-        ## initialize with a list of CDR3s, parse each CDR3 into Kmers, build Kmer-sID dictionary
-        ## Seqs and sIDs must have the same length
+        # initialize with a list of CDR3s, parse each CDR3 into Kmers, build Kmer-sID
+        # dictionary
+        # Seqs and sIDs must have the same length
         if len(Seqs) != len(sIDs):
-            raise "Sequence and ID lists have different length. Please check input."
+            raise ValueError(
+                "Sequence and ID lists have different length. Please check input."
+            )
         KmerDict = {}
         N = len(Seqs)
         self.N = N
@@ -675,7 +684,7 @@ class KmerSet:
         return KS_n1
 
     def FindKmerNeighbor2(self, kk):
-        ## KS>=6, allowing 2 mismatches. CDR3 length must be >= 10
+        # KS>=6, allowing 2 mismatches. CDR3 length must be >= 10
         KS = self.KS
         KS_n1 = []
         for jj in range(KS):
@@ -695,28 +704,28 @@ class KmerSet:
         return KS_n1
 
     def KmerIndex(self):
-        ## For each K-mer, find its nearest neighbor with 1 character mismatch
+        # For each K-mer, find its nearest neighbor with 1 character mismatch
         KKs = list(self.KD.keys())
-        KS = self.KS
+        KS = self.KS  # noqa # type: ignore
         KKs_set = set(KKs)
-        Skk = "_".join(KKs)
+        Skk = "_".join(KKs)  # noqa # type: ignore
         KI_Dict = {}
         for kk in KKs:
-            ##            kk_neighbor=[]
-            ##            for jj in range(KS):
-            ##                kk_pre=kk[0:jj]
-            ##                kk_suf=kk[(jj+1):KS]
-            ##                pat=kk_pre+'['+AAstring+']{1}'+kk_suf
-            ##                p=re.compile(pat)
-            ##                mm=[m.group() for m in p.finditer(Skk)]
-            ##                kk_neighbor+=mm
+            #            kk_neighbor=[]
+            #            for jj in range(KS):
+            #                kk_pre=kk[0:jj]
+            #                kk_suf=kk[(jj+1):KS]
+            #                pat=kk_pre+'['+AAstring+']{1}'+kk_suf
+            #                p=re.compile(pat)
+            #                mm=[m.group() for m in p.finditer(Skk)]
+            #                kk_neighbor+=mm
             KS_n = set(self.FindKmerNeighbor(kk))
             kk_neighbor = KS_n & KKs_set
             KI_Dict[kk] = list(kk_neighbor)
         return KI_Dict
 
     def updateKD(self, KI):
-        ## group sequences sharing motifs with 1-2 mismatches
+        # group sequences sharing motifs with 1-2 mismatches
         KD = self.KD
         KDnew = {}
         for kk in KD:
@@ -763,7 +772,7 @@ def GenerateMotifGraph(mD, seqs, seqID):
 
 
 def generateSSG(Kset, CDR3s, k_thr=2):
-    KD = Kset.KD
+    KD = Kset.KD  # noqa # type: ignore
     KI = Kset.KmerIndex()
     KDnew = Kset.updateKD(KI)
     CD = Kset.CD
@@ -795,7 +804,7 @@ def generateSSG(Kset, CDR3s, k_thr=2):
 
 def SeqComparison(s1, s2, gap=-6):
     n = len(s1)
-    CorList = []
+    CorList = []  # noqa # type: ignore
     score = 0
     for kk in range(0, n):
         aa = s1[kk]
@@ -831,7 +840,7 @@ def NHLocalAlignment(Seq1, Seq2, gap_thr=1, gap=-6):
         return -1
     SeqList1 = [Seq1]
     SeqList2 = InsertGap(Seq2, nn)
-    alns = []
+    alns = []  # noqa # type: ignore
     SCOREList = []
     for s1 in SeqList1:
         for s2 in SeqList2:
@@ -841,7 +850,7 @@ def NHLocalAlignment(Seq1, Seq2, gap_thr=1, gap=-6):
 
 
 def InsertGap(Seq, n):
-    ## Insert n gaps to Seq; n<=2
+    # Insert n gaps to Seq; n<=2
     if n == 0:
         return [Seq]
     ns = len(Seq)
@@ -884,8 +893,8 @@ def falign(s1, s2, V1, V2, st, VScore={}, UseV=True, gapn=1, gap=-6):
 def UpdateSSG(SSG, seqs, Vgenes, Vscore={}, UseV=True, gap=-6, gapn=1, cutoff=7.5):
     SSGnew = {}
     count = 0
-    t1 = time.time()
-    N = len(list(chain(*list(SSG.values()))))
+    t1 = time.time()  # noqa # type: ignore
+    N = len(list(chain(*list(SSG.values()))))  # noqa # type: ignore
     #    print("Number of pairs to be processed: %d" %N)
     for kk in SSG:
         s1 = seqs[kk]
@@ -899,7 +908,7 @@ def UpdateSSG(SSG, seqs, Vgenes, Vscore={}, UseV=True, gap=-6, gapn=1, cutoff=7.
             )
             count += 1
             if count % 1000000 == 0:
-                t2 = time.time()
+                t2 = time.time()  # noqa # type: ignore
             #                print("Processed %d pairs. Elapsed time %f" %(count, t2-t1))
             if score >= cutoff:
                 if kk not in SSGnew:
@@ -925,9 +934,9 @@ def dfs(graph, start):
 
 
 def IdentifyMotifCluster(SSG):
-    ## Input SeqShareGraph dictionary representation of sparse matrix
+    # Input SeqShareGraph dictionary representation of sparse matrix
     POS = set(SSG.keys())
-    NP = len(POS)
+    NP = len(POS)  # noqa # type: ignore
     ClusterList = []
     tmpL = set(chain(*ClusterList))
     count = 0
@@ -949,13 +958,13 @@ def IdentifyMotifCluster(SSG):
 
 
 def IdentifyVgeneCluster(sMat):
-    ## Input Vgene score matrix
+    # Input Vgene score matrix
     vG = {}
     n = len(sMat)
     IDs = [x for x in range(n)]
     for kk in IDs:
         LL = sMat[:, kk]
-        vL = np.where(LL >= thr_v)[0]
+        vL = np.where(LL >= thr_v)[0]  # noqa # type: ignore
         if len(vL) > 0:
             vG[kk] = vL
     CL = IdentifyMotifCluster(vG)
@@ -966,6 +975,7 @@ def ParseFa(fname):
     InputStr = open(fname).readlines()
     FaDict = {}
     seq = ""
+    seqHead = None
     for line in InputStr:
         if line.startswith(">"):
             if len(seq) > 0:
@@ -980,7 +990,7 @@ def ParseFa(fname):
 
 
 def PreCalculateVgeneDist(VgeneFa="Imgt_Human_TRBV.fasta"):
-    ## Only run one time if needed
+    # Only run one time if needed
     FaDict = ParseFa(cur_dir + VgeneFa)
     VScore = {}
     CDR1Dict = {}
@@ -990,14 +1000,14 @@ def PreCalculateVgeneDist(VgeneFa="Imgt_Human_TRBV.fasta"):
             VV = kk.split("|")[1]
         else:
             VV = kk[1:]
-        CDR1Dict[VV] = FaDict[kk][26:37]  ## Imgt CDR1: 27 - 38
-        CDR2Dict[VV] = FaDict[kk][55:64]  ## Imgt CDR2: 56 - 65
+        CDR1Dict[VV] = FaDict[kk][26:37]  # Imgt CDR1: 27 - 38
+        CDR2Dict[VV] = FaDict[kk][55:64]  # Imgt CDR2: 56 - 65
     Vkeys = list(CDR1Dict.keys())
     nn = len(Vkeys)
     for ii in range(0, nn):
         V1 = Vkeys[ii]
         s1_CDR1 = CDR1Dict[V1]
-        s1_CDR2 = CDR2Dict[V1]
+        s1_CDR2 = CDR2Dict[V1]  # noqa # type: ignore
         for jj in range(ii, nn):
             V2 = Vkeys[jj]
             s2_CDR1 = CDR1Dict[V2]
@@ -1030,22 +1040,25 @@ def EncodeRepertoire(
     Mat=False,
     verbose=False,
 ):
-    ## No V gene version
-    ## Encode CDR3 sequences into 96 dimensional space and perform k-means clustering
-    ## If exact is True, SW alignment will be performed within each cluster after isometric encoding and clustering
+    # No V gene version
+    # Encode CDR3 sequences into 96 dimensional space and perform k-means clustering
+    # If exact is True, SW alignment will be performed within each cluster after
+    # isometric encoding and clustering
     h = open(inputfile)
     t1 = time.time()
     alines = h.readlines()
     ww = alines[0].strip().split("\t")
     if not ww[0].startswith("C"):
-        ## header line
+        # header line
         hline = alines[0]
         alines = alines[1:]
     elif "CDR3" in ww[0]:
         hline = alines[0]
         alines = alines[1:]
     else:
-        hline = "CDR3\t" + "\t".join(["Info" + str(x) for x in range(len(ww) - 1)])
+        hline = "CDR3\t" + "\t".join(  # noqa # type: ignore
+            ["Info" + str(x) for x in range(len(ww) - 1)]
+        )
     seqs = []
     vgs = []
     infoList = []
@@ -1100,10 +1113,11 @@ def EncodeRepertoire(
     )
     g.write(InfoLine + "\n")
     g.write(
-        "##Column Info: CDR3 aa sequence, cluster id, other information in the input file\n"
+        "##Column Info: CDR3 aa sequence, cluster id, other information "
+        "in the input file\n"
     )
     gr = 0
-    ## Split into different lengths
+    # Split into different lengths
     LD, VD, ID, SD = BuildLengthDict(
         seqs, vGene=vgs, INFO=infoList, sIDs=[x for x in range(len(seqs))]
     )
@@ -1131,20 +1145,20 @@ def EncodeRepertoire(
                 NUMs = [str(xx) for xx in dM[ii, :]]
                 line += "\t".join(NUMs) + "\n"
                 h.write(line)
-        sID = [x for x in range(dM.shape[0])]
+        sID = [x for x in range(dM.shape[0])]  # noqa # type: ignore
         t2 = time.time()
         if verbose:
             print(" Done! Total time elapsed %f" % (t2 - t1))
         Cls = ClusterCDR3(
             dM, flagL, thr=thr_iso - 0.5 * (15 - kk), verbose=verbose
-        )  ## change cutoff with different lengths
+        )  # change cutoff with different lengths
         if verbose:
             print("     Handling identical CDR3 groups")
         Cls_u = []
         for ii in range(len(Cls)):
             cc = Cls[ii]
             if len(cc) == 1:
-                ## Handle identical CDR3 groups first
+                # Handle identical CDR3 groups first
                 if flagL[cc[0]] > 0:
                     gr += 1
                     jj = cc[0]
@@ -1203,7 +1217,7 @@ def EncodeRepertoire(
             for ii in range(len(Cls_v)):
                 cc = Cls_v[ii]
                 if len(cc) == 1:
-                    ## Handle identical CDR3 groups first
+                    # Handle identical CDR3 groups first
                     gr += 1
                     jj = cc[0]
                     for v_info in vInfo[jj]:
@@ -1320,7 +1334,7 @@ def OrderUnique(Ig):
 
 
 def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
-    ## flagL: flag vector for identical CDR3 groups, >0 for grouped non-identical CDR3s
+    # flagL: flag vector for identical CDR3 groups, >0 for grouped non-identical CDR3s
     Cls = []
     flag = 0
     dM1 = dM
@@ -1328,15 +1342,15 @@ def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
     if GPU:
         res = faiss.StandardGpuResources()
     while 1:
-        #        print("     %d number of clusters, with %d sequences" %(len(Cls),dM1.shape[0]))
+        # print("     %d number of clusters, with %d sequences" %(len(Cls),dM1.shape[0]))
         if verbose:
             print("=", end="")
         index = faiss.IndexFlatL2(Ndim * 6)
         if GPU:
-            index = faiss.index_cpu_to_gpu(res, 0, index)
+            index = faiss.index_cpu_to_gpu(res, 0, index)  # noqa # type: ignore
         index.add(dM1)
         if flag == 0:
-            D, I = index.search(dM1, 2)
+            D, I = index.search(dM1, 2)  # noqa # type: ignore
             vv = np.where((D[:, 1] <= thr))[0]
             vv0 = np.where((D[:, 1] > thr) & (flagL > 0))[0]
             for v in vv0:
@@ -1359,13 +1373,13 @@ def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
             tmp_dM = tmp_dM[fid,]
             Ig_new = Igs
         else:
-            D, I = index.search(dM1, 2)
+            D, I = index.search(dM1, 2)  # noqa # type: ignore
             vv = np.where(D[:, 1] <= thr)[0]
             vv0 = np.where(D[:, 1] > thr)[0]
-            ## move groups in vv0 to Cls
-            kkg = list(Ig.keys())
+            # move groups in vv0 to Cls
+            kkg = list(Ig.keys())  # noqa # type: ignore
             for v in vv0:
-                ng = list(Ig[kkg[v]][1])
+                ng = list(Ig[kkg[v]][1])  # noqa # type: ignore
                 #            if ng not in Cls:
                 Cls.append(ng)
             tmp_dM = np.zeros((len(vv), Ndim * 6))
@@ -1380,16 +1394,18 @@ def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
                 Ig_new[ii] = (
                     sorted(
                         list(set([idx1, idx2]))
-                    ),  ## First entry records the relative index of a sequence clique
-                    sorted(list(set(list(Ig[kkg[idx1]][1]) + list(Ig[kkg[idx2]][1])))),
-                )  ## Second entry records the absolute index of a sequence
+                    ),  # First entry records the relative index of a sequence clique
+                    sorted(
+                        list(set(list(Ig[kkg[idx1]][1]) + list(Ig[kkg[idx2]][1])))  # noqa # type: ignore
+                    ),
+                )  # Second entry records the absolute index of a sequence
                 tmp_dM[ii,] = (dM1[idx1,] + dM1[idx2,]) / 2
             if len(Ig_new) == 0:
                 if verbose:
                     print("\ntype I break")
-                kkg = list(Ig.keys())
+                kkg = list(Ig.keys())  # noqa # type: ignore
                 for kk in kkg:
-                    ng = list(Ig[kk][1])
+                    ng = list(Ig[kk][1])  # noqa # type: ignore
                     if ng not in Cls:
                         Cls.append(ng)
                 break
@@ -1398,17 +1414,17 @@ def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
             tmp_dM = tmp_dM[fid,]
             Ig_new = Igs
         if flag > 0:
-            if Ig == Ig_new:
+            if Ig == Ig_new:  # noqa # type: ignore
                 if verbose:
                     print("\ntype II break")
-                kkg = list(Ig.keys())
+                kkg = list(Ig.keys())  # noqa # type: ignore
                 for kk in kkg:
-                    ng = list(Ig[kk][1])
+                    ng = list(Ig[kk][1])  # noqa # type: ignore
                     if ng in Cls:
                         continue
                     Cls.append(ng)
                 break
-        Ig = Ig_new
+        Ig = Ig_new  # noqa # type: ignore
         tmp_dM = tmp_dM.astype("float32")
         dM1 = tmp_dM
         flag += 1
@@ -1418,7 +1434,7 @@ def ClusterCDR3(dM, flagL, thr=10, GPU=False, verbose=False):
 def ClusterCDR3r(dM, flagL, thr=10, verbose=False):
     index = faiss.IndexFlatL2(Ndim * 6)
     index.add(dM)
-    lims, D, I = index.range_search(dM, thr)
+    lims, D, I = index.range_search(dM, thr)  # noqa # type: ignore
     # with open('cdr3.npy', 'wb') as f:
     #     np.save(f, lims)
     #     np.save(f, D)
@@ -1506,7 +1522,8 @@ Input columns:
         "-d",
         "--directory",
         dest="Directory",
-        help="Input repertoire sequencing file directory. Please make sure that all the files in the directory are input files.",
+        help="Input repertoire sequencing file directory. Please make sure that "
+        "all the files in the directory are input files.",
         default="",
     )
     parser.add_option(
@@ -1521,21 +1538,25 @@ Input columns:
         "--fileList",
         dest="files",
         default="",
-        help="Alternative input: a file containing the full path to all the files. If given, overwrite -d and -f option",
+        help="Alternative input: a file containing the full path to all the files. "
+        "If given, overwrite -d and -f option",
     )
     parser.add_option(
         "-t",
         "--threshold",
         dest="thr",
         default=7,
-        help="Isometric distance threshold for calling similar CDR3 groups. Without -E, smaller value will increase speed. With -E, smaller value will increase specificity. Must be smaller than 12.",
+        help="Isometric distance threshold for calling similar CDR3 groups. "
+        "Without -E, smaller value will increase speed. With -E, smaller value "
+        "will increase specificity. Must be smaller than 12.",
     )
     parser.add_option(
         "-S",
         "--threshold_score",
         dest="thr_s",
         default=3.6,
-        help="Threshold for Smith-Waterman alignment score (normalized by CDR3 length). Default 3.6",
+        help="Threshold for Smith-Waterman alignment score (normalized by CDR3 length). "
+        "Default 3.6",
     )
     parser.add_option(
         "-G",
@@ -1556,14 +1577,16 @@ Input columns:
         "--outfile",
         dest="OutFile",
         default="",
-        help="Output file name. If not given, a file with --RotationEncoding will be added to the input file as the output file name.",
+        help="Output file name. If not given, a file with --RotationEncoding will be "
+        "added to the input file as the output file name.",
     )
     parser.add_option(
         "-T",
         "--startPosition",
         dest="ST",
         default=3,
-        help="Starting position of CDR3 sequence. The first ST letters are omitted. CDR3 sequence length L must be >= ST+7 ",
+        help="Starting position of CDR3 sequence. The first ST letters are omitted. "
+        "CDR3 sequence length L must be >= ST+7 ",
     )
     parser.add_option(
         "-g",
@@ -1577,7 +1600,8 @@ Input columns:
         "--GapNumber",
         dest="GapN",
         default=1,
-        help="Maximum number of gaps allowed when performing alignment. Max=1, default=1. Not used.",
+        help="Maximum number of gaps allowed when performing alignment. "
+        "Max=1, default=1. Not used.",
     )
     parser.add_option(
         "-V",
@@ -1592,7 +1616,9 @@ Input columns:
         dest="V",
         default=True,
         action="store_false",
-        help="If False, GIANA will omit variable gene information and use CDR3 sequences only. This will yield reduced specificity. The cut-off will automatically become the current value-4.0",
+        help="If False, GIANA will omit variable gene information and use "
+        "CDR3 sequences only. This will yield reduced specificity. "
+        "The cut-off will automatically become the current value-4.0",
     )
     parser.add_option(
         "-e",
@@ -1600,7 +1626,8 @@ Input columns:
         dest="E",
         default=True,
         action="store_false",
-        help="If False, GIANA will not perform Smith-Waterman alignment after isometric encoding.",
+        help="If False, GIANA will not perform Smith-Waterman alignment after "
+        "isometric encoding.",
     )
     parser.add_option(
         "-N",
@@ -1615,7 +1642,8 @@ Input columns:
         dest="Mat",
         default=False,
         action="store_true",
-        help="If true, GIANA will export the isometric encoding matrix for each TCR. Default: False.",
+        help="If true, GIANA will export the isometric encoding matrix for each TCR. "
+        "Default: False.",
     )
     parser.add_option(
         "-U",
@@ -1630,7 +1658,8 @@ Input columns:
         "--queryFile",
         dest="Query",
         default="",
-        help="Input query file, if given, GIANA will run in query mode, also need to provide -r option.",
+        help="Input query file, if given, GIANA will run in query mode, also need to "
+        "provide -r option.",
     )
     parser.add_option(
         "-r",
@@ -1655,13 +1684,13 @@ def main():
     cutoff = float(opt.thr)
     OutDir = opt.OutDir
     thr_s = float(opt.thr_s)
-    ## Check if query mode first
+    # Check if query mode first
     qFile = opt.Query
     if len(qFile) > 0:
-        ## query mode
+        # query mode
         t1 = time.time()
         if qFile.endswith("/"):
-            ## input query is a directory
+            # input query is a directory
             qFs = os.listdir(qFile)
             qFileList = []
             for ff in qFs:
@@ -1670,16 +1699,17 @@ def main():
             qFileList = [qFile]
         rFile = opt.ref
         if len(rFile) == 0:
-            raise ("Must provide reference file in query mode!")
+            raise ValueError("Must provide reference file in query mode!")
         else:
-            ## check if reference cluster file exists
+            # check if reference cluster file exists
             rFile0 = re.sub("\\.txt", "", rFile)
             refClusterFile = rFile0 + "--RotationEncodingBL62.txt"
             if not os.path.exists(refClusterFile):
-                raise (
-                    "Must run clustering on reference file first! Did you forget to put the clustering file in this directory?"
+                raise ValueError(
+                    "Must run clustering on reference file first! Did you forget to put "
+                    "the clustering file in this directory?"
                 )
-            rData = CreateReference(rFile)
+            rData = CreateReference(rFile)  # noqa # type: ignore
             t2 = time.time()
             print("Reference created. Elapsed %f" % (t2 - t1))
             for qf in qFileList:
@@ -1697,15 +1727,15 @@ def main():
                 if path.exists(of):
                     print(of + " already exits. Skipping.")
                     continue
-                MakeQuery(qf, rData, thr=cutoff, thr_s=thr_s)
+                MakeQuery(qf, rData, thr=cutoff, thr_s=thr_s)  # noqa # type: ignore
                 t2 = time.time()
                 print("     Build query clustering file. Elapsed %f" % (t2 - t1))
                 print("Now mering with reference cluster")
-                MergeExist(refClusterFile, OutDir + "/" + outFile)
+                MergeExist(refClusterFile, OutDir + "/" + outFile)  # noqa # type: ignore
                 t2 = time.time()
                 print("         Time of elapsed for query %s: %f" % (qf, t2 - t2_0))
     else:
-        ## regular clustering mode
+        # regular clustering mode
         FileDir = opt.Directory
         if len(FileDir) > 0:
             files = os.listdir(FileDir)
@@ -1727,7 +1757,7 @@ def main():
                 files.append(ff.strip())
         VFa = opt.VFa
         PreCalculateVgeneDist(VFa)
-        vf = open("./VgeneScores.txt")  ## Use tcrDist's Vgene 80-score calculation
+        vf = open("./VgeneScores.txt")  # Use tcrDist's Vgene 80-score calculation
         VScore = {}
         VV = opt.V
         EE = opt.E
@@ -1744,11 +1774,11 @@ def main():
                 VScore[(ww[0], ww[1])] = int(ww[2]) / 20
                 VScore[(ww[1], ww[0])] = int(ww[2]) / 20
         Gap = int(opt.Gap)
-        Gapn = int(opt.GapN)
+        Gapn = int(opt.GapN)  # noqa # type: ignore
         OutFile = opt.OutFile
         GPU = opt.GPU
-        st = 3
-        ed = 1
+        st = 3  # noqa # type: ignore
+        ed = 1  # noqa # type: ignore
         NT = int(opt.NN)
         faiss.omp_set_num_threads(NT)
         for ff in files:
@@ -1763,7 +1793,7 @@ def main():
                 exact=EE,
                 VDict=VScore,
                 Vgene=VV,
-                thr_iso=cutoff,
+                thr_iso=cutoff,  # noqa # type: ignore
                 gap=Gap,
                 GPU=GPU,
                 Mat=Mat,
