@@ -35,7 +35,7 @@ for (indir in indirs) {
             file.path(indir, "metrics", paste0("sensitivity_", sens), "metrics_summary.csv"),
             header = FALSE, row.names = 1, check.names = FALSE)
         colnames(metric) <- c("Value")
-        metric <- t(metric)
+        metric <- as.data.frame(t(metric))
         metric$Sample <- sample
         metric$Sensitivity <- sens
 
@@ -69,7 +69,7 @@ write.table(
 )
 
 reporter$add(
-    list(kind = "descr", content = "Metrics for all samples (sensitivity = {paste0(sensitivity, collapse = ", ")})"),
+    list(kind = "descr", content = glue::glue("Metrics for all samples (sensitivity = {paste0(sensitivity, collapse = ", ")})")),
     list(kind = "table", src = file.path(outdir, "metrics.txt")),
     h1 = "Metrics of all samples"
 )
@@ -96,24 +96,28 @@ METRIC_DESCR <- list(
 
 logger$info("Plotting metrics ...")
 for (metric in colnames(metrics)) {
-    if (metric == "Sample") { next }
+    if (metric == "Sample" || metric == "Sensitivity") { next }
     logger$info("- {metric}")
 
     reporter$add(
         list(
             kind = "descr",
-            content = METRIC_DESCR[[metric_name]] %||% paste0("Metric: ", metric)
+            content = METRIC_DESCR[[metric]] %||% paste0("Metric: ", metric)
         ),
         h1 = metric
     )
 
     # barplot
-    p <- BarPlot(metrics, x = "Sample", y = metric, x_text_angle = 90, facet_by = "Sensitivity")
+    if (length(sensitivity) > 1) {
+        p <- BarPlot(metrics, x = "Sample", y = metric, x_text_angle = 90, facet_by = "Sensitivity")
+    } else {
+        p <- BarPlot(metrics, x = "Sample", y = metric, x_text_angle = 90)
+    }
     figfile <- file.path(outdir, paste0(slugify(metric), ".barplot"))
     save_plot(p, prefix = figfile)
 
     reporter$add(
-        list(src = figfile, name = "By Sample"),
+        list(src = paste0(figfile, ".png"), name = "By Sample"),
         ui = "table_of_images",
         h1 = metric
     )
@@ -125,12 +129,16 @@ for (metric in colnames(metrics)) {
         left_join(metrics, by = "Sample") %>%
         mutate(Group = factor(Group, levels = unique(Group)))
 
-    p <- BoxPlot(pdata, x = "Group", y = metric, x_text_angle = 90, facet_by = "Sensitivity")
+    if (length(sensitivity) > 1) {
+        p <- BoxPlot(pdata, x = "Group", y = metric, x_text_angle = 90, facet_by = "Sensitivity")
+    } else {
+        p <- BoxPlot(pdata, x = "Group", y = metric, x_text_angle = 90)
+    }
     figfile <- file.path(outdir, paste0(slugify(metric), ".boxplot"))
     save_plot(p, prefix = figfile)
 
     reporter$add(
-        list(src = figfile, name = "By Group"),
+        list(src = paste0(figfile, ".png"), name = "By Group"),
         ui = "table_of_images",
         h1 = metric
     )
