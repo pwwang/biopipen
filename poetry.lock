@@ -253,14 +253,14 @@ all = ["scipy (>=1.8,<2.0)", "wcwidth (>=0.2,<0.3)"]
 
 [[package]]
 name = "diot"
-version = "0.3.2"
+version = "0.3.3"
 description = "Python dictionary with dot notation."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "diot-0.3.2-py3-none-any.whl", hash = "sha256:5f64146322709cb9b18e30f9115ff65653b36483390c81ae0d7f089cd8306aca"},
-    {file = "diot-0.3.2.tar.gz", hash = "sha256:15f4030803ab0b540bb94174b7eecc5676c869bb93fa86e4fb60a0bc4735dfad"},
+    {file = "diot-0.3.3-py3-none-any.whl", hash = "sha256:57295553b140bea4b58f945ad73ea4c1f4bbf5427b26de3bc5aad832ec53c7f1"},
+    {file = "diot-0.3.3.tar.gz", hash = "sha256:50e0435d19d3b2ece746886d42f7e4326cc62c1daf70080aaf7c9ba3d8e0791b"},
 ]
 
 [package.dependencies]
@@ -1671,18 +1671,18 @@ six = ">=1.5"
 
 [[package]]
 name = "python-simpleconf"
-version = "0.9.1"
+version = "0.9.2"
 description = "Simple configuration management with python."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "python_simpleconf-0.9.1-py3-none-any.whl", hash = "sha256:e4570400c2e086dfd6c17334c1ccc16fa6982373e12c31b3b3ca5a1d5adfb79b"},
-    {file = "python_simpleconf-0.9.1.tar.gz", hash = "sha256:ffad80cc77bc3be04e124d42df8ca24245b7b4ba0b04820ce796be8177ef8ccf"},
+    {file = "python_simpleconf-0.9.2-py3-none-any.whl", hash = "sha256:b4abfaaf299a21ed6698efd4df941ce7b8642ee4cbf5afddd1301a6c9a8cb31f"},
+    {file = "python_simpleconf-0.9.2.tar.gz", hash = "sha256:cfb3b5a56ec5cd4ab5cbb12678d269f093aff0b62871be3d9239834e1cebc656"},
 ]
 
 [package.dependencies]
-diot = ">=0.3.2,<0.4.0"
+diot = ">=0.3.3,<0.4.0"
 panpath = ">=0.4.8,<0.5.0"
 rtoml = {version = ">=0.12,<0.13", optional = true, markers = "sys_platform == \"linux\" and (extra == \"toml\" or extra == \"all\")"}
 tomli = {version = ">=2.0,<3.0", optional = true, markers = "sys_platform != \"linux\" and (extra == \"toml\" or extra == \"all\")"}
