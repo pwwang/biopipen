@@ -163,15 +163,15 @@ typing-extensions = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3
 
 [[package]]
 name = "copier"
-version = "9.12.0"
+version = "9.13.0"
 description = "A library for rendering project templates."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "python_version >= \"3.11\""
 files = [
-    {file = "copier-9.12.0-py3-none-any.whl", hash = "sha256:a1bc84dfd2a4b85dbe034999026c0e24ca02a6bc1574f45df07fd76d935c2ea9"},
-    {file = "copier-9.12.0.tar.gz", hash = "sha256:87986637205a0443dbf7e5946502e5c71962a559c25f436642a08203cf61ef54"},
+    {file = "copier-9.13.0-py3-none-any.whl", hash = "sha256:3abb37f15aea815f9dc5e48da6166a7eb8cc09d97bd8d06d8e5ee0e4f395bf2a"},
+    {file = "copier-9.13.0.tar.gz", hash = "sha256:5dd6efba8ea3d2d6c05d36574d50087c6b824e55e36146d7369c15f171442134"},
 ]
 
 [package.dependencies]
@@ -1309,14 +1309,14 @@ pipen = "==1.1.*"
 
 [[package]]
 name = "pipen-report"
-version = "1.1.1"
+version = "1.1.2"
 description = "Report generation system for pipen"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_report-1.1.1-py3-none-any.whl", hash = "sha256:335f0f40e8e0f6ffb56ea780ed35888a24b0663d1fe99d96748fea066d33325f"},
-    {file = "pipen_report-1.1.1.tar.gz", hash = "sha256:65c63e4d88ea75c823a8ff373f19dc7acb79e6aad936d73cced6c8b0d517ee7e"},
+    {file = "pipen_report-1.1.2-py3-none-any.whl", hash = "sha256:fb48aa8ee222773b0b17b01d4f7f119068570c5e527de46d8b2e7e6fdd9f996f"},
+    {file = "pipen_report-1.1.2.tar.gz", hash = "sha256:231c3af071489e3e6542381f7029cc95091b5b9f74f502a646468739590894c6"},
 ]
 
 [package.dependencies]
