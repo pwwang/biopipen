@@ -1,5 +1,4 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
-
 <script>
     import { Iframe } from "$libs";
 </script>
