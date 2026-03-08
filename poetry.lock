@@ -58,14 +58,14 @@ panpath = ["panpath (>=0.4,<0.5)"]
 
 [[package]]
 name = "blessed"
-version = "1.32.0"
+version = "1.33.0"
 description = "Easy, practical library for making terminal apps, by providing an elegant, well-documented interface to Colors, Keyboard input, and screen Positioning capabilities."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "blessed-1.32.0-py3-none-any.whl", hash = "sha256:c6fdc18838491ebc7f0460234917eff4e172074934f5f80e82672417bd74be70"},
-    {file = "blessed-1.32.0.tar.gz", hash = "sha256:d4090e9908cf86bea15a5275845c8bfc69c4c34eb6d22de07c65d26f1e54a918"},
+    {file = "blessed-1.33.0-py3-none-any.whl", hash = "sha256:1bc8ecac6d139286ea51ec1683433528ce75b0c60db77b7d881112bf9fc85b0f"},
+    {file = "blessed-1.33.0.tar.gz", hash = "sha256:c732a1043042d84f411423a1a7b74643e1dd3a2271bd6e5955682dd4a321b0ef"},
 ]
 
 [package.dependencies]
@@ -1153,14 +1153,14 @@ executing = ">=2.0,<3.0"
 
 [[package]]
 name = "pipen"
-version = "1.1.10"
+version = "1.1.12"
 description = "A pipeline framework for python"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen-1.1.10-py3-none-any.whl", hash = "sha256:8e466fef1f3c9ee1a8ffedd61f38ce71916434de45f2397a6a080e99fde988b5"},
-    {file = "pipen-1.1.10.tar.gz", hash = "sha256:290305a7a36e92440c11e95970bc0ba59f84d7b14468a65019727f4e7e9a2c22"},
+    {file = "pipen-1.1.12-py3-none-any.whl", hash = "sha256:caabd9c64d7ea476314c676428354678545ea0adff70be91e4343cf2f4bf4711"},
+    {file = "pipen-1.1.12.tar.gz", hash = "sha256:0aba1c320d8c50dc9882619ae73f89e498f58b04743538d1526f208c0a0e40ff"},
 ]
 
 [package.dependencies]
@@ -1190,14 +1190,14 @@ pipen = ">=1.0,<2.0"
 
 [[package]]
 name = "pipen-args"
-version = "1.1.2"
+version = "1.1.3"
 description = "Command-line argument parser for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_args-1.1.2-py3-none-any.whl", hash = "sha256:37563f47d7d62dc67799bd7f3708b6f4408563d7ea99c65a321785afaaa22b9f"},
-    {file = "pipen_args-1.1.2.tar.gz", hash = "sha256:9b143a912a7497069d45c55162e700ca08266592f5452de70b2a7313bdadbeef"},
+    {file = "pipen_args-1.1.3-py3-none-any.whl", hash = "sha256:0d70c10624daa6829a9c852d3dee7c589b6282fa57513fd180be40b4a8cf4a12"},
+    {file = "pipen_args-1.1.3.tar.gz", hash = "sha256:b334f37740670becde8d5a3abfef556880d282153e96d734f87c61ed67ab0b78"},
 ]
 
 [package.dependencies]
@@ -1347,14 +1347,14 @@ pipen = ">=1.1,<2.0"
 
 [[package]]
 name = "pipen-verbose"
-version = "1.1.1"
+version = "1.1.2"
 description = "Add verbosal information in logs for pipen."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_verbose-1.1.1-py3-none-any.whl", hash = "sha256:fb8ec860e401065a95969b4a6ca1d01e750eeaeb3f8ca2f69b673f60af3cee0f"},
-    {file = "pipen_verbose-1.1.1.tar.gz", hash = "sha256:5d07c1b637259243ad87cd3718cf687958dc92f2999948c075233ce398c3f376"},
+    {file = "pipen_verbose-1.1.2-py3-none-any.whl", hash = "sha256:f510e3e4c62f9dc372cd2137d0d8892558665282bb5cf928756740042cb3d961"},
+    {file = "pipen_verbose-1.1.2.tar.gz", hash = "sha256:1b430d08c43085b2f3b16af196eecaba4648c97db3a7041502fc75534809e466"},
 ]
 
 [package.dependencies]
