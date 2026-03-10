@@ -1,6 +1,13 @@
 # Change Log
 
 
+## 1.2.2
+
+- feat(scrna.SeuratClusterStats): add 'add_box' parameter to ngenes_defaults for enhanced plotting options
+- chore(scrna.MarkersFinder): add devpars for Dot Plot dimensions
+- chore(scrna.SeuratClusterStats): remove commented default variable assignments for dimplots, features, and ngenes
+
+
 ## 1.2.1
 
 - chore(cellranger): add output_flatten attribute to CellRangerCount and CellRangerVdj classes for flattened output directories
