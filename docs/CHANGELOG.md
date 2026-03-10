@@ -1,6 +1,13 @@
 # Change Log
 
 
+## 1.2.1
+
+- chore(cellranger): add output_flatten attribute to CellRangerCount and CellRangerVdj classes for flattened output directories
+- chore(pipseeker.PipseekerFull): add output_flatten attribute to PipseekerFull class to make output directories flattened in process output directory
+- chore: bump pipen to 1.1.12 (support output flattening for processes)
+- chore(deps): bump diot to version 0.3.3 and python-simpleconf to version 0.9.2 (support templated configuration)
+
 ## 1.2.0
 
 - chore: update commit log retrieval to use merge commit instead of last tag
@@ -12,7 +19,6 @@
 - docs(scrna.ModuleScoreCalculator): add additional arguments description for AddModuleScore and CellCycleScoring
 - fix(regulatory): correct function calls to use biopipen.utils for height and width calculations in plot_variant_motifs
 - feat: support relative devpars width/height for saving plots
-
 
 ## 1.1.14
 

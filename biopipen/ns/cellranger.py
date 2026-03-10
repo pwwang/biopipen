@@ -66,6 +66,7 @@ class CellRangerCount(Proc):
             {{- id -}}
         {%- endif -%}
     """
+    output_flatten = True
     lang = config.lang.python
     envs = {
         "ncores": config.misc.ncores,
@@ -139,6 +140,7 @@ class CellRangerVdj(Proc):
             {{- id -}}
         {%- endif -%}
     """
+    output_flatten = True
     lang = config.lang.python
     envs = {
         "ncores": config.misc.ncores,
