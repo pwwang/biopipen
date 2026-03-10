@@ -1,7 +1,5 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-# ngenes_defaults <- {{envs.ngenes_defaults | r: todot="-"}}
-# ngenes <- {{envs.ngenes | r: todot="-", skip=1}}
 log$info("ngenes:")
 
 odir <- file.path(outdir, "ngenes")

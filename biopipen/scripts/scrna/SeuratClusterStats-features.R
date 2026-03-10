@@ -1,7 +1,5 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-# features_defaults = {{envs.features_defaults | r: todot="-"}}
-# features = {{envs.features | r: todot="-", skip=1}}
 log$info("features:")
 
 odir = file.path(outdir, "features")
