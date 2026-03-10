@@ -910,6 +910,7 @@ class SeuratClusterStats(Proc):
         "ngenes_defaults": {
             "subset": None,
             "more_formats": [],
+            "add_box": True,
             "devpars": {"res": 100, "height": 800, "width": 1000},
         },
         "ngenes": {
