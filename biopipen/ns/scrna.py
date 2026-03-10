@@ -1452,7 +1452,10 @@ class MarkersFinder(Proc):
         "marker_plots": {
             "Volcano Plot (diff_pct)": {"plot_type": "volcano_pct"},
             "Volcano Plot (log2FC)": {"plot_type": "volcano_log2fc"},
-            "Dot Plot": {"plot_type": "dot"},
+            "Dot Plot": {
+                "plot_type": "dot",
+                "devpars": {"width": "x1.25", "height": "x1.8"},
+            },
         },
         "enrich_plots_defaults": {
             "more_formats": [],
@@ -3243,6 +3246,7 @@ class PseudoBulkDEG(Proc):
             If no cases are specified, a default case will be added with
             the name `DEG Analysis` and the default values specified above.
     """  # noqa: E501
+
     input = "sobjfile:file"
     output = "outdir:dir:{{in.sobjfile | stem}}.pseudobulk_deg"
     lang = config.lang.rscript
@@ -3392,6 +3396,7 @@ class MQuad(Proc):
         <more>: Other arguments passed to MQuad.
             See <https://github.com/single-cell-genetics/MQuad/blob/main/mquad/mquad_CLI.py> for more details.
     """  # noqa: E501
+
     input = "cellsnpout:dir"
     output = "outdir:dir:{{in.cellsnpout | stem}}.mquad"
     lang = config.lang.python
@@ -3419,6 +3424,7 @@ class MQuadMerge(Proc):
         outdir: The output directory for merged MQuad results.
             This can be later used as input to `VireoSNP` process.
     """
+
     input = "mquaddirs:dirs"
     output = "outdir:dir:{{in.mquaddirs | first | stem | append: '-etc'}}.mquadmerged"
     lang = config.lang.python
@@ -3455,6 +3461,7 @@ class VireoSNP(Proc):
         min_iter (type=int): The minimum number of iterations to perform.
         max_iter (type=int): The maximum number of iterations to perform.
     """  # noqa: E501
+
     input = "cellsnpout:dir"
     output = "outdir:dir:{{in.cellsnpout | stem}}.vireoSNP"
     lang = config.lang.python
