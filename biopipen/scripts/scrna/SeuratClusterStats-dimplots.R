@@ -1,7 +1,5 @@
 # Loaded variables: srtfile, outdir, srtobj
 
-# dimplots_defaults = {{envs.dimplots_defaults | r: todot="-"}}
-# dimplots = {{envs.dimplots | r: todot="-", skip=1}}
 log$info("dimplots:")
 
 odir <- file.path(outdir, "dimplots")
