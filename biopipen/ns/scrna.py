@@ -2196,6 +2196,264 @@ class SeuratMap2Ref(Proc):
     See: <https://satijalab.org/seurat/articles/integration_mapping.html>
     and <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
 
+    Details:
+
+        ### Preparing a Seurat reference for mapping
+
+        #### Step 0: Create the Seurat reference object
+
+        Start from raw counts.
+
+        ```r
+        reference <- CreateSeuratObject(counts = reference_counts)
+        ```
+
+        At this stage the object should contain at least:
+
+        * RNA counts
+        * cell barcodes
+
+        #### Step 1: Choose normalization strategy
+
+        Two main normalization strategies are supported for reference mapping.
+
+        ##### Option A — LogNormalize workflow
+
+        Recommended for:
+
+        * standard scRNA-seq
+        * single modality datasets
+        * smaller references
+
+        ```r
+        reference <- NormalizeData(reference, normalization.method = "LogNormalize", scale.factor = 10000)
+        reference <- FindVariableFeatures(reference, selection.method = "vst", nfeatures = 2000)
+        reference <- ScaleData(reference)
+        ```
+
+        This produces the normalized expression matrix used for PCA.
+
+        ##### Option B — SCTransform workflow
+
+        Recommended for:
+
+        * large datasets
+        * heterogeneous samples
+        * multimodal references (e.g. CITE-seq)
+
+        ```r
+        reference <- SCTransform(reference, verbose = FALSE)
+        ```
+
+        Important notes:
+
+        * Creates an **SCT assay**
+        * Variable features and scaling are performed automatically
+        * Mapping later requires `normalization.method = "SCT"`
+
+        #### Step 2: Choose dimensional reduction
+
+        The reference must contain a dimensional reduction used for mapping.
+
+        ##### Option A — PCA (standard references)
+
+        Used with LogNormalize.
+
+        ```r
+        reference <- RunPCA(reference, verbose = FALSE)
+        ```
+
+        Typical usage:
+
+        * 30-50 PCs
+
+        ##### Option B — SPCA (supervised PCA)
+
+        Used with SCTransform references and often in multimodal workflows.
+
+        ```r
+        reference <- RunSPCA(reference, assay = "SCT")
+        ```
+
+        SPCA learns a projection supervised by a cell‑cell similarity graph and is commonly used in reference atlases.
+
+        ####  Step 3: Compute neighbors and clustering (optional but recommended)
+
+        Precomputing neighbors allows faster anchor finding.
+
+        ##### PCA reference
+
+        ```r
+        reference <- FindNeighbors(reference, reduction = "pca", dims = 1:30)
+        reference <- FindClusters(reference, resolution = 0.5)
+        ```
+
+        ##### SPCA / multimodal reference
+
+        ```r
+        reference <- FindMultiModalNeighbors(
+        reference,
+        reduction.list = list("spca"),
+        dims.list = list(1:30)
+        )
+        ```
+
+        This creates a **weighted nearest neighbor (WNN)** graph.
+
+        #### Step 4: Compute UMAP and store the model
+
+        To allow `MapQuery` to project new cells into the same UMAP space, the model must be saved.
+
+        ```r
+        reference <- RunUMAP(
+            reference,
+            reduction = "pca",
+            dims = 1:30,
+            return.model = TRUE
+        )
+        ```
+
+        For WNN references:
+
+        ```r
+        reference <- RunUMAP(
+            reference,
+            nn.name = "weighted.nn",
+            reduction.name = "wnn.umap",
+            return.model = TRUE
+        )
+        ```
+
+        Storing the model enables **ProjectUMAP / MapQuery** to reuse the trained embedding.
+
+        #### Step 5: Annotate the reference
+
+        Reference mapping transfers metadata labels.
+
+        Add cell type annotations to metadata:
+
+        ```r
+        reference$celltype <- annotated_celltypes
+        reference$celltype_l1 <- broad_labels
+        reference$celltype_l2 <- fine_labels
+        ```
+
+        Any metadata field can later be transferred.
+
+        #### Step 6: Save the reference
+
+        ```r
+        saveRDS(reference, "reference.rds")
+        ```
+
+        Or save it in [qs2](https://github.com/qsbase/qs2) format for faster loading:
+
+        ```r
+        biopipen.utils::save_obj(reference, "reference.qs")
+        ```
+
+        This allows the reference to be reused across multiple mapping runs.
+
+
+        ### Prepare the query dataset (can be done with `SeuratPreparing` process)
+
+        The **query must use the same normalization method as the reference**.
+
+        If the query is not normalized in the same way as the reference, you can specify arguments
+        in `envs.NormalizeData` or `envs.SCTransform` for this process to reproduce the same normalization.
+
+        You can also specify `envs.skip_if_normalized = false` to force re‑normalization of the query dataset.
+
+        ### Find transfer anchors (arguments specified in `envs.FindTransferAnchors`)
+
+        Anchors link cells between the query and reference.
+
+        #### LogNormalize reference
+
+        ```r
+        anchors <- FindTransferAnchors(
+            reference = reference,
+            query = query,
+            reference.reduction = "pca",
+            dims = 1:30,
+            normalization.method = "LogNormalize"
+        )
+        ```
+
+        #### SCTransform reference
+
+        ```r
+        anchors <- FindTransferAnchors(
+            reference = reference,
+            query = query,
+            reference.reduction = "spca",
+            dims = 1:30,
+            normalization.method = "SCT"
+        )
+        ```
+
+        Optional useful parameters:
+
+        * `reference.assay = "SCT"`
+        * `recompute.residuals = TRUE`
+        * `reference.neighbors = "pca.nn"` (reuse neighbor index if precomputed)
+
+        ### Map the query (arguments specified in `envs.MapQuery`)
+
+        ```r
+        query <- MapQuery(
+            anchorset = anchors,
+            query = query,
+            reference = reference,
+            refdata = list(celltype = "celltype"),
+            reference.reduction = "pca",
+            reduction.model = "umap"
+        )
+        ```
+
+        `MapQuery` performs:
+
+        1. `TransferData`
+        2. `IntegrateEmbeddings`
+        3. `ProjectUMAP`
+
+        The query cells will:
+
+        * receive predicted cell type labels
+        * be projected into the reference UMAP
+
+        The reference UMAP reduction is reused and saved in the query object as `ref.umap`.
+
+        ### Decision summary
+
+        | Reference type          | Normalization | Reduction  | Typical use                       |
+        | ----------------------- | ------------- | ---------- | --------------------------------- |
+        | Standard scRNA‑seq      | LogNormalize  | PCA        | Single modality datasets          |
+        | Large / atlas reference | SCTransform   | SPCA       | Large heterogeneous datasets      |
+        | Multimodal reference    | SCTransform   | SPCA + WNN | CITE‑seq / multimodal integration |
+
+        ---
+
+        ### Important rules
+
+        1. Query and reference **must use the same normalization strategy**.
+        2. The **reference dimensional reduction must already exist**.
+        3. Metadata labels in the reference are required for label transfer.
+        4. Store a **UMAP model (`return.model = TRUE`)** to enable projection.
+        5. Precomputing neighbors improves performance for repeated mapping.
+        6. Use `ref.umap` for consistent visualization of mapped query cells.
+
+        ### Practical advice
+
+        For high-quality reference atlases:
+
+        * integrate multiple datasets first
+        * curate annotations carefully
+        * use ~30-50 PCs
+        * keep metadata hierarchy (broad → fine labels)
+
+        The reference effectively acts as a **pretrained cell atlas** that new datasets can be projected onto.
+
     Input:
         sobjfile: The seurat object
 
