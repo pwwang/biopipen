@@ -49,12 +49,13 @@ class SeuratPreparing(Proc):
 
     This process will read the scRNA-seq data, based on the information provided by
     `SampleInfo`, specifically, the paths specified by the `RNAData` column.
-    Those paths should be either paths to directoies containing `matrix.mtx`,
-    `barcodes.tsv` and `features.tsv` files that can be loaded by
-    [`Seurat::Read10X()`](https://satijalab.org/seurat/reference/read10x),
-    or paths of loom files that can be loaded by `SeuratDisk::LoadLoom()`, or paths to
-    `h5` files that can be loaded by
-    [`Seurat::Read10X_h5()`](https://satijalab.org/seurat/reference/read10x_h5).
+    The RNAData column should contain the path to the 10X, ParseBio data or HIVE data, either a directory or
+    a file If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz
+    and matrix.mtx.gz. The directory should be loaded by Seurat::Read10X, Seurat::ReadParseBio or
+    the HIVE data. Sometimes, there may be prefix in the file names, e.g. "'prefix'.barcodes.tsv.gz",
+    which is also supported. If the path is a file ending with ".loom", it will be loaded by
+    SeuratDisk::Connect() and converted to a Seurat object. Otherwise, if the path is a file,
+    it should be a h5 file that can be loaded by `Seurat::Read10X_h5()`.
 
     Each sample will be loaded individually and then merged into one `Seurat` object, and then perform QC.
 
