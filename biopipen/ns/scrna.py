@@ -3389,7 +3389,8 @@ class PseudoBulkDEG(Proc):
         aggregate_by: The column names in metadata to aggregate the cells.
         layer: The layer to pull and aggregate the data.
         assay: The assay to pull and aggregate the data.
-        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
             If `False`, empty results will be returned.
         group_by: The column name in metadata to group the cells.
         ident_1: The first identity to compare.
