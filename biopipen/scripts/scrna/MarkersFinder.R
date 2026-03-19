@@ -49,7 +49,6 @@ if (ncores > 1) {
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
 
-
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating meta data ...")
     srtobj@meta.data <- srtobj@meta.data %>%
@@ -234,8 +233,6 @@ post_casing <- function(name, case) {
     outcases
 }
 cases <- expand_cases(cases, defaults, post_casing, default_case = "Marker Discovery")
-
-log$info("Running cases ...")
 
 process_markers <- function(markers, info, case) {
     ## Attributes lost
@@ -645,11 +642,30 @@ run_case <- function(name) {
     # Let RunSeuratDEAnalysis handle the subset
     case$subset <- subset_
     case$object <- srtobj
-    markers <- do_call(RunSeuratDEAnalysis, case)
+    markers <- tryCatch({
+        do_call(RunSeuratDEAnalysis, case)
+    }, error = function(e) {
+        if (case$error) {
+            stop("Error: ", e$message)
+        } else {
+            log$warn("  ! Error: {e$message}")
+        }
+        NULL
+    })
     case$object <- NULL  # Release memory
     gc()
 
-    subobj <- if (is.null(subset_)) srtobj else filter(srtobj, !!parse_expr(subset_))
+    if (is.null(markers)) {
+        return(invisible())
+    }
+
+    # filter errors already popped up in DE analysis with subset
+    subobj <- if (is.null(subset_)) srtobj else tryCatch({
+        filter(srtobj, !!parse_expr(subset_))
+    }, error = function(e) {
+        # errors should be popped by RunSeuratDEAnalysis
+        NULL
+    })
 
     if (is.null(case$ident_1)) {
         all_idents <- unique(as.character(markers[[case$group_by]]))
@@ -749,6 +765,7 @@ run_case <- function(name) {
     invisible()
 }
 
+log$info("Running cases ...")
 sapply(names(cases), run_case)
 
 reporter$save(joboutdir)

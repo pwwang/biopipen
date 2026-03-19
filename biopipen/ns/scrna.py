@@ -1324,9 +1324,10 @@ class MarkersFinder(Proc):
             - clusterprofiler: `clusterProfiler` style enrichment analysis (hypergeometric test will be used).
             - clusterProfiler: alias for `clusterprofiler`
         assay: The assay to use.
-        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
-            If `False`, empty results will be returned.
         subset: An expression to subset the cells for each case.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         cache (type=auto): Where to cache the results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.
