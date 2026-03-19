@@ -1920,6 +1920,9 @@ class ScFGSEA(Proc):
         assay: The assay to use. If not provided, the default assay will be used.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
             You can use built-in dbs in `enrichit`, or provide your own gmt files.
             See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
@@ -1992,6 +1995,7 @@ class ScFGSEA(Proc):
         "ident_2": None,
         "each": None,
         "subset": None,
+        "error": True,
         "gmtfile": "KEGG_2021_Human",
         "method": "s2n",
         "top": 20,
