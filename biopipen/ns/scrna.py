@@ -1543,6 +1543,9 @@ class TopExpressingGenes(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         subset: An expression to subset the cells for each case.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `mutaters`. If some options are
@@ -1563,6 +1566,7 @@ class TopExpressingGenes(Proc):
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
         "subset": None,
+        "error": True,
         "enrich_style": "enrichr",
         "enrich_plots_defaults": {
             "more_formats": [],

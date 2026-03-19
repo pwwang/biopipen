@@ -11,6 +11,7 @@ mutaters <- {{ envs.mutaters | r }}
 ident <- {{ envs.ident | r }}
 group_by <- {{ envs.group_by | default: envs["group-by"] | default: None | r }}  # nolint
 each <- {{ envs.each | r }}
+error <- {{ envs.error | r }}
 dbs <- {{ envs.dbs | r }}
 n <- {{ envs.n | r }}
 enrich_style <- {{ envs.enrich_style | r }}
@@ -40,6 +41,7 @@ defaults <- list(
     ident = ident,
     group_by = group_by,
     each = each,
+    error = error,
     dbs = dbs,
     n = n,
     enrich_style = enrich_style,
@@ -165,7 +167,34 @@ run_case <- function(name) {
 
     log$info("- Subsetting cells and calculating average expression ...")
     if (!is.null(case$subset)) {
-        subobj <- filter(srtobj, !!parse_expr(case$subset))
+        subobj <- tryCatch({
+            filter(srtobj, !!parse_expr(case$subset))
+        }, error = function(e) {
+            if (case$error) {
+                stop("Error: ", e$message)
+            } else {
+                log$warn("  ! Error: {e$message}")
+                info <- case_info(name, outdir, create = TRUE)
+                reporter$add2(
+                    list(
+                        name = "Warning",
+                        contents = list(
+                            list(kind = "error",
+                                content = paste0("Error subsetting (", case$subset, ") Seurat object: ", e$message),
+                                kind_ = "warning"
+                            )
+                        )
+                    ),
+                    hs = c(info$section, info$name),
+                    hs2 = "Top Genes",
+                    ui = "tabs"
+                )
+            }
+            NULL
+        })
+        if (is.null(subobj)) {
+            return(invisible())
+        }
     } else {
         subobj <- srtobj
     }
