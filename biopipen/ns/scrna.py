@@ -3531,7 +3531,7 @@ class PseudoBulkDEG(Proc):
         "aggregate_by": None,
         "layer": "counts",
         "assay": None,
-        "error": False,
+        "error": True,
         "group_by": None,
         "ident_1": None,
         "ident_2": None,
