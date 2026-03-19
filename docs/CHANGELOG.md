@@ -1,6 +1,21 @@
 # Change Log
 
 
+## 1.2.3
+
+- chore: bump pipen-report to 1.1.3 and pipen-poplog to 1.1.6
+- test(scrna): add SubsetError case for Seurat process tests
+- fix(scrna.PseudoBulkDEG): set default `envs.error` handling to True
+- chore(scrna.MarkersFinder): defaut `envs.error` to True
+- feat(scrna.PseudoBulkDEG): make `envs.error` control AggregateExpressionPseudobulk errors
+- feat(scrna.ScFGSEA): add error handling for subsetting and filtering in ScFGSEA process
+- feat(scrna.TopExpressingGenes): add error handling for subsetting cells
+- feat(scrna.MarkersFinder): make `envs.error` control RunSeuratDEAnalysis errors
+- docs(scrna.SeuratPreparing): add missing newline in docstring for clarity (immunopipe collapse followed options)
+- docs(scrna.SeuratPreparing): enhance documentation for RNAData column paths and loading methods
+- docs(scrna.SeuratMap2Ref): add detailed documentation for preparing Seurat reference for mapping
+
+
 ## 1.2.2
 
 - feat(scrna.SeuratClusterStats): add 'add_box' parameter to ngenes_defaults for enhanced plotting options
