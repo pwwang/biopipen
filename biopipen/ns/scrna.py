@@ -1566,7 +1566,7 @@ class TopExpressingGenes(Proc):
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
         "subset": None,
-        "error": True,
+        "error": False,
         "enrich_style": "enrichr",
         "enrich_plots_defaults": {
             "more_formats": [],
@@ -1995,7 +1995,7 @@ class ScFGSEA(Proc):
         "ident_2": None,
         "each": None,
         "subset": None,
-        "error": True,
+        "error": False,
         "gmtfile": "KEGG_2021_Human",
         "method": "s2n",
         "top": 20,

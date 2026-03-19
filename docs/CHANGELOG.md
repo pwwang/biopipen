@@ -1,6 +1,11 @@
 # Change Log
 
 
+## 1.2.4
+
+- chore(scrna): default `envs.error` flag to false for TopExpressingGenes, ScFGSEA, PseudoBulkDEG and MarkersFinder
+
+
 ## 1.2.3
 
 - chore: bump pipen-report to 1.1.3 and pipen-poplog to 1.1.6
