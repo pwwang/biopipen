@@ -13,6 +13,7 @@ ident_2 <- {{envs.ident_2 | default: envs["ident-2"] | default: None | r}}  # no
 assay <- {{envs.assay | r}}  # nolint
 each <- {{envs.each | r}}  # nolint
 subset <- {{envs.subset | r}}  # nolint
+error <- {{envs.error | r}}  # nolint
 gmtfile <- {{envs.gmtfile | r}}  # nolint
 method <- {{envs.method | r}}  # nolint
 top <- {{envs.top | r}}  # nolint
@@ -48,6 +49,7 @@ defaults <- list(
     assay = assay,
     each = each,
     subset = subset,
+    error = error,
     gmtfile = gmtfile,
     method = method,
     top = top,
@@ -187,46 +189,52 @@ do_case <- function(name) {
         return(invisible(NULL))
     }
 
-    allow_empty = !is.null(case$each)
     # prepare expression matrix
     log$info("  Preparing expression matrix...")
-    sobj <- ensure_sobj({ srtobj %>% filter(!is.na(!!sym(case$group_by))) }, allow_empty)
-    if (is.null(sobj)) {
-        reporter$add2(
-            list(
-                kind = "error",
-                content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
-            ),
-            hs = c(info$section, info$name)
-        )
-        return(NULL)
-    }
+    sobj <- srtobj %>% filter(!is.na(!!sym(case$group_by)))
 
     if (!is.null(case$subset)) {
-        sobj <- ensure_sobj({ sobj %>% filter(!!!parse_exprs(case$subset)) }, allow_empty)
+        # sobj <- ensure_sobj({ sobj %>% filter(!!!parse_exprs(case$subset)) }, allow_empty)
+        sobj <- tryCatch({
+            sobj %>% filter(!!!parse_exprs(case$subset))
+        }, error = function(e) {
+            if (case$error) {
+                stop("Error: ", e$message)
+            } else {
+                reporter$add2(
+                    list(
+                        kind = "error",
+                        content = paste0("Error in subsetting (", case$subset, ") the Seurat object: ", e$message)
+                    ),
+                    hs = c(info$section, info$name)
+                )
+                log$warn("  ! Error in subsetting {case$subset} the Seurat object: {e$message}")
+                return(NULL)
+            }
+        })
+
         if (is.null(sobj)) {
-            reporter$add2(
-                list(
-                    kind = "error",
-                    content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
-                ),
-                hs = c(info$section, info$name)
-            )
             return(NULL)
         }
     }
     if (!is.null(case$ident_2)) {
-        sobj <- ensure_sobj({ sobj %>% filter(!!sym(case$group_by) %in% c(case$ident_1, case$ident_2)) }, allow_empty)
-        if (is.null(sobj)) {
-            reporter$add2(
-                list(
-                    kind = "error",
-                    content = paste0("No cells with non-NA `", case$group_by, "` in the Seurat object.")
-                ),
-                hs = c(info$section, info$name)
-            )
-            return(NULL)
-        }
+        sobj <- tryCatch({
+            sobj %>% filter(!!sym(case$group_by) %in% c(case$ident_1, case$ident_2))
+        }, error = function(e) {
+            if (case$error) {
+                stop("Error: ", e$message)
+            } else {
+                reporter$add2(
+                    list(
+                        kind = "error",
+                        content = paste0("Error in filtering ident_1 and ident_2 the Seurat object: ", e$message)
+                    ),
+                    hs = c(info$section, info$name)
+                )
+                log$warn("  ! Error in filtering ident_1 and ident_2 the Seurat object: {e$message}")
+                return(NULL)
+            }
+        })
     }
 
     rest <- case$rest %||% list()

@@ -49,12 +49,13 @@ class SeuratPreparing(Proc):
 
     This process will read the scRNA-seq data, based on the information provided by
     `SampleInfo`, specifically, the paths specified by the `RNAData` column.
-    Those paths should be either paths to directoies containing `matrix.mtx`,
-    `barcodes.tsv` and `features.tsv` files that can be loaded by
-    [`Seurat::Read10X()`](https://satijalab.org/seurat/reference/read10x),
-    or paths of loom files that can be loaded by `SeuratDisk::LoadLoom()`, or paths to
-    `h5` files that can be loaded by
-    [`Seurat::Read10X_h5()`](https://satijalab.org/seurat/reference/read10x_h5).
+    The RNAData column should contain the path to the 10X, ParseBio data or HIVE data, either a directory or
+    a file If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz
+    and matrix.mtx.gz. The directory should be loaded by Seurat::Read10X, Seurat::ReadParseBio or
+    the HIVE data. Sometimes, there may be prefix in the file names, e.g. "'prefix'.barcodes.tsv.gz",
+    which is also supported. If the path is a file ending with ".loom", it will be loaded by
+    SeuratDisk::Connect() and converted to a Seurat object. Otherwise, if the path is a file,
+    it should be a h5 file that can be loaded by `Seurat::Read10X_h5()`.
 
     Each sample will be loaded individually and then merged into one `Seurat` object, and then perform QC.
 
@@ -147,6 +148,7 @@ class SeuratPreparing(Proc):
             ```
             will keep genes that are expressed in at least 3 cells.
             ///
+
 
         ccs_args (ns): Arguments for `RunSeuratCellCycleScoring()`.
             When "S.Score" and/or "G2M.Score" are specified in `envs.SCTransform.vars-to-regress` when `envs.use_sct = TRUE`
@@ -1322,9 +1324,10 @@ class MarkersFinder(Proc):
             - clusterprofiler: `clusterProfiler` style enrichment analysis (hypergeometric test will be used).
             - clusterProfiler: alias for `clusterprofiler`
         assay: The assay to use.
-        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
-            If `False`, empty results will be returned.
         subset: An expression to subset the cells for each case.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         cache (type=auto): Where to cache the results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.
@@ -1428,7 +1431,7 @@ class MarkersFinder(Proc):
         "sigmarkers": "p_val_adj < 0.05",
         "enrich_style": "enrichr",
         "assay": None,
-        "error": False,
+        "error": True,
         "subset": None,
         "cache": config.path.tmpdir,
         "rest": {},
@@ -1540,6 +1543,9 @@ class TopExpressingGenes(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `enrich_plots_defaults`.
             The cases under `envs.cases` can inherit this options.
         subset: An expression to subset the cells for each case.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         cases (type=json): If you have multiple cases, you can specify them
             here. The keys are the names of the cases and the values are the
             above options except `mutaters`. If some options are
@@ -1560,6 +1566,7 @@ class TopExpressingGenes(Proc):
         "dbs": ["KEGG_2021_Human", "MSigDB_Hallmark_2020"],
         "n": 250,
         "subset": None,
+        "error": True,
         "enrich_style": "enrichr",
         "enrich_plots_defaults": {
             "more_formats": [],
@@ -1913,6 +1920,9 @@ class ScFGSEA(Proc):
         assay: The assay to use. If not provided, the default assay will be used.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
         subset: An expression to subset the cells.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
+            If `False`, empty results will be returned.
         gmtfile: The pathways in GMT format, with the gene names/ids in the same format as the seurat object.
             You can use built-in dbs in `enrichit`, or provide your own gmt files.
             See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
@@ -1985,6 +1995,7 @@ class ScFGSEA(Proc):
         "ident_2": None,
         "each": None,
         "subset": None,
+        "error": True,
         "gmtfile": "KEGG_2021_Human",
         "method": "s2n",
         "top": 20,
@@ -2195,6 +2206,264 @@ class SeuratMap2Ref(Proc):
 
     See: <https://satijalab.org/seurat/articles/integration_mapping.html>
     and <https://satijalab.org/seurat/articles/multimodal_reference_mapping.html>
+
+    Details:
+
+        ### Preparing a Seurat reference for mapping
+
+        #### Step 0: Create the Seurat reference object
+
+        Start from raw counts.
+
+        ```r
+        reference <- CreateSeuratObject(counts = reference_counts)
+        ```
+
+        At this stage the object should contain at least:
+
+        * RNA counts
+        * cell barcodes
+
+        #### Step 1: Choose normalization strategy
+
+        Two main normalization strategies are supported for reference mapping.
+
+        ##### Option A — LogNormalize workflow
+
+        Recommended for:
+
+        * standard scRNA-seq
+        * single modality datasets
+        * smaller references
+
+        ```r
+        reference <- NormalizeData(reference, normalization.method = "LogNormalize", scale.factor = 10000)
+        reference <- FindVariableFeatures(reference, selection.method = "vst", nfeatures = 2000)
+        reference <- ScaleData(reference)
+        ```
+
+        This produces the normalized expression matrix used for PCA.
+
+        ##### Option B — SCTransform workflow
+
+        Recommended for:
+
+        * large datasets
+        * heterogeneous samples
+        * multimodal references (e.g. CITE-seq)
+
+        ```r
+        reference <- SCTransform(reference, verbose = FALSE)
+        ```
+
+        Important notes:
+
+        * Creates an **SCT assay**
+        * Variable features and scaling are performed automatically
+        * Mapping later requires `normalization.method = "SCT"`
+
+        #### Step 2: Choose dimensional reduction
+
+        The reference must contain a dimensional reduction used for mapping.
+
+        ##### Option A — PCA (standard references)
+
+        Used with LogNormalize.
+
+        ```r
+        reference <- RunPCA(reference, verbose = FALSE)
+        ```
+
+        Typical usage:
+
+        * 30-50 PCs
+
+        ##### Option B — SPCA (supervised PCA)
+
+        Used with SCTransform references and often in multimodal workflows.
+
+        ```r
+        reference <- RunSPCA(reference, assay = "SCT")
+        ```
+
+        SPCA learns a projection supervised by a cell‑cell similarity graph and is commonly used in reference atlases.
+
+        ####  Step 3: Compute neighbors and clustering (optional but recommended)
+
+        Precomputing neighbors allows faster anchor finding.
+
+        ##### PCA reference
+
+        ```r
+        reference <- FindNeighbors(reference, reduction = "pca", dims = 1:30)
+        reference <- FindClusters(reference, resolution = 0.5)
+        ```
+
+        ##### SPCA / multimodal reference
+
+        ```r
+        reference <- FindMultiModalNeighbors(
+        reference,
+        reduction.list = list("spca"),
+        dims.list = list(1:30)
+        )
+        ```
+
+        This creates a **weighted nearest neighbor (WNN)** graph.
+
+        #### Step 4: Compute UMAP and store the model
+
+        To allow `MapQuery` to project new cells into the same UMAP space, the model must be saved.
+
+        ```r
+        reference <- RunUMAP(
+            reference,
+            reduction = "pca",
+            dims = 1:30,
+            return.model = TRUE
+        )
+        ```
+
+        For WNN references:
+
+        ```r
+        reference <- RunUMAP(
+            reference,
+            nn.name = "weighted.nn",
+            reduction.name = "wnn.umap",
+            return.model = TRUE
+        )
+        ```
+
+        Storing the model enables **ProjectUMAP / MapQuery** to reuse the trained embedding.
+
+        #### Step 5: Annotate the reference
+
+        Reference mapping transfers metadata labels.
+
+        Add cell type annotations to metadata:
+
+        ```r
+        reference$celltype <- annotated_celltypes
+        reference$celltype_l1 <- broad_labels
+        reference$celltype_l2 <- fine_labels
+        ```
+
+        Any metadata field can later be transferred.
+
+        #### Step 6: Save the reference
+
+        ```r
+        saveRDS(reference, "reference.rds")
+        ```
+
+        Or save it in [qs2](https://github.com/qsbase/qs2) format for faster loading:
+
+        ```r
+        biopipen.utils::save_obj(reference, "reference.qs")
+        ```
+
+        This allows the reference to be reused across multiple mapping runs.
+
+
+        ### Prepare the query dataset (can be done with `SeuratPreparing` process)
+
+        The **query must use the same normalization method as the reference**.
+
+        If the query is not normalized in the same way as the reference, you can specify arguments
+        in `envs.NormalizeData` or `envs.SCTransform` for this process to reproduce the same normalization.
+
+        You can also specify `envs.skip_if_normalized = false` to force re‑normalization of the query dataset.
+
+        ### Find transfer anchors (arguments specified in `envs.FindTransferAnchors`)
+
+        Anchors link cells between the query and reference.
+
+        #### LogNormalize reference
+
+        ```r
+        anchors <- FindTransferAnchors(
+            reference = reference,
+            query = query,
+            reference.reduction = "pca",
+            dims = 1:30,
+            normalization.method = "LogNormalize"
+        )
+        ```
+
+        #### SCTransform reference
+
+        ```r
+        anchors <- FindTransferAnchors(
+            reference = reference,
+            query = query,
+            reference.reduction = "spca",
+            dims = 1:30,
+            normalization.method = "SCT"
+        )
+        ```
+
+        Optional useful parameters:
+
+        * `reference.assay = "SCT"`
+        * `recompute.residuals = TRUE`
+        * `reference.neighbors = "pca.nn"` (reuse neighbor index if precomputed)
+
+        ### Map the query (arguments specified in `envs.MapQuery`)
+
+        ```r
+        query <- MapQuery(
+            anchorset = anchors,
+            query = query,
+            reference = reference,
+            refdata = list(celltype = "celltype"),
+            reference.reduction = "pca",
+            reduction.model = "umap"
+        )
+        ```
+
+        `MapQuery` performs:
+
+        1. `TransferData`
+        2. `IntegrateEmbeddings`
+        3. `ProjectUMAP`
+
+        The query cells will:
+
+        * receive predicted cell type labels
+        * be projected into the reference UMAP
+
+        The reference UMAP reduction is reused and saved in the query object as `ref.umap`.
+
+        ### Decision summary
+
+        | Reference type          | Normalization | Reduction  | Typical use                       |
+        | ----------------------- | ------------- | ---------- | --------------------------------- |
+        | Standard scRNA‑seq      | LogNormalize  | PCA        | Single modality datasets          |
+        | Large / atlas reference | SCTransform   | SPCA       | Large heterogeneous datasets      |
+        | Multimodal reference    | SCTransform   | SPCA + WNN | CITE‑seq / multimodal integration |
+
+        ---
+
+        ### Important rules
+
+        1. Query and reference **must use the same normalization strategy**.
+        2. The **reference dimensional reduction must already exist**.
+        3. Metadata labels in the reference are required for label transfer.
+        4. Store a **UMAP model (`return.model = TRUE`)** to enable projection.
+        5. Precomputing neighbors improves performance for repeated mapping.
+        6. Use `ref.umap` for consistent visualization of mapped query cells.
+
+        ### Practical advice
+
+        For high-quality reference atlases:
+
+        * integrate multiple datasets first
+        * curate annotations carefully
+        * use ~30-50 PCs
+        * keep metadata hierarchy (broad → fine labels)
+
+        The reference effectively acts as a **pretrained cell atlas** that new datasets can be projected onto.
 
     Input:
         sobjfile: The seurat object
@@ -3120,7 +3389,8 @@ class PseudoBulkDEG(Proc):
         aggregate_by: The column names in metadata to aggregate the cells.
         layer: The layer to pull and aggregate the data.
         assay: The assay to pull and aggregate the data.
-        error (flag): Error out if no/not enough markers are found or no pathways are enriched.
+        error (flag): Stop the job if errors happen.
+            Helpful when no/not enough markers are found or no pathways are enriched.
             If `False`, empty results will be returned.
         group_by: The column name in metadata to group the cells.
         ident_1: The first identity to compare.
@@ -3261,7 +3531,7 @@ class PseudoBulkDEG(Proc):
         "aggregate_by": None,
         "layer": "counts",
         "assay": None,
-        "error": False,
+        "error": True,
         "group_by": None,
         "ident_1": None,
         "ident_2": None,

@@ -16,6 +16,8 @@ from biopipen.ns.scrna import (
 )
 from biopipen.core.testing import get_pipeline
 
+ENABLE_REPORT = False
+
 
 class PrepareSeurat(Proc):
     """Prepare the data"""
@@ -191,7 +193,12 @@ class CellTypeAnnotationDirect2(CellTypeAnnotation_):
 
 class TopExpressingGenes(TopExpressingGenes_):
     requires = CellTypeAnnotation
-    envs = {"cases": {"Cluster": {}}}
+    envs = {
+        "cases": {
+            "Cluster": {},
+            "SubsetError": {"subset": "seurat_clusters == 'c100'", "error": False},
+        }
+    }
 
 
 class SeuratSubClustering(SeuratSubClustering_):
@@ -286,6 +293,12 @@ class DEG(MarkersFinder):
                     },
                 },
             },
+            "SubsetError": {
+                "group_by": "Group",
+                "ident_1": "Group1",
+                "subset": "seurat_clusters == 'c100'",
+                "error": False,
+            },
         },
     }
     order = 99
@@ -378,6 +391,13 @@ class PseudoBulkDEG(PseudoBulkDEG_):
         "sigmarkers": "p_val < 0.25",
         "error": False,
         "aggregate_by": ["Sample", "Group"],
+        "cases": {
+            "Default": {},
+            "SubsetError": {
+                "subset": "seurat_clusters == 'c100'",
+                "error": False,
+            },
+        },
     }
 
 
@@ -466,6 +486,13 @@ class ScFGSEASingle(ScFGSEA_):
             "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
             "master/data/KEGG_metabolism.short.gmt"
         ),
+        "cases": {
+            "Default": {},
+            "SubsetError": {
+                "subset": "seurat_clusters == 'c100'",
+                "error": False,
+            },
+        },
     }
 
 
@@ -481,6 +508,7 @@ class ScFGSEAEach(ScFGSEA_):
         # "gmtfile": Path(__file__).parent.parent.parent.joinpath(
         #     "data/reference/KEGG_metabolism.gmt"
         # ),
+        "error": False,
         "each": "seurat_clusters",
         "gmtfile": (
             "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
@@ -491,8 +519,7 @@ class ScFGSEAEach(ScFGSEA_):
 
 def pipeline():
     return (
-        get_pipeline(__file__)
-        # get_pipeline(__file__, enable_report=True)
+        get_pipeline(__file__, enable_report=ENABLE_REPORT)
         .set_starts(PrepareSeurat)
     )
 

@@ -215,8 +215,6 @@ expand_each <- function(name, case) {
 }
 cases <- expand_cases(cases, defaults, expand_each, default_case = "DEG Analysis")
 
-log$info("Running cases ...")
-
 process_markers <- function(markers, info, case) {
     ## Attributes lost
     # markers <- markers %>%
@@ -541,8 +539,9 @@ run_case <- function(name) {
         case,
         "dbs", "sigmarkers", "allmarker_plots", "allenrich_plots", "marker_plots", "enrich_plots",
         "overlaps", "original_case", "markers", "enriches", "each_name", "each", "enrich_style",
-        "aggregate_by", "subset", "layer", "assay", "group_by", "ident_1", "ident_2", "original_subset",
+        "aggregate_by", "layer", "assay", "group_by", "ident_1", "ident_2", "original_subset",
         "paired_by", "tool", "error", "ncores", "cache", "allexprs",
+        subset_ = "subset",
         allow_nonexisting = TRUE
     )
 
@@ -624,10 +623,40 @@ run_case <- function(name) {
     }
 
     info <- case_info(name, outdir, create = TRUE)
-    exprs <- AggregateExpressionPseudobulk(
-        srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
-        subset = subset, log = log
-    )
+
+    exprs <- tryCatch({
+        AggregateExpressionPseudobulk(
+            srtobj, aggregate_by = aggregate_by, layer = layer, assay = assay,
+            subset = subset_, log = log
+        )
+    }, error = function(e) {
+        if (error) {
+            stop("Error: ", e$message)
+        } else {
+            log$warn("! Error: {e$message}")
+            reporter$add2(
+                list(
+                    name = "Warning",
+                    contents = list(
+                        list(
+                            kind = "error",
+                            content = paste0("Failed to run biopipen.utils::AggregateExpressionPseudobulk: ", html_escape(e$message)),
+                            kind_ = "warning"
+                        )
+                    )
+                ),
+                hs = c(info$section, info$name),
+                hs2 = "DEG Analysis",
+                ui = "tabs"
+            )
+            return(invisible())
+        }
+    })
+
+    if (is.null(exprs)) {
+        return(invisible())
+    }
+
     markers <- tryCatch(
         {
             RunDEGAnalysis(
@@ -675,6 +704,7 @@ run_case <- function(name) {
     invisible()
 }
 
+log$info("Running cases ...")
 sapply(names(cases), run_case)
 
 reporter$save(joboutdir)
