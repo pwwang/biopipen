@@ -1431,7 +1431,7 @@ class MarkersFinder(Proc):
         "sigmarkers": "p_val_adj < 0.05",
         "enrich_style": "enrichr",
         "assay": None,
-        "error": False,
+        "error": True,
         "subset": None,
         "cache": config.path.tmpdir,
         "rest": {},
