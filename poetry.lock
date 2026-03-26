@@ -1205,20 +1205,20 @@ pipen-annotate = ">=1.0,<2.0"
 
 [[package]]
 name = "pipen-board"
-version = "1.1.0"
+version = "1.1.1"
 description = "Visualization configuration and running of pipen pipelines on the web"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_board-1.1.0-py3-none-any.whl", hash = "sha256:2c42c43c6119f81c78fc414380797d61b0176cd4e3cf61cfce143afd755c2964"},
-    {file = "pipen_board-1.1.0.tar.gz", hash = "sha256:b7399c0355c79338fe50704efe675be32be6d7ff9c99e8e72f489c047e91a10a"},
+    {file = "pipen_board-1.1.1-py3-none-any.whl", hash = "sha256:a8d5e5b2acd8d0d30cc6f81d7265352e50422ed727f74226b207266348ec6d6f"},
+    {file = "pipen_board-1.1.1.tar.gz", hash = "sha256:180f5ab691843837862fdad97a3762c751636cddac58f2d8de4822f091d4d4c4"},
 ]
 
 [package.dependencies]
 pipen-args = ">=1.1,<2.0"
 pipen-log2file = ">=1.1,<2.0"
-pipen-report = {version = ">=1.1,<2.0", optional = true, markers = "extra == \"report\" or extra == \"all\""}
+pipen-report = {version = ">=1.2,<2.0", optional = true, markers = "extra == \"report\" or extra == \"all\""}
 psutil = ">=7,<8"
 python-slugify = ">=8.0,<9.0"
 quart = ">=0.20,<0.21"
@@ -1226,10 +1226,10 @@ taskgroup = {version = ">=0.2,<0.3", markers = "python_version < \"3.11\""}
 websocket-client = ">=1.8,<2.0"
 
 [package.extras]
-all = ["pipen-diagram (>=1.1,<2.0)", "pipen-filters (>=1.1,<2.0)", "pipen-report (>=1.1,<2.0)"]
+all = ["pipen-diagram (>=1.1,<2.0)", "pipen-filters (>=1.1,<2.0)", "pipen-report (>=1.2,<2.0)"]
 diagram = ["pipen-diagram (>=1.1,<2.0)"]
 filters = ["pipen-filters (>=1.1,<2.0)"]
-report = ["pipen-report (>=1.1,<2.0)"]
+report = ["pipen-report (>=1.2,<2.0)"]
 
 [[package]]
 name = "pipen-cli-run"
@@ -1309,14 +1309,14 @@ pipen = "==1.1.*"
 
 [[package]]
 name = "pipen-report"
-version = "1.1.3"
+version = "1.2.0"
 description = "Report generation system for pipen"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pipen_report-1.1.3-py3-none-any.whl", hash = "sha256:99b1ba8877660e429e2bf89dbd2b440b85ffa7a2837ee638d3166c5ef7738a43"},
-    {file = "pipen_report-1.1.3.tar.gz", hash = "sha256:222f81e9210529ffecf3574d660909faabad45f2d3670ba1ac26fd82d351460d"},
+    {file = "pipen_report-1.2.0-py3-none-any.whl", hash = "sha256:bfd0704203bf2c885af4b23bd4de229a19ce784705573ec15ec7770eb20ae259"},
+    {file = "pipen_report-1.2.0.tar.gz", hash = "sha256:8a1c8016d2e1a31cd74471472b4a2d88e9a14f62adf218a89500993ae10bd214"},
 ]
 
 [package.dependencies]
