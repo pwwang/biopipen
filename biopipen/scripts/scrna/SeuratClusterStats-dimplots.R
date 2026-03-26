@@ -38,7 +38,27 @@ do_one_dimplot = function(name) {
 
     p <- do_call(CellDimPlot, case)
     prefix <- file.path(odir, paste0(slugify(name), ".dim"))
-    save_plot(p, prefix, devpars)
+    save_plot(p, prefix, devpars, selfcontained = FALSE)
+
+    interactive_plot_file <- paste0(prefix, ".html")
+    if (file.exists(interactive_plot_file)) {
+        shared_asset_dir <- file.path(odir, "dimplot_3d_assets")
+        asset_files_dir <- paste0(prefix, "_files")
+        if (dir.exists(asset_files_dir)) {
+            if (!dir.exists(shared_asset_dir)) {
+                # copy the entire directory of assets to the shared asset directory
+                dir.create(shared_asset_dir, recursive = TRUE, showWarnings = FALSE)
+                file.copy(list.files(asset_files_dir, full.names = TRUE), shared_asset_dir, recursive = TRUE)
+            }
+            # remove the original directory of assets
+            unlink(asset_files_dir, recursive = TRUE)
+
+            # Now we need to update the paths in the HTML file to point to the shared asset directory
+            html_content <- readLines(interactive_plot_file)
+            updated_html_content <- gsub(paste0(basename(prefix), "_files/"), paste0("dimplot_3d_assets/"), html_content)
+            writeLines(updated_html_content, interactive_plot_file)
+        }
+    }
 
     reporter$add(
         list(

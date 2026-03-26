@@ -1458,7 +1458,7 @@ class MarkersFinder(Proc):
             "Volcano Plot (log2FC)": {"plot_type": "volcano_log2fc"},
             "Dot Plot": {
                 "plot_type": "dot",
-                "devpars": {"width": "x1.25", "height": "x1.8"},
+                "devpars": {"width": 500, "height": 720},
             },
         },
         "enrich_plots_defaults": {

@@ -368,6 +368,7 @@ class SeuratClusterStats(SeuratClusterStats_):
         },
         "dimplots": {
             "3d": {"dims": [1, 2, 3], "label": True},
+            "3d_2": {"dims": [1, 2, 3], "label": False},
             "seurat_clusters": {"group_by": "seurat_clusters"},
             "nk_subcluster": {
                 "group_by": "mono_subcluster",
