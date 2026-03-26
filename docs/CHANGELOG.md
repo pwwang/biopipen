@@ -1,10 +1,15 @@
 # Change Log
 
 
+## 1.2.5
+
+- chore(deps): bump pipen-board to 1.1.1 and pipen-report to 1.2.0
+- chore(scrna.SeuratClusterStats): make 3d dimplots share assets
+- chore(scrna.MarkersFinder): update plot dimensions for Dot Plot visualization
+
 ## 1.2.4
 
 - chore(scrna): default `envs.error` flag to false for TopExpressingGenes, ScFGSEA, PseudoBulkDEG and MarkersFinder
-
 
 ## 1.2.3
 
@@ -20,13 +25,11 @@
 - docs(scrna.SeuratPreparing): enhance documentation for RNAData column paths and loading methods
 - docs(scrna.SeuratMap2Ref): add detailed documentation for preparing Seurat reference for mapping
 
-
 ## 1.2.2
 
 - feat(scrna.SeuratClusterStats): add 'add_box' parameter to ngenes_defaults for enhanced plotting options
 - chore(scrna.MarkersFinder): add devpars for Dot Plot dimensions
 - chore(scrna.SeuratClusterStats): remove commented default variable assignments for dimplots, features, and ngenes
-
 
 ## 1.2.1
 
