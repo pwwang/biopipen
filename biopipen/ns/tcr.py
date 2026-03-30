@@ -1177,6 +1177,9 @@ class CDR3Clustering(Proc):
     > repertoire classification by isometric transformation."
     > Nature communications 12.1 (2021): 1-11.
 
+    It is designed for TCR clustering, but it can also be used for BCR clustering.
+    See <https://github.com/s175573/GIANA/issues/18>.
+
     Or [ClusTCR](https://github.com/svalkiers/clusTCR)
 
     > Sebastiaan Valkiers, Max Van Houcke, Kris Laukens, Pieter Meysman,

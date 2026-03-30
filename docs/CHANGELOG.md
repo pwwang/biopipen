@@ -1,5 +1,16 @@
 # Change Log
 
+## 1.2.6
+
+- fix(Makefile): update merge commit grep pattern in version rule
+- docs(tcr.CDR3Clustering): add clarification on usage for TCR and BCR clustering
+- chore: bump xqute to 2.0.9 and pipen to 1.1.13
+
+## 1.2.5
+
+- chore(deps): bump pipen-board to 1.1.1 and pipen-report to 1.2.0
+- chore(scrna.SeuratClusterStats): make 3d dimplots share assets
+- chore(scrna.MarkersFinder): update plot dimensions for Dot Plot visualization
 
 ## 1.2.5
 
