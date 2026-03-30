@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.2.6
+
+- fix(Makefile): update merge commit grep pattern in version rule
+- docs(tcr.CDR3Clustering): add clarification on usage for TCR and BCR clustering
+- chore: bump xqute to 2.0.9 and pipen to 1.1.13
 
 ## 1.2.5
 
