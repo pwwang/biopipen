@@ -41,7 +41,7 @@ version:
 	echo "Updating version to $$NEW_VERSION"; \
 	sed -i "s/^version = .*/version = \"$$NEW_VERSION\"/" pyproject.toml; \
 	sed -i "s/^__version__ = .*/__version__ = \"$$NEW_VERSION\"/" biopipen/__init__.py; \
-	MERGE_COMMIT=$$(git log --grep="Merge remote-tracking branch 'origin/master' into dev" --pretty=format:"%H" -1 2>/dev/null || echo ""); \
+	MERGE_COMMIT=$$(git log --grep="Merge remote-tracking branch 'origin/master' into dev" --grep="Merge branch 'master' into dev" --pretty=format:"%H" -1 2>/dev/null || echo ""); \
 	if [ -z "$$MERGE_COMMIT" ]; then \
 		COMMITS=$$(git log --pretty=format:"- %s" HEAD); \
 	else \
