@@ -12,12 +12,6 @@
 - chore(scrna.SeuratClusterStats): make 3d dimplots share assets
 - chore(scrna.MarkersFinder): update plot dimensions for Dot Plot visualization
 
-## 1.2.5
-
-- chore(deps): bump pipen-board to 1.1.1 and pipen-report to 1.2.0
-- chore(scrna.SeuratClusterStats): make 3d dimplots share assets
-- chore(scrna.MarkersFinder): update plot dimensions for Dot Plot visualization
-
 ## 1.2.4
 
 - chore(scrna): default `envs.error` flag to false for TopExpressingGenes, ScFGSEA, PseudoBulkDEG and MarkersFinder
