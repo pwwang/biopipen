@@ -37,7 +37,7 @@ dependencies:
   - bioconda::pysam
   - bioconda::bcftools
   - bioconda::mygene
-  - bioconda::meme>5.5
+  - pwwang::meme
   - bioconda::tabix
   - bioconda::seqkit
   - bioconda::plink
@@ -58,7 +58,7 @@ dependencies:
   - bioconda::bioconductor-dropletutils
   - bioconda::bioconductor-rtracklayer
   - bioconda::bioconductor-universalmotif
-  - bioconda::bioconductor-motifbreakr
+  - pwwang::bioconductor-motifbreakr
   - bioconda::bioconductor-atsnp
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-ruvcorr
