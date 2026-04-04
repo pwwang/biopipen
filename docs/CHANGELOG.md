@@ -4,6 +4,7 @@
 
 - ci: update CACHE_NUMBER for conda environment to force updates
 - feat(scrna.SeuratPreparing): add features parameter to LoadSeuratAndPerformQC for renaming features
+- chore(deps): update r-base to version 4.4 in conda environment
 
 ## 1.2.6
 
