@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.2.7
+
+- ci: update CACHE_NUMBER for conda environment to force updates
+- feat(scrna.SeuratPreparing): add features parameter to LoadSeuratAndPerformQC for renaming features
+
 ## 1.2.6
 
 - fix(Makefile): update merge commit grep pattern in version rule
