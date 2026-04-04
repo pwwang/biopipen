@@ -14,7 +14,7 @@ dependencies:
   - conda-forge::time  # pipen-runinfo
   - conda-forge::openssl
   - conda-forge::aria2
-  - conda-forge::r-base=4.3
+  - conda-forge::r-base=4.4
   - conda-forge::r-mediation
   - conda-forge::r-enrichr
   - conda-forge::r-future
