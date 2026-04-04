@@ -81,6 +81,8 @@ dependencies:
   # package to specify version to avoid old versions
   - pwwang::bioconductor-ggmanh=1.12
   - conda-forge::mscorefonts
+  # unable to load shared object: stringfish.so for the one from r channel
+  - pwwang::r-stringfish
   - pip:
     - poetry
     - magic-impute
