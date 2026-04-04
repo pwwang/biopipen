@@ -110,6 +110,10 @@ class SeuratPreparing(Proc):
             express to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
             It doesn't work when data is loaded from loom files or RDS/qs2 files.
+        features (type=auto): Features to rename. It can be a dict with the keys as
+            the original feature names and the values as the new feature names, or
+            file path to a two-column tab-delimited file (no header) with the first column as
+            the original feature names and the second column as the new feature names.
         cell_qc: Filter expression to filter cells, using
             `tidyrseurat::filter()`.
             It can also be a dictionary of expressions, where the names of the list are
@@ -288,6 +292,7 @@ class SeuratPreparing(Proc):
         "mutaters": {},
         "min_cells": 0,
         "min_features": 0,
+        "features": None,
         "cell_qc": None,  # "nFeature_RNA > 200 & percent.mt < 5",
         "gene_qc": {"min_cells": 0, "excludes": []},
         "ccs_args": {},
