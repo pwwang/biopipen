@@ -84,6 +84,7 @@ sobj <- LoadSeuratAndPerformQC(
     metadata,
     min_cells = envs$min_cells,
     min_features = envs$min_features,
+    features = envs$features,
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
     ccs_args = envs$ccs_args,
