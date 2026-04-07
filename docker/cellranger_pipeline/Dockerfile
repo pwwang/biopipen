@@ -5,6 +5,10 @@ COPY --from=cellranger /cellranger /cellranger
 
 # in case we have updates about the pipeline
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.py /biopipen/docker/cleanup.py
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.list /biopipen/docker/cleanup.list
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 RUN micromamba env update -n base -f /biopipen/docker/cellranger_pipeline/env.yml && \
     micromamba clean --all --yes && \
@@ -12,9 +16,7 @@ RUN micromamba env update -n base -f /biopipen/docker/cellranger_pipeline/env.ym
     chmod +x /biopipen/docker/cellranger_pipeline/entry.sh && \
     ln -s /biopipen/docker/cellranger_pipeline/entry.sh /opt/conda/bin/entry.sh && \
     /opt/conda/bin/cellranger telemetry disable all && \
-    rm -rf /opt/conda/pkgs/*
-
-ARG MAMBA_DOCKERFILE_ACTIVATE=1
+    python /biopipen/docker/cleanup.py
 
 WORKDIR /example
 RUN /bin/bash /biopipen/docker/cellranger_pipeline/make-examples.sh && \

@@ -2,6 +2,8 @@ FROM biopipen/base:latest
 
 # in case we have updates about the pipeline
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.py /biopipen/docker/cleanup.py
+COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.list /biopipen/docker/cleanup.list
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -10,7 +12,7 @@ RUN micromamba install -y -n base -f /biopipen/docker/cnvkit_pipeline/env.yml &&
     micromamba clean --all --yes && \
     chmod +x /biopipen/docker/cnvkit_pipeline/entry.sh && \
     ln -s /biopipen/docker/cnvkit_pipeline/entry.sh /opt/conda/bin/entry.sh && \
-    rm -rf /opt/conda/pkgs/*
+    python /biopipen/docker/cleanup.py
 
 WORKDIR /example
 RUN /bin/bash /biopipen/docker/cnvkit_pipeline/make-examples.sh && \

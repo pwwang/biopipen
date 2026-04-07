@@ -32,6 +32,8 @@ dependencies:
   - conda-forge::r-tidyseurat
   - conda-forge::r-hgnchelper
   - conda-forge::r-harmony
+  - conda-forge::git
+  - conda-forge::procps-ng
   - pytorch::faiss-cpu
   - conda-forge::pip
   - bioconda::pysam
