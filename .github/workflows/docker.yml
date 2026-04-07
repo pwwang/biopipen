@@ -40,7 +40,7 @@ jobs:
       - name: Check if env/docker files changed
         id: check_changes
         run: |
-          if [[ "${{ github.ref_name }}" == "dev" ]] && git diff --name-only HEAD~1 HEAD | grep -qE '(env_biopipen\.yml|Dockerfile\.deps)$'; then
+          if [[ "${{ github.ref_name }}" == "dev" ]] && git diff --name-only HEAD~1 HEAD | grep -qE '(cleanup\.list|env_biopipen\.yml|Dockerfile\.deps)$'; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
