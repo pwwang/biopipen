@@ -201,7 +201,7 @@ share/gettext
 share/thumbnailers
 share/emacs
 share/vim
-share/terminfo
+# share/terminfo
 
 # =====================================================================
 # Jupyter (pipeline container — not a notebook server)
