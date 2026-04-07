@@ -1,4 +1,4 @@
-FROM biopipen/test-deps:latest
+FROM biopipen/test-deps:latest AS builder
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
