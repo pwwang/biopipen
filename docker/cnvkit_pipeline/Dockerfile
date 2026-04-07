@@ -2,6 +2,7 @@ FROM biopipen/base:latest
 
 # in case we have updates about the pipeline
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cellranger_pipeline /biopipen/docker/cellranger_pipeline
+# also copy the cleanup scripts in case we have updates
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.py /biopipen/docker/cleanup.py
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.list /biopipen/docker/cleanup.list
 

@@ -5,6 +5,7 @@ COPY --from=pipseeker /usr/local/bin/pipseeker /opt/conda/bin/pipseeker
 
 # in case we have updates about the pipeline
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/pipseeker_pipeline /biopipen/docker/pipseeker_pipeline
+# also copy the cleanup scripts in case we have updates
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.py /biopipen/docker/cleanup.py
 COPY --chown=$MAMBA_USER:$MAMBA_USER docker/cleanup.list /biopipen/docker/cleanup.list
 
