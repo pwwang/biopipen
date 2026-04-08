@@ -260,7 +260,7 @@ class DEGSingleComparisonWithEach(MarkersFinder):
     requires = SeuratSubClustering
     envs = {
         "group_by": "Group",
-        "each": "seurat_clusters",
+        "each": "ident",
         "ident_1": "Group1",
         "sigmarkers": "p_val < 0.5",
         "allmarker_plots": {
