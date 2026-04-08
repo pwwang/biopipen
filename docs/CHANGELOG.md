@@ -1,6 +1,10 @@
 # Change Log
 
 
+## 1.2.9
+
+- docs(scrna.SeuratClusterStats): update image URLs for cluster statistics plots
+
 ## 1.2.8
 
 - feat(scrna): allow using "ident" as an alias for the default identity column in multiple processes
