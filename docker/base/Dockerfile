@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:2.3.0 AS builder
+FROM mambaorg/micromamba:2.5.0 AS builder
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /biopipen
 
@@ -8,15 +8,14 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 # Install dependencies
 # nodejs is for report building (pipen-report)
 # procps-ng is for `free` command for memory info by pipen-runinfo
-RUN micromamba install -y -n base python=3.10 nodejs=22 git poetry procps-ng && \
+RUN micromamba install -y -n base python=3.11 nodejs=22 git poetry procps-ng && \
     micromamba clean --all --yes && \
     poetry config virtualenvs.create false && \
     poetry install -v --all-extras && \
     pipen report update && \
-    rm -rf /opt/conda/pkgs/* && \
-    rm -rf /home/$MAMBA_USER/.cache/*
+    python /biopipen/docker/cleanup.py
 
-FROM mambaorg/micromamba:2.3.0
+FROM mambaorg/micromamba:2.5.0
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /biopipen /biopipen
 COPY --chown=$MAMBA_USER:$MAMBA_USER --from=builder /opt/conda /opt/conda

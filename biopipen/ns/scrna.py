@@ -1303,6 +1303,7 @@ class MarkersFinder(Proc):
             then the case will be expanded as `envs.cases."Cluster Markers - Sample1"`, `envs.cases."Cluster Markers - Sample2"`, etc.
             You can specify `allmarker_plots` and `overlaps` to plot the markers for all cases in the same plot and plot the overlaps of the markers
             between different cases by values in this column.
+            `"ident"` can be used as an alias for the default identity column (e.g. `"seurat_clusters"`).
         dbs (list): The dbs to do enrichment analysis for significant markers.
             You can use built-in dbs in `enrichit`, or provide your own gmt files.
             See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
@@ -1513,6 +1514,7 @@ class TopExpressingGenes(Proc):
         group_by: The column name in metadata to group the cells.
         each: The column name in metadata to separate the cells into different
             cases.
+            `"ident"` can be used as an alias for the default identity column (e.g. `"seurat_clusters"`).
         dbs (list): The dbs to do enrichment analysis for significant markers.
             You can use built-in dbs in `enrichit`, or provide your own gmt files.
             See also <https://pwwang.github.io/enrichit/reference/FetchGMT.html>.
@@ -1924,6 +1926,7 @@ class ScFGSEA(Proc):
         ident_2: The second group of cells to compare, if not provided, the rest of the cells that are not `NA`s in `group_by` column are used for `ident_2`.
         assay: The assay to use. If not provided, the default assay will be used.
         each: The column name in metadata to separate the cells into different subsets to do the analysis.
+            `"ident"` can be used as an alias for the default identity column (e.g. `"seurat_clusters"`).
         subset: An expression to subset the cells.
         error (flag): Stop the job if errors happen.
             Helpful when no/not enough markers are found or no pathways are enriched.
@@ -3387,6 +3390,7 @@ class PseudoBulkDEG(Proc):
         each: The column name in metadata to separate the cells into different cases.
             When specified, the case will be expanded to multiple cases for
             each value in the column.
+            `"ident"` can be used as an alias for the default identity column (e.g. `"seurat_clusters"`).
         cache (type=auto): Where to cache the results.
             If `True`, cache to `outdir` of the job. If `False`, don't cache.
             Otherwise, specify the directory to cache to.

@@ -61,6 +61,10 @@ cases <- expand_cases(cases, defaults, default_case = "Top Expressing Genes", po
 
         outcases[[name]] <- case
     } else {
+        if (identical(case$each, "ident")) {
+            case$each <- GetIdentityColumn(srtobj)
+        }
+
         meta <- if (!is.null(case$subset)) {
             srtobj@meta.data %>% filter(!!parse_expr(case$subset))
         } else {

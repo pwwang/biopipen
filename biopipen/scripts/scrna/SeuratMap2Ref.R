@@ -71,6 +71,8 @@ sobj <- RunSeuratMap2Ref(
     log = log, cache = cache
 )
 
+log$info("NOTE: the default identity of query is now '{ident}'.")
+
 # Save
 gc()
 log$info("Saving result ...")

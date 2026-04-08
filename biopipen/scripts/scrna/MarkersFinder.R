@@ -147,6 +147,10 @@ post_casing <- function(name, case) {
 
         outcases[[name]] <- case
     } else {  # !no_each
+        if (identical(case$each, "ident")) {
+            case$each <- GetIdentityColumn(srtobj)
+        }
+
         meta <- if (!is.null(case$subset)) {
             srtobj@meta.data %>% filter(!!parse_expr(case$subset))
         } else {

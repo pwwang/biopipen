@@ -1,5 +1,13 @@
 # Change Log
 
+
+## 1.2.8
+
+- feat(scrna): allow using "ident" as an alias for the default identity column in multiple processes
+- chore(scrna.SeuratMap2Ref): log default identity of query after mapping
+- chore(cnvkit): update cnvkit version to 0.9.13 and downgrade python to 3.10
+- chore(docker): update Dockerfiles to use mambaorg/micromamba:2.5.0 and add cleanup scripts
+
 ## 1.2.7
 
 - ci: update CACHE_NUMBER for conda environment to force updates
