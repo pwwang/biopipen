@@ -446,22 +446,22 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
         plots <- list()
         for (plotname in names(plotcases)) {
             plotargs <- plotcases[[plotname]]
-            plotargs <- extract_vars(plotargs, "devpars")
-            plotargs$data <- enriches[enriches$Database == db, , drop = FALSE]
-            if (plotargs$plot_type == "heatmap") {
-                plotargs$group_by <- groupname
-                plotargs$show_row_names = plotargs$show_row_names %||% TRUE
-                plotargs$show_column_names = plotargs$show_column_names %||% TRUE
-            }
+            plotargs <- extract_vars(plotargs, "devpars", plotdb = "db", plotdbs = "dbs", allow_nonexisting = TRUE)
+            plotdb <- plotdb %||% plotdbs
+            if (is.null(plotdb) || any(sapply(plotdb, function(x) { grepl(tolower(x), tolower(db), fixed = TRUE) }))) {
+                log$info("  {plotname} ({db}) ...")
+                plotargs$data <- enriches[enriches$Database == db, , drop = FALSE]
+                if (plotargs$plot_type == "heatmap") {
+                    plotargs$group_by <- groupname
+                    plotargs$show_row_names = plotargs$show_row_names %||% TRUE
+                    plotargs$show_column_names = plotargs$show_column_names %||% TRUE
+                }
 
-            p <- do_call(VizEnrichment, plotargs)
-
-            if (plotargs$plot_type == "bar") {
-                attr(p, "height") <- attr(p, "height") / 1.5
+                p <- do_call(VizEnrichment, plotargs)
+                outprefix <- file.path(info$prefix, paste0("allenrich.", slugify(db), ".", slugify(plotname)))
+                save_plot(p, outprefix, devpars, formats = "png")
+                plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
             }
-            outprefix <- file.path(info$prefix, paste0("allenrich.", slugify(db), ".", slugify(plotname)))
-            save_plot(p, outprefix, devpars, formats = "png")
-            plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
         }
         reporter$add2(
             list(name = db, contents = plots),
@@ -708,6 +708,6 @@ run_case <- function(name) {
 }
 
 log$info("Running cases ...")
-sapply(names(cases), run_case)
+invisible(sapply(names(cases), run_case))
 
 reporter$save(joboutdir)

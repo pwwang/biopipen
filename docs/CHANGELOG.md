@@ -1,6 +1,10 @@
 # Change Log
 
 
+## 1.2.10
+
+- feat(scrna.MarkersFinder/PseduBulkDEG): add db parameter for allenrich plot database selection
+
 ## 1.2.9
 
 - docs(scrna.SeuratClusterStats): update image URLs for cluster statistics plots

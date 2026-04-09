@@ -419,6 +419,7 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
         },
         "allenrich_plots": {
             "Heatmap": {
+                "db": "KEGG",
                 "plot_type": "heatmap",
             },
         },
