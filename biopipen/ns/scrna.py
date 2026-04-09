@@ -1360,6 +1360,8 @@ class MarkersFinder(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
+            - db (type=str): The database(s) to apply for the plot. If not specified, all databases will be applied.
+                `dbs` can also be used as an alias for this parameter.
             - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
         allenrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
             The keys are the names of the cases and the values are the dicts inherited from `allenrich_plots_defaults`.
@@ -3451,6 +3453,8 @@ class PseudoBulkDEG(Proc):
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
+            - db (type=str): The database(s) to apply for the plot. If not specified, all databases will be applied.
+                `dbs` can also be used as an alias for this parameter.
             - <more>: See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
         allenrich_plots (type=json): Cases of the plots to generate for the enrichment analysis.
             The keys are the names of the cases and the values are the dicts inherited from `allenrich_plots_defaults`.
