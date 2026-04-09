@@ -418,8 +418,12 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
             },
         },
         "allenrich_plots": {
-            "Heatmap": {
+            "Heatmap (KEGG)": {
                 "db": "KEGG",
+                "plot_type": "heatmap",
+            },
+            "Heatmap (Hallmark)": {
+                "db": "Hallmark",
                 "plot_type": "heatmap",
             },
         },
@@ -512,6 +516,16 @@ class ScFGSEAEach(ScFGSEA_):
         # ),
         "error": False,
         "each": "seurat_clusters",
+        "cases": {
+            "Cluster": {
+                "alleach_plots": {
+                    "Heatmap": {
+                        "plot_type": "heatmap",
+                        "signif_only": False,
+                    },
+                },
+            }
+        },
         "gmtfile": (
             "https://raw.githubusercontent.com/pwwang/immunopipe-example/"
             "master/data/KEGG_metabolism.short.gmt"
