@@ -60,6 +60,11 @@ Idents(reference) <- reference@meta.data[[use]]
 log$info("Loading query data ...")
 sobj <- read_obj(sobjfile)
 
+if (!is.null(mutaters) && length(mutaters) > 0) {
+    log$info("Mutating metadata columns ...")
+    sobj <- MutateSeuratMeta(sobj, mutaters, log = log)
+}
+
 sobj <- RunSeuratMap2Ref(
     object = sobj, ref = reference, use = use,
     ident = ident, refnorm = refnorm, skip_if_normalized = skip_if_normalized,

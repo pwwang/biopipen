@@ -102,6 +102,7 @@ class SeuratPreparing(Proc):
         mutaters (type=json): The mutaters to mutate the metadata to the cells.
             These new columns will be added to the metadata of the Seurat object and
             will be saved in the output file.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         min_cells (type=int): The minimum number of cells that a gene must be
             expressed in to be kept. This is used in `Seurat::CreateSeuratObject()`.
             Futher QC (`envs.cell_qc`, `envs.gene_qc`) will be performed after this.
@@ -446,6 +447,7 @@ class SeuratSubClustering(Proc):
             Needed for `RunUMAP` when `umap.method` is set to `umap-learn`.
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         subset: An expression to subset the cells, will be passed to
             [`tidyseurat::filter()`](https://stemangiola.github.io/tidyseurat/reference/filter.html).
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
@@ -775,6 +777,9 @@ class SeuratClusterStats(Proc):
             The mutaters will be applied in the order specified.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
+            You can also use key `<newcol>:ident` to set the `<newcol>` as the default
+            ident for the stats.
+            See also <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         cache (type=auto): Whether to cache the plots.
             Currently only plots for features are supported, since creating the those
             plots can be time consuming.
@@ -1210,6 +1215,7 @@ class SeuratMetadataMutater(Proc):
     Envs:
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         subset: An expression to subset the cells, will be passed to `dplyr::filter()`.
             This will be applied after mutating the metadata.
 
@@ -1285,6 +1291,9 @@ class MarkersFinder(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
+            You can also use key `<newcol>:ident` to set the `<newcol>` as the default
+            ident for the stats.
+            See also <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         group_by: The column name in metadata to group the cells.
             If only `group_by` is specified, and `ident_1` and `ident_2` are
             not specified, markers will be found for all groups in this column
@@ -1508,6 +1517,9 @@ class TopExpressingGenes(Proc):
         mutaters (type=json): The mutaters to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
+            You can also use key `<newcol>:ident` to set the `<newcol>` as the default
+            ident for the stats.
+            See also <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         ident: The group of cells to find the top expressing genes.
             The cells will be selected by the `group_by` column with this
             `ident` value in metadata.
@@ -1922,6 +1934,9 @@ class ScFGSEA(Proc):
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
+            You can also use key `<newcol>:ident` to set the `<newcol>` as the default
+            ident for the stats.
+            See also <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
 
         group_by: The column name in metadata to group the cells.
         ident_1: The first group of cells to compare
@@ -2491,6 +2506,7 @@ class SeuratMap2Ref(Proc):
             See also: <https://satijalab.org/seurat/archive/v3.0/future_vignette.html>
         mutaters (type=json): The mutaters to mutate the metadata.
             This is helpful when we want to create new columns for `split_by`.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>.
         use: A column name of metadata from the reference
             (e.g. `celltype.l1`, `celltype.l2`) to transfer to the query as the
             cell types (ident) for downstream analysis. This field is required.
@@ -3389,6 +3405,9 @@ class PseudoBulkDEG(Proc):
             used to define your cases.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
+            You can also use key `<newcol>:ident` to set the `<newcol>` as the default
+            ident for the stats.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         each: The column name in metadata to separate the cells into different cases.
             When specified, the case will be expanded to multiple cases for
             each value in the column.

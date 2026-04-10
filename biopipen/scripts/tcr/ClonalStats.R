@@ -405,7 +405,7 @@ log$info("Loading scRepertoire object ...")
 screp <- read_obj(screpfile)
 
 log$info("Applying mutaters if any ...")
-screp <- ScRepMutate(screp, mutaters)
+screp <- MutateScRep(screp, mutaters, log = log)
 
 log$info("Making cases ...")
 cases <- expand_cases(cases, envs)

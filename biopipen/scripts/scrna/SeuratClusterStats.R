@@ -26,8 +26,7 @@ srtobj = read_obj(srtfile)
 
 log$info("Applying mutaters if any ...")
 if (!is.null(mutaters) && length(mutaters) > 0) {
-    srtobj@meta.data = srtobj@meta.data %>%
-        mutate(!!!lapply(mutaters, parse_expr))
+    srtobj <- MutateSeuratMeta(srtobj, mutaters, log = log)
 }
 
 ############## dimplots ##############
