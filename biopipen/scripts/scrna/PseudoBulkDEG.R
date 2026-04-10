@@ -48,7 +48,7 @@ srtobj <- read_obj(sobjfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating metadata columns ...")
-    srtobj@meta.data <- srtobj@meta.data %>% mutate(!!!lapply(mutaters, parse_expr))
+    srtobj <- MutateSeuratMeta(srtobj, mutaters, log = log)
 }
 
 allmarker_plots <- lapply(allmarker_plots, function(x) {

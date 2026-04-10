@@ -30,8 +30,7 @@ assay <- DefaultAssay(srtobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating meta data ...")
-    srtobj@meta.data <- srtobj@meta.data %>%
-        mutate(!!!lapply(mutaters, parse_expr))
+    srtobj <- MutateSeuratMeta(srtobj, mutaters, log = log)
 }
 
 enrich_plots <- lapply(enrich_plots, function(x) {

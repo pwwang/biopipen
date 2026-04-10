@@ -366,10 +366,11 @@ class ScrnaMetabolicLandscape(ProcGroup):
             `{"timepoint": "if_else(treatment == 'control', 'pre', 'post')"}`
             will add a new column `timepoint` to the metadata with values of
             `pre` and `post` based on the `treatment` column.
+            See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
         subset (pgarg): Subset the data before analysis.
         ncores (type=int): Number of cores to use for parallelization for
             each process
-    """
+    """  # noqa: E501
 
     DEFAULTS = Diot(
         metafile=None,

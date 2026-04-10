@@ -40,10 +40,7 @@ object <- read_obj(srtfile)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating meta data ...")
-    object@meta.data <- mutate(
-        object@meta.data,
-        !!!lapply(mutaters, parse_expr)
-    )
+    object <- MutateSeuratMeta(object, mutaters, log = log)
 }
 
 for (name in names(cases)) {

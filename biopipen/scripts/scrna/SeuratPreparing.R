@@ -62,7 +62,7 @@ if (!"RNAData" %in% meta_cols && !is_seurat) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }
 
-qcdir = file.path(joboutdir, "qc")
+qcdir <- file.path(joboutdir, "qc")
 dir.create(qcdir, showWarnings = FALSE, recursive = TRUE)
 
 if (
@@ -267,8 +267,7 @@ if (!identical(envs$doublet_detector, "none")) {
 
 if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
     log$info("Mutating metadata ...")
-    sobj@meta.data <- sobj@meta.data %>%
-        mutate(!!!lapply(envs$mutaters, rlang::parse_expr))
+    sobj <- MutateSeuratMeta(sobj, envs$mutaters, log = log)
 }
 
 log$info("Saving QC'ed seurat object ...")

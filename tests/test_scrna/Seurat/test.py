@@ -93,18 +93,68 @@ class SeuratPreparing(SeuratPreparing_):
             # pbmc3k doesn't have enough cell cycle genes,
             # so just use some random genes for testing
             "s-features": [
-                'CAMK1D', 'RFX5', 'TBC1D1', 'IPCEF1', 'CHMP2B', 'LSM2', 'COX6A1',
-                'GMPPA', 'ADRM1', 'SBF1', 'ARPC1A', 'VPS29', 'MARCH2', 'PSMC6',
-                'MTCH1', 'CDKN2AIP', 'ELMSAN1', 'SIK1', 'RPS15', 'FTSJ2', 'NAB1',
-                'UBE2M', 'TRABD', 'SH3BGRL', 'SRBD1', 'RPL23A', 'LY86', 'TNFRSF4',
-                'IL4R', 'PUF60',
+                "CAMK1D",
+                "RFX5",
+                "TBC1D1",
+                "IPCEF1",
+                "CHMP2B",
+                "LSM2",
+                "COX6A1",
+                "GMPPA",
+                "ADRM1",
+                "SBF1",
+                "ARPC1A",
+                "VPS29",
+                "MARCH2",
+                "PSMC6",
+                "MTCH1",
+                "CDKN2AIP",
+                "ELMSAN1",
+                "SIK1",
+                "RPS15",
+                "FTSJ2",
+                "NAB1",
+                "UBE2M",
+                "TRABD",
+                "SH3BGRL",
+                "SRBD1",
+                "RPL23A",
+                "LY86",
+                "TNFRSF4",
+                "IL4R",
+                "PUF60",
             ],
             "g2m-features": [
-                'CCDC88C', 'GBP3', 'GPX7', 'BCL2', 'LCMT1', 'TSHZ2', 'CASP4', 'PPTC7',
-                'FAM60A', 'SF3A3', 'TSG101', 'VPS13A', 'CYLD', 'CCT6A', 'FAM211A',
-                'HLA-DRB5', 'SMARCAL1', 'NIFK', 'STOM', 'ZNF706', 'CNFN', 'LSM4',
-                'FAM172A', 'WIPI1', 'NRIP1', 'DUSP5', 'SH3BP2', 'SNAPC2',
-                'TPRKB', 'MRPL44',
+                "CCDC88C",
+                "GBP3",
+                "GPX7",
+                "BCL2",
+                "LCMT1",
+                "TSHZ2",
+                "CASP4",
+                "PPTC7",
+                "FAM60A",
+                "SF3A3",
+                "TSG101",
+                "VPS13A",
+                "CYLD",
+                "CCT6A",
+                "FAM211A",
+                "HLA-DRB5",
+                "SMARCAL1",
+                "NIFK",
+                "STOM",
+                "ZNF706",
+                "CNFN",
+                "LSM4",
+                "FAM172A",
+                "WIPI1",
+                "NRIP1",
+                "DUSP5",
+                "SH3BP2",
+                "SNAPC2",
+                "TPRKB",
+                "MRPL44",
             ],
         },
     }
@@ -134,7 +184,10 @@ class SeuratClustering(SeuratClustering_):
     requires = SeuratPreparing
     envs = {
         "ncores": 1,
-        "RunUMAP": {"umap.method": "umap-learn", "n.components": 3},
+        "RunUMAP": {
+            # "umap.method": "umap-learn",
+            "n.components": 3,
+        },
         "FindNeighbors": {"dims": 5},
         "FindClusters": {"resolution": "0.1:1,.8"},
     }
@@ -182,11 +235,7 @@ class CellTypeAnnotationDirect2(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
         "tool": "direct",
-        "cell_types": {
-            "c1": "Naive CD4+ T",
-            "c2": "NA",
-            "c5": "B"
-        },
+        "cell_types": {"c1": "Naive CD4+ T", "c2": "NA", "c5": "B"},
         "merge": True,
     }
 
@@ -212,7 +261,9 @@ class SeuratSubClustering(SeuratSubClustering_):
             },
             "dc_subcluster": {
                 "subset": "seurat_clusters == 'c2'",
-                "RunUMAP": {"umap.method": "umap-learn"},
+                "RunUMAP": {
+                    # "umap.method": "umap-learn",
+                },
                 "FindClusters": {"resolution": "0.1:0.8,0.2"},
             },
         },
@@ -534,10 +585,7 @@ class ScFGSEAEach(ScFGSEA_):
 
 
 def pipeline():
-    return (
-        get_pipeline(__file__, enable_report=ENABLE_REPORT)
-        .set_starts(PrepareSeurat)
-    )
+    return get_pipeline(__file__, enable_report=ENABLE_REPORT).set_starts(PrepareSeurat)
 
 
 def testing(pipen):
