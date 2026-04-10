@@ -1,6 +1,13 @@
 # Change Log
 
 
+## 1.2.11
+
+- chore(deps): update comment for r-biopipen.utils to for ci update conda env
+- feat(tcr.ClonalStats): update mutator function to use MutateScRep for improved logging
+- feat(scrna): refactor metadata mutation to use MutateSeuratMeta function
+- test(scrna.PseudoBulkDEG): enhance allenrich plot options with additional heatmap types
+
 ## 1.2.10
 
 - feat(scrna.MarkersFinder/PseduBulkDEG): add db parameter for allenrich plot database selection
