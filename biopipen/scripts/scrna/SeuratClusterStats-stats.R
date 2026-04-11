@@ -102,4 +102,4 @@ do_one_stats <- function(name) {
     }
 }
 
-sapply(names(stats), do_one_stats)
+invisible(sapply(names(stats), do_one_stats))

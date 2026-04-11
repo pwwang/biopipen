@@ -489,6 +489,6 @@ do_case <- function(casename) {
     }
 }
 
-sapply(names(cases), do_case)
+invisible(sapply(names(cases), do_case))
 
 reporter$save(dirname(outdir))

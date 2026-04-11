@@ -194,4 +194,4 @@ do_one_features <- function(name) {
     }
 }
 
-sapply(names(features), do_one_features)
+invisible(sapply(names(features), do_one_features))

@@ -76,4 +76,4 @@ do_one_ngenes <- function(name) {
     }
 }
 
-sapply(names(ngenes), do_one_ngenes)
+invisible(sapply(names(ngenes), do_one_ngenes))

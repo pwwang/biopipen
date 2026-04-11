@@ -70,4 +70,4 @@ do_one_dimplot = function(name) {
     )
 }
 
-sapply(names(dimplots), do_one_dimplot)
+invisible(sapply(names(dimplots), do_one_dimplot))
