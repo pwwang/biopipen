@@ -7,7 +7,7 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 WORKDIR /biopipen
 # Install biopipen
 RUN uv pip install --system -e .[runinfo,log2file] && \
-    uv cache purge && \
+    uv cache clean && \
     pipen report update && \
     python /biopipen/docker/cleanup.py
 
