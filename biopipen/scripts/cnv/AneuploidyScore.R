@@ -260,7 +260,7 @@ p <- BarPlot(
     plotdata,
     x = "Arms",
     y = "Signal",
-    fill = "Type",
+    fill_by = "Type",
     facet_by = "SignalType",
     facet_nrow = 2,
     y_min = sig_min,
