@@ -16,12 +16,20 @@ write.table(
     sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE
 )
 snps <- snps.from.file(motifbreakr_bed, search.genome = bsgenome, format = "bed", indels = any(is_indel))
-snpinfo <- snpinfo[snpinfo$coordname == snps$SNP_id, , drop = FALSE]
-snps@elementMetadata$SNP_id <- ifelse(
-    snpinfo$name == "." | is.na(snpinfo$name) | nchar(snpinfo$name) == 0,
-    snpinfo$coordname,
-    snpinfo$name
-)
+snpinfo <- snpinfo[snpinfo$coordname %in% snps$SNP_id, , drop = FALSE]
+# snps@elementMetadata$SNP_id <- ifelse(
+#     snpinfo$name == "." | is.na(snpinfo$name) | nchar(snpinfo$name) == 0,
+#     snpinfo$coordname,
+#     snpinfo$name
+# )
+idx <- which(snps@elementMetadata$SNP_id %in% snpinfo$coordname)
+snp_ids <- snps@elementMetadata$SNP_id
+snp_ids[idx] <- snpinfo$name[match(snps@elementMetadata$SNP_id[idx], snpinfo$coordname)]
+bad_idx <- which(is.na(snp_ids) | nchar(snp_ids) == 0 | snp_ids == ".")
+if (length(bad_idx) > 0) {
+    snp_ids[bad_idx] <- snps@elementMetadata$SNP_id[bad_idx]
+}
+snps@elementMetadata$SNP_id <- snp_ids
 
 # prepare PWMs
 get_bkg <- function(base) {
