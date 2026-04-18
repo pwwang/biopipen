@@ -15,7 +15,7 @@ jobs:
       - name: Delete cache to save space
         # https://github.com/orgs/community/discussions/25678#discussioncomment-5242449
         run: rm -rf /opt/hostedtoolcache
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -38,7 +38,7 @@ jobs:
 
       - name: Restore conda environments
         id: restore-conda
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CONDA }}/envs/
           key: conda-${{ hashFiles('tests/conda/env_*.yml') }}-${{ env.CACHE_NUMBER }}
@@ -60,7 +60,7 @@ jobs:
       - name: Save conda environments
         id: save-conda
         if: steps.restore-conda.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.CONDA }}/envs/
           key: ${{ steps.restore-conda.outputs.cache-primary-key }}
@@ -76,18 +76,14 @@ jobs:
             bname=$(basename $envfile .yml)
             envname=${bname:4}
             echo "::group::Installing biopipen in environment: $envname"
-            conda run --no-capture-output -n $envname poetry install -E runinfo -v
-
-            # Numba needs NumPy 2.3 or less. Got NumPy 2.4.
-            # And scanpy requires Numba.
-            conda run --no-capture-output -n $envname poetry run pip install "numpy<2.4"
+            conda run --no-capture-output -n $envname uv pip install --system -e .[runinfo]
 
             echo "::endgroup::"
           done
 
       - name: Restore reference data
         id: restore-reference
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: tests/data
           key: reference-${{ hashFiles('tests/data/prep_data.py') }}-${{ env.CACHE_NUMBER }}
@@ -102,14 +98,14 @@ jobs:
       - name: Save reference data
         id: save-reference
         if: steps.restore-reference.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: tests/data
           key: ${{ steps.restore-reference.outputs.cache-primary-key }}
 
       - name: Restore test intermediate files
         id: restore-test-intermediate
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: tests/running
           key: test-intermediates-${{ env.CACHE_NUMBER }}
@@ -132,7 +128,7 @@ jobs:
       - name: Save test intermediate files
         id: save-test-intermediate
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: tests/running
           key: ${{ steps.restore-test-intermediate.outputs.cache-primary-key }}
@@ -144,15 +140,16 @@ jobs:
     if: startsWith(github.ref, 'refs/tags')
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python # Set Python version
-        uses: actions/setup-python@v5
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Publish to PyPI
-        run: poetry publish --build -u ${{ secrets.PYPI_USER }} -p ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          uv build
+          uv publish --username ${{ secrets.PYPI_USER }} --password ${{ secrets.PYPI_PASSWORD }}
         if: success()
