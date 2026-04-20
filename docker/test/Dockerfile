@@ -6,11 +6,8 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 WORKDIR /biopipen
 # Install biopipen
-RUN python -m pip install --no-cache-dir -U poetry && \
-    python -m poetry config virtualenvs.create false && \
-    python -m poetry install --no-cache -v --all-extras && \
-    python -m pip cache purge && \
-    python -m poetry cache clear --all pypi && \
+RUN uv pip install --system -e .[runinfo,log2file] && \
+    uv cache clean && \
     pipen report update && \
     python /biopipen/docker/cleanup.py
 

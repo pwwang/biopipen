@@ -33,6 +33,7 @@ dependencies:
   - conda-forge::r-hgnchelper
   - conda-forge::r-harmony
   - conda-forge::git
+  - conda-forge::uv
   - conda-forge::procps-ng
   - pytorch::faiss-cpu
   - conda-forge::pip
@@ -86,7 +87,6 @@ dependencies:
   # unable to load shared object: stringfish.so for the one from r channel
   - pwwang::r-stringfish
   - pip:
-    - poetry
     - magic-impute
     # For GIANA
     - biopython  #==1.79

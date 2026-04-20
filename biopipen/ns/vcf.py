@@ -422,7 +422,7 @@ class TruvariConsistency(Proc):
         vcfs: The vcf files with CNV calls
 
     Output:
-        outfile: The output file with the report
+        outdir: The output directory with the report
 
     Envs:
         truvari: Path to truvari

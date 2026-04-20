@@ -124,3 +124,66 @@ class CellRangerVdjPipeline(ProcGroup):
             input_data = lambda ch: [list(ch.iloc[:, 0])]
 
         return CellRangerVdjSummary
+
+
+class CellRangerMultiPipeline(ProcGroup):
+    """The cellranger multi pipeline
+
+    Run cellranger multi for multiple GEM wells and summarize the per-sample metrics.
+
+    The multi config CSV for each GEM well is generated automatically from
+    the `p_cellranger_multi` process envs (`gex`, `vdj`, `feature`,
+    `libraries`). Users must set at minimum `envs.gex.reference` and
+    `envs.libraries` on `p_cellranger_multi`.
+
+    Args:
+        input (list): The list of lists of FASTQ files (or directories) for
+            each GEM well. Each element provides all the FASTQs for one
+            `cellranger multi` run.
+        ids (list): The list of run IDs (one per GEM well). If not provided,
+            the ID is inferred from the common prefix of the FASTQ filenames.
+    """
+    DEFAULTS = Diot(input=None, ids=None)
+
+    def post_init(self):
+        """Check if the input is a list of FASTQ file lists"""
+        if not is_loading_pipeline("-h", "-h+", "--help", "--help+") and (
+            not isinstance(self.opts.input, (list, tuple))
+            or len(self.opts.input) == 0
+        ):
+            raise TypeError(
+                "The input of `CellRangerMultiPipeline` should be a list of lists of "
+                "FASTQ files (one list per GEM well)."
+            )
+
+        if isinstance(self.opts.input, (list, tuple)):
+            self.opts.input = [
+                [y.strip() for y in x.split(",")]
+                if isinstance(x, str)
+                else x
+                for x in self.opts.input
+            ]
+
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_multi(self) -> Type[Proc]:
+        """Build CellRangerMulti process"""
+        from .cellranger import CellRangerMulti as _CellRangerMulti
+
+        class CellRangerMulti(_CellRangerMulti):
+            if self.opts.ids:
+                input_data = list(zip(self.opts.input, self.opts.ids))
+            else:
+                input_data = [(fastqs, None) for fastqs in self.opts.input]
+
+        return CellRangerMulti
+
+    @ProcGroup.add_proc  # type: ignore
+    def p_cellranger_multi_summary(self) -> Type[Proc]:
+        """Build CellRangerMultiSummary process"""
+        from .cellranger import CellRangerMultiSummary
+
+        class CellRangerMultiSummary(CellRangerMultiSummary):
+            requires = self.p_cellranger_multi
+            input_data = lambda ch: [list(ch.iloc[:, 0])]
+
+        return CellRangerMultiSummary

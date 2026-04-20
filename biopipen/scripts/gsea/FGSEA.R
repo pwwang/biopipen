@@ -188,5 +188,6 @@ do_case <- function(name) {
     )
 }
 
-sapply(names(cases), do_case)
+invisible(sapply(names(cases), do_case))
+
 reporter$save(joboutdir)

@@ -88,6 +88,6 @@ do_case <- function(name) {
     reporter$add2(report, hs = c(info$section, info$name), ui = "table_of_images:2")
 }
 
-sapply(names(cases), do_case)
+invisible(sapply(names(cases), do_case))
 
 reporter$save(joboutdir)

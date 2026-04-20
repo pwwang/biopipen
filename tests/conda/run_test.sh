@@ -48,13 +48,13 @@ if [[ "$LOCAL_ONLY-$FORCE" == "true-false" ]]; then
     echo "  Skipped"
     exit 0
 else
-    CMD="conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS"
+    CMD="conda run --no-capture-output -n $ENVNAME python $PROC_TEST_DIR/test.py $ARGS"
     echo "  Running: $CMD"
 
     if [[ $VERBOSE == "true" ]]; then
-        conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS
+        conda run --no-capture-output -n $ENVNAME python $PROC_TEST_DIR/test.py $ARGS
     else
-        conda run --no-capture-output -n $ENVNAME poetry run python $PROC_TEST_DIR/test.py $ARGS > /dev/null 2>&1
+        conda run --no-capture-output -n $ENVNAME python $PROC_TEST_DIR/test.py $ARGS > /dev/null 2>&1
     fi
 
     if [[ $? -eq 0 ]]; then

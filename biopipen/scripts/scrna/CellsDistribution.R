@@ -545,13 +545,14 @@ do_overlap <- function(section) {
     )
 }
 
-sapply(sort(names(cases)), function(name) do_case(name, cases[[name]]))
+invisible(sapply(sort(names(cases)), function(name) do_case(name, cases[[name]])))
 
 unhit_overlaps <- setdiff(overlap, names(overlaps))
 if (length(unhit_overlaps) > 0) {
     log_warn("- No sections found for overlapping analysis: {paste(unhit_overlaps, collapse=', ')}")
     log_warn("  Available sections: {paste(sections, collapse=', ')}")
 }
-sapply(sort(names(overlaps)), do_overlap)
+
+invisible(sapply(sort(names(overlaps)), do_overlap))
 
 save_report(joboutdir)
