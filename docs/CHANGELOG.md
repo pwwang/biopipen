@@ -1,6 +1,15 @@
 # Change Log
 
 
+## 1.3.0
+
+- feat(cellranger): add "cellranger multi" pipeline
+- fix(regulatory.MotifAffinityTest): fix SNP_id assignment
+- fix(cnv.AneuploidyScore): rename fill parameter to fill_by in BarPlot function
+- refactor: migrate from poetry to uv for dependency management
+- docs(vcf.TruvariConsistency): rename output file to output directory for report generation
+- chore(scrna): use invisible() for sapply calls to suppress output when applying cases
+
 ## 1.2.11
 
 - chore(deps): update comment for r-biopipen.utils to for ci update conda env
