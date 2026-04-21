@@ -131,38 +131,24 @@ class CellRangerMultiPipeline(ProcGroup):
 
     Run cellranger multi for multiple GEM wells and summarize the per-sample metrics.
 
-    The multi config CSV for each GEM well is generated automatically from
-    the `p_cellranger_multi` process envs (`gex`, `vdj`, `feature`,
-    `libraries`). Users must set at minimum `envs.gex.reference` and
-    `envs.libraries` on `p_cellranger_multi`.
-
     Args:
-        input (list): The list of lists of FASTQ files (or directories) for
-            each GEM well. Each element provides all the FASTQs for one
-            `cellranger multi` run.
-        ids (list): The list of run IDs (one per GEM well). If not provided,
-            the ID is inferred from the common prefix of the FASTQ filenames.
+        input (list): The list of paths to the multi config CSV files.
+            Each CSV describes one GEM well and is passed directly to `cellranger multi`.
+        ids (list): The list of ids for the runs (one per CSV).
+            If not provided, the id is inferred from the CSV filename stem.
     """
     DEFAULTS = Diot(input=None, ids=None)
 
     def post_init(self):
-        """Check if the input is a list of FASTQ file lists"""
+        """Check if the input is a list of CSV files"""
         if not is_loading_pipeline("-h", "-h+", "--help", "--help+") and (
             not isinstance(self.opts.input, (list, tuple))
             or len(self.opts.input) == 0
         ):
             raise TypeError(
-                "The input of `CellRangerMultiPipeline` should be a list of lists of "
-                "FASTQ files (one list per GEM well)."
+                "The input of `CellRangerMultiPipeline` should be a list of paths to "
+                "multi config CSV files."
             )
-
-        if isinstance(self.opts.input, (list, tuple)):
-            self.opts.input = [
-                [y.strip() for y in x.split(",")]
-                if isinstance(x, str)
-                else x
-                for x in self.opts.input
-            ]
 
     @ProcGroup.add_proc  # type: ignore
     def p_cellranger_multi(self) -> Type[Proc]:
@@ -173,7 +159,7 @@ class CellRangerMultiPipeline(ProcGroup):
             if self.opts.ids:
                 input_data = list(zip(self.opts.input, self.opts.ids))
             else:
-                input_data = [(fastqs, None) for fastqs in self.opts.input]
+                input_data = [(csv, None) for csv in self.opts.input]
 
         return CellRangerMulti
 

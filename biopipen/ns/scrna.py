@@ -861,8 +861,6 @@ class SeuratClusterStats(Proc):
             Note that the default `n.components` for `RunUMAP` is 2, so if you want to make a 3D UMAP plot,
             you need to set `n.components` to 3 in `RunUMAP` parameters in `SeuratSubClustering` or `SeuratClustering`.
             - group_by: The identity to use.
-                If it is from subclustering (reduction `sub_umap_<ident>` exists), this reduction will be used if `reduction`
-                is set to `dim` or `auto`.
             - split_by: The column name in metadata to split the cells into different plots.
             - subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
             - devpars (ns): The device parameters for the plots.
@@ -870,9 +868,9 @@ class SeuratClusterStats(Proc):
                 - height (type=int): The height of the plots.
                 - width (type=int): The width of the plots.
             - reduction (choice): Which dimensionality reduction to use.
-                - dim: Use `Seurat::DimPlot`.
-                    First searches for `umap`, then `tsne`, then `pca`.
-                    If `ident` is from subclustering, `sub_umap_<ident>` will be used.
+                - dim: If `ident` is from subclustering, `<group_by>.<reduction>` will be used.
+                    Otherwise, `scplotter:::default_dimreduc(obj)` will be used to determine
+                    the default dimensionality reduction to use based on the reductions available in the object.
                 - auto: Same as `dim`
                 - umap: Use `Seurat::UMAPPlot`.
                 - tsne: Use `Seurat::TSNEPlot`.

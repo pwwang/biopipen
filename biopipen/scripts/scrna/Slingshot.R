@@ -27,7 +27,7 @@ if (is.null(group_by) || !group_by %in% colnames(srt@meta.data)) {
     stop(paste("Grouping column", group_by, "not found in the Seurat object"))
 }
 
-reduction <- reduction %||% DefaultDimReduc(srt)
+reduction <- reduction %||% scplotter:::default_dimreduc(srt)
 dims <- biopipen.utils:::.expand_number(dims)
 
 if (is.null(prefix)) {
