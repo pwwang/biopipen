@@ -18,7 +18,7 @@ do_one_dimplot = function(name) {
         is.null(case$group_by) || is.null(case$ident) || identical(case$group_by, case$ident))
 
     # Normalize arguments
-    reduction <- if (reduction %in% c("dim", "auto")) DefaultDimReduc(srtobj) else reduction
+    reduction <- if (reduction %in% c("dim", "auto")) scplotter:::default_dimreduc(srtobj) else reduction
     devpars <- list_update(dimplots_defaults$devpars, devpars)
 
     case$group_by <- case$group_by %||% case$ident %||% GetIdentityColumn(srtobj)
