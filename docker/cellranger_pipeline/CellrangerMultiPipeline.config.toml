@@ -3,37 +3,12 @@
 report_no_collapse_pgs=true
 
 [CellRangerMultiPipeline]
-# Each element is a list of FASTQ files (or a directory) for one GEM well.
 input=[
-    [
-        "example-data/Sample_A_S1_L001_R1_001.fastq.gz",
-        "example-data/Sample_A_S1_L001_R2_001.fastq.gz",
-        "example-data/Sample_B_S1_L001_R1_001.fastq.gz",
-        "example-data/Sample_B_S1_L001_R2_001.fastq.gz",
-    ],
+    "example-data/sample1_multi_config.csv",
+    "example-data/sample2_multi_config.csv",
 ]
-ids = ["GEMwell1"]
+ids = ["Sample1", "Sample2"]
 
 [CellRangerMulti.envs]
 # ncores = 8
 # cellranger = "cellranger"
-
-[CellRangerMulti.envs.gex]
-reference = "/path/to/refdata-gex-GRCh38"
-create_bam = false
-
-# Uncomment and configure for VDJ libraries
-# [CellRangerMulti.envs.vdj]
-# reference = "/path/to/refdata-cellranger-vdj-GRCh38"
-
-# Uncomment and configure for Feature Barcode (antibody, CRISPR) libraries
-# [CellRangerMulti.envs.feature]
-# reference = "/path/to/feature_ref.csv"
-
-[[CellRangerMulti.envs.libraries]]
-fastq_id = "Sample_A"
-feature_types = "Gene Expression"
-
-[[CellRangerMulti.envs.libraries]]
-fastq_id = "Sample_B"
-feature_types = "Gene Expression"

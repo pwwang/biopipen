@@ -1,16 +1,15 @@
 """Test for CellRangerMulti and CellRangerMultiSummary.
 
 Uses the same tiny nf-core test FASTQs as the CellRanger/test.py.
-A "3' GEX only" configuration is described via envs (gex + libraries)
--- no manually-authored CSV needed. The multi config CSV is generated
-automatically by the CellRangerMulti process.
+A "3' GEX only" multi config CSV is generated dynamically from the
+downloaded FASTQs (gene expression libraries only, no VDJ/Feature Barcode).
 The multi config references the same transcriptome as CellRangerCount via
 config.ref.ref_cellranger_gex.
 """
 
-from pathlib import Path
 from biopipen.ns.cellranger import CellRangerMulti, CellRangerMultiSummary
 from biopipen.ns.web import Download
+from biopipen.core.proc import Proc
 from biopipen.core.config import config
 from biopipen.core.testing import get_pipeline
 
@@ -34,26 +33,72 @@ class DownloadData(Download):
     envs = {"tool": "aria2c"}
 
 
-class CellRangerMultiTest(CellRangerMulti):
+class CreateMultiConfig(Proc):
+    """Generate a minimal cellranger multi config CSV (3' GEX only)
+    from the downloaded FASTQ files.
+
+    The output CSV is suitable for `cellranger multi --csv <outfile>`.
+    Library rows use the sample-name prefix (text before the first '_S')
+    and the directory that holds the FASTQs.
+    """
+
+    input = "fastqs:files"
+    output = "outfile:file:multi_config.csv"
+    input_data = lambda ch: [list(ch.iloc[:, 0])]
     requires = DownloadData
-    # Collect all 6 downloaded FASTQs into a single GEM well run.
-    input_data = lambda ch: [(list(ch.iloc[:, 0]), "test_multi")]
+    envs = {"ref": config.ref.ref_cellranger_gex}
+    lang = "python"
+    script = r"""
+from pathlib import Path
+from panpath import LocalPath  # noqa: F401
+
+fastqs = {{in.fastqs | each: as_path}}
+ref    = {{envs.ref | repr}}
+outfile = "{{out.outfile}}"
+
+# All FASTQs land in the same directory
+fastq_dir = str(Path(fastqs[0]).parent)
+
+# Derive unique sample prefixes (text before the first "_S\d" token)
+samples = []
+seen = set()
+for fq in fastqs:
+    stem = Path(fq).name
+    # e.g. "Sample_X_S1_L001_R1_001.fastq.gz" -> "Sample_X"
+    prefix = stem.split("_S")[0]
+    if prefix not in seen:
+        seen.add(prefix)
+        samples.append(prefix)
+
+if not ref:
+    raise ValueError(
+        "Reference genome not configured. "
+        "Set 'ref.ref_cellranger_gex' in your biopipen configuration "
+        "(~/.biopipen.toml or ./.biopipen.toml)."
+    )
+
+with open(outfile, "w") as f:
+    f.write("[gene-expression]\n")
+    f.write(f"reference,{ref}\n")
+    f.write("create-bam,false\n")
+    f.write("\n")
+    f.write("[libraries]\n")
+    f.write("fastq_id,fastqs,feature_types\n")
+    for sample in samples:
+        f.write(f"{sample},{fastq_dir},Gene Expression\n")
+"""
+
+from pathlib import Path
+class CellRangerMultiTest(CellRangerMulti):
+    requires = CreateMultiConfig
+    input_data = lambda ch: [(csv, None) for csv in ch.iloc[:, 0]]
     envs = {
         "ncores": 10,
         "cellranger": (
             "docker run -it --rm"
             f" -v {str(Path.cwd())}:{str(Path.cwd())}"
             " biopipen/cellranger:10.0.0"
-        ),
-        "gex": {
-            "reference": config.ref.ref_cellranger_gex,
-            "create_bam": False,
-        },
-        # Two GEX libraries from the same GEM well (Sample_X and Sample_Y)
-        "libraries": [
-            {"fastq_id": "Sample_X", "feature_types": "Gene Expression"},
-            {"fastq_id": "Sample_Y", "feature_types": "Gene Expression"},
-        ],
+        )
     }
 
 
