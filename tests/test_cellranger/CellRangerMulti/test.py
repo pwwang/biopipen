@@ -49,55 +49,54 @@ class CreateMultiConfig(Proc):
     envs = {"ref": config.ref.ref_cellranger_gex}
     lang = "python"
     script = r"""
-from pathlib import Path
-from panpath import LocalPath  # noqa: F401
+        from pathlib import Path
+        from panpath import LocalPath  # noqa: F401
 
-fastqs = {{in.fastqs | each: as_path}}
-ref    = {{envs.ref | repr}}
-outfile = "{{out.outfile}}"
+        fastqs = {{in.fastqs | each: as_path}}
+        ref    = {{envs.ref | repr}}
+        outfile = "{{out.outfile}}"
 
-# All FASTQs land in the same directory
-fastq_dir = str(Path(fastqs[0]).parent)
+        # All FASTQs land in the same directory
+        fastq_dir = str(Path(fastqs[0]).parent)
 
-# Derive unique sample prefixes (text before the first "_S\d" token)
-samples = []
-seen = set()
-for fq in fastqs:
-    stem = Path(fq).name
-    # e.g. "Sample_X_S1_L001_R1_001.fastq.gz" -> "Sample_X"
-    prefix = stem.split("_S")[0]
-    if prefix not in seen:
-        seen.add(prefix)
-        samples.append(prefix)
+        # Derive unique sample prefixes (text before the first "_S\d" token)
+        # samples = []
+        # seen = set()
+        # for fq in fastqs:
+        #     stem = Path(fq).name
+        #     # e.g. "Sample_X_S1_L001_R1_001.fastq.gz" -> "Sample_X"
+        #     prefix = stem.split("_S")[0]
+        #     if prefix not in seen:
+        #         seen.add(prefix)
+        #         samples.append(prefix)
 
-if not ref:
-    raise ValueError(
-        "Reference genome not configured. "
-        "Set 'ref.ref_cellranger_gex' in your biopipen configuration "
-        "(~/.biopipen.toml or ./.biopipen.toml)."
-    )
+        if not ref:
+            raise ValueError(
+                "Reference genome not configured. "
+                "Set 'ref.ref_cellranger_gex' in your biopipen configuration "
+                "(~/.biopipen.toml or ./.biopipen.toml)."
+            )
 
-with open(outfile, "w") as f:
-    f.write("[gene-expression]\n")
-    f.write(f"reference,{ref}\n")
-    f.write("create-bam,false\n")
-    f.write("\n")
-    f.write("[libraries]\n")
-    f.write("fastq_id,fastqs,feature_types\n")
-    for sample in samples:
-        f.write(f"{sample},{fastq_dir},Gene Expression\n")
-"""
+        with open(outfile, "w") as f:
+            f.write("[gene-expression]\n")
+            f.write(f"reference,{ref}\n")
+            f.write("create-bam,false\n")
+            f.write("\n")
+            f.write("[libraries]\n")
+            f.write("fastq_id,fastqs,feature_types\n")
+            # for sample in samples:
+            f.write(f"Sample_X,{fastq_dir},Gene Expression\n")
+    """
 
-from pathlib import Path
+
 class CellRangerMultiTest(CellRangerMulti):
     requires = CreateMultiConfig
     input_data = lambda ch: [(csv, None) for csv in ch.iloc[:, 0]]
     envs = {
         "ncores": 10,
+        "outdir_is_mounted": True,
         "cellranger": (
-            "docker run -it --rm"
-            f" -v {str(Path.cwd())}:{str(Path.cwd())}"
-            " biopipen/cellranger:10.0.0"
+            "/usr/local/biotools/cellranger/10.0.0/bin/cellranger"
         )
     }
 
@@ -110,7 +109,8 @@ def pipeline():
     return get_pipeline(__file__).set_start(DownloadData)
 
 
-def testing(pipen): ...
+def testing(pipen):
+    ...
 
 
 if __name__ == "__main__":

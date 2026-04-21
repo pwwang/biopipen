@@ -31,6 +31,7 @@ command = [
     "--localcores",
     ncores,
     "--disable-ui",
+    "--nopreflight",
     *other_args,
 ]
 
