@@ -1256,7 +1256,7 @@ class CDR3Clustering(Proc):
             - check: {{ proc.envs.python }} -c "import clustcr"
     """  # noqa: E501
     input = "screpfile:file"
-    output = "outfile:file:{{in.screpfile | stem}}.tcr_clustered.qs"
+    output = "outfile:file:{{in.screpfile | stem}}.cdr3_clustered.qs"
     lang = config.lang.rscript
     envs = {
         "type": "auto",  # or TCR, BCR
