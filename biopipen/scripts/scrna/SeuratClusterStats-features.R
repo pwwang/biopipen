@@ -154,7 +154,7 @@ do_one_features <- function(name) {
         " else if (identical(case$plot_type, 'cor')) 'showing the correlation between features' ",
         " else 'showing aggregated feature values by the grouping variables'}. ",
         "{if (!is.null(case$facet_by)) glue('Plots are further faceted by \"{case$facet_by}\". ') else ''}",
-        "{if (identical(case$plot_type, 'dim')) glue('The reduction used is \"{if (!is.null(case$reduction)) case$reduction else DefaultDimReduc(case$object)}\"') else ''}",
+        "{if (identical(case$plot_type, 'dim')) glue('The reduction used is \"{if (!is.null(case$reduction)) case$reduction else scplotter:::default_dimreduc(case$object)}\"') else ''}",
         "{if (identical(case$plot_type, 'dim') && !is.null(case$graph)) glue(', with graph \"{case$graph}\" drawn to show cell neighbor edges') else ''}",
         "{if (identical(case$plot_type, 'dim') && !is.null(case$bg_cutoff) && case$bg_cutoff > 0) glue(', and a background cutoff of {case$bg_cutoff}') else ''}",
         "{if (identical(case$plot_type, 'dim')) glue(', using dimensions {paste(case$dims %||% 1:2, collapse = \",\")}') else ''}"
