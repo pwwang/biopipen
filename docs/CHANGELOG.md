@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.2
+
+- chore(deps): update certifi to version 2026.4.22 and click to version 8.3.3
+- fix(tcr.ClonalStats): correct plot type handling in get_plot_descr function
 
 ## 1.3.1
 
