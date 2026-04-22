@@ -119,16 +119,16 @@ get_plot_descr <- function(viz_type, case) {
         }
         out <- glue("{out} The clones are identified by {case$clone_call %||% 'aa'} and {case$chain %||% 'both'} chain(s) was/were used.")
     } else if (identical(viz_type, "stat")) {
-        if (case$plot_type %in% c("sankey", "alluvial")) {
+        plot_type <- case$plot_type %||% "bar"
+        if (plot_type %in% c("sankey", "alluvial")) {
             out <- glue(
-                "This {case$plot_type} plot illustrates the statistics of clones across different groups. ",
+                "This {plot_type} plot illustrates the statistics of clones across different groups. ",
                 "The bars are showing the groups and the flow/links are showing the transitions of the clones. "
             )
-        } else {  # trend
+        } else {
             out <- glue(
-                "This trend plot illustrates the statistics of clones across different groups. ",
-                "The x-axis represents the groups, while the y-axis denotes the number/fraction of clones. ",
-                "The links between the groups are showing the transitions of the clones. "
+                "This {plot_type} plot illustrates the statistics of clones across different groups. ",
+                "The x-axis represents the groups, while the y-axis denotes the number/fraction of clones. "
             )
         }
         out <- glue("{out} The clones are identified by {case$clone_call %||% 'aa'} and {case$chain %||% 'both'} chain(s) was/were used.")
