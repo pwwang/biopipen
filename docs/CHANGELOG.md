@@ -15,6 +15,16 @@
 - feat(cellranger): add --nopreflight option to CellRangerMulti command
 - feat(cellranger): update CellRangerMulti to use multi config CSV for input
 
+## 1.3.1
+
+- chore(deps): update comment for r-biopipen.utils to for ci update conda env
+- fix(scrna.SeuratClusterStats): correct default dimension reduction function reference in feature plotting
+- fix(scrna.Slingshot): correct default dimension reduction function reference
+- fix(scrna.SeuratClusterStats): get default dimension reduction from scploter:::default_dimreduc
+- fix(tcr.CDR3Clustering): update output filename to reflect CDR3 clustering results
+- feat(cellranger): add --nopreflight option to CellRangerMulti command
+- feat(cellranger): update CellRangerMulti to use multi config CSV for input
+
 ## 1.3.0
 
 - feat(cellranger): add "cellranger multi" pipeline
