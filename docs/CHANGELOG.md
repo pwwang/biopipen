@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.3
+
+- fix(scrna.ScFGSEA): handle null Seurat object in do_case function
+- chore: bump pipen-log2file to v1.1.3
+
 ## 1.3.2
 
 - chore(deps): update certifi to version 2026.4.22 and click to version 8.3.3
