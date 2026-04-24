@@ -239,6 +239,10 @@ do_case <- function(name) {
                 return(NULL)
             }
         })
+
+        if (is.null(sobj)) {
+            return(NULL)
+        }
     }
 
     rest <- case$rest %||% list()
