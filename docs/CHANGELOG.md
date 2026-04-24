@@ -4,6 +4,7 @@
 
 - fix(scrna.ScFGSEA): handle null Seurat object in do_case function
 - chore: bump pipen-log2file to v1.1.3
+- ci: update build condition to exclude merge commits and WIP messages
 
 ## 1.3.2
 
