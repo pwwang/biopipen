@@ -14,6 +14,7 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'Merge branch ''master'' into') && !contains(github.event.head_commit.message, '[wip]')"
     # if: github.ref == 'refs/heads/master'
     strategy:
       matrix:

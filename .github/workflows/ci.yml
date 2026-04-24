@@ -7,7 +7,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev' && !startsWith(github.event.head_commit.message, 'Merge branch ''master'' into') && !contains(github.event.head_commit.message, '[wip]')
     defaults:
       run:
         shell: bash -l {0}

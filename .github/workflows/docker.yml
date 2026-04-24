@@ -4,7 +4,14 @@ on: [push]
 
 jobs:
 
+  check:
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'Merge branch ''master'' into') && !contains(github.event.head_commit.message, '[wip]')"
+    steps:
+      - run: echo "Running workflows"
+
   docker-base:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - name: Delete cache to save space
@@ -29,6 +36,7 @@ jobs:
           tags: biopipen/base:latest
 
   docker-test-deps:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - name: Delete cache to save space
@@ -108,8 +116,8 @@ jobs:
           tags: biopipen/test:latest
 
   docker-cnvkit-pipeline:
-    needs: docker-test
-    if: always()
+    needs: [check, docker-test]
+    if: always() && needs.check.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Delete cache to save space
@@ -149,8 +157,8 @@ jobs:
           tags: biopipen/cnvkit-pipeline:${{ github.ref_name }}
 
   docker-cellranger-pipeline:
-    needs: docker-test
-    if: always()
+    needs: [check, docker-test]
+    if: always() && needs.check.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Delete cache to save space
@@ -190,8 +198,8 @@ jobs:
           tags: biopipen/cellranger-pipeline:${{ github.ref_name }}
 
   docker-pipseeker-pipeline:
-    needs: docker-test
-    if: always()
+    needs: [check, docker-test]
+    if: always() && needs.check.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Delete cache to save space
