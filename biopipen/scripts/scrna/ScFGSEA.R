@@ -36,6 +36,7 @@ alleach_plots <- lapply(alleach_plots, function(x) {
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
+obj_sig <- biopipen.utils:::.sig_str(srtobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating metadata columns ...")
@@ -249,7 +250,7 @@ do_case <- function(name) {
     case$rest <- NULL
 
     caching <- Cache$new(
-        c(case, list(sobj)),
+        list(obj_sig, case),
         prefix = "biopipen.scrna.ScFGSEA.RunGSEAPreRank",
         cache_dir = cache
     )

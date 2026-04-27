@@ -1,5 +1,11 @@
 # Change Log
 
+
+## 1.3.4
+
+- feat(scrna.ScFGSEA): add signature string extraction for Seurat object
+- feat(scrna.MarkersFinder): add signature string extraction for Seurat object
+
 ## 1.3.3
 
 - fix(scrna.ScFGSEA): handle null Seurat object in do_case function

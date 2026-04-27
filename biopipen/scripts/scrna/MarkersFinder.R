@@ -48,6 +48,7 @@ if (ncores > 1) {
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
+obj_sig <- biopipen.utils:::.sig_str(srtobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating meta data ...")
@@ -644,6 +645,7 @@ run_case <- function(name) {
     # Let RunSeuratDEAnalysis handle the subset
     case$subset <- subset_
     case$object <- srtobj
+    case$object_sig <- obj_sig
     markers <- tryCatch({
         do_call(RunSeuratDEAnalysis, case)
     }, error = function(e) {
