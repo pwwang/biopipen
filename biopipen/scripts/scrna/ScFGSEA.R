@@ -36,7 +36,7 @@ alleach_plots <- lapply(alleach_plots, function(x) {
 
 log$info("Reading Seurat object ...")
 srtobj <- read_obj(srtfile)
-obj_str <- biopipen.utils:::.sig_str(srtobj)
+obj_sig <- biopipen.utils:::.sig_str(srtobj)
 
 if (!is.null(mutaters) && length(mutaters) > 0) {
     log$info("Mutating metadata columns ...")
