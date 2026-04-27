@@ -78,7 +78,7 @@ dependencies:
   - pwwang::r-seuratwrappers
   - pwwang::r-sccatch
   - pwwang::r-aneuploidyscore
-  - pwwang::r-biopipen.utils  # R utilities for biopipen
+  - pwwang::r-biopipen.utils  # R utilities for biopipen and runinfo
   - pwwang::bioconductor-data-packages
   - pwwang::clustcr=2025
   # package to specify version to avoid old versions
