@@ -408,9 +408,18 @@ process_markers <- function(markers, info, case) {
     }
 }
 
-process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, subset_by_group = TRUE) {
+process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, subset_by_group = TRUE, sigmarkers = NULL) {
     name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
+
+    if (!is.null(sigmarkers)) {
+        markers <- markers %>% filter(!!parse_expr(sigmarkers))
+    }
+
+    if (nrow(markers) == 0) {
+        log$warn("  No significant markers found for all-marker plots, skipping.")
+        return(invisible())
+    }
 
     for (plotname in names(plotcases)) {
         log$info("  {plotname} ...")
@@ -583,7 +592,8 @@ run_case <- function(name) {
                         comparison_by = group_by,
                         allmarker_plots,
                         name,
-                        each
+                        each,
+                        sigmarkers = sigmarkers
                     )
                 }
             }
@@ -704,7 +714,8 @@ run_case <- function(name) {
                 plotcases = allmarker_plots,
                 casename = name,
                 groupname = case$group_by,
-                subset_by_group = FALSE)
+                subset_by_group = FALSE,
+                sigmarkers = sigmarkers)
         }
 
         if (length(overlaps) > 0) {
