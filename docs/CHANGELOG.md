@@ -1,6 +1,11 @@
 # Change Log
 
 
+## 1.3.5
+
+- fix(scrna.MarkersFinder): add support for filtering significant markers in all-marker processing
+
+
 ## 1.3.4
 
 - feat(scrna.ScFGSEA): add signature string extraction for Seurat object
