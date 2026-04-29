@@ -585,6 +585,7 @@ class ScFGSEAEach(ScFGSEA_):
                     "Heatmap": {
                         "plot_type": "heatmap",
                         "signif_only": False,
+                        "descr": "Heatmap of pathway enrichment across clusters.",
                     },
                 },
             }

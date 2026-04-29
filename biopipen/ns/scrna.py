@@ -1988,6 +1988,7 @@ class ScFGSEA(Proc):
             See <https://rdrr.io/bioc/fgsea/man/fgseaMultilevel.html>
         alleach_plots_defaults (ns): Default options for the plots to generate for all pathways.
             - plot_type: The type of the plot, currently either dot or heatmap (default)
+            - descr: A description of the plot to be shown above the plot image.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
