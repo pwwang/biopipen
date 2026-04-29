@@ -418,7 +418,11 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
     info <- case_info(name, outdir, create = TRUE)
 
     if (!is.null(sigmarkers)) {
-        markers <- markers %>% filter(!!parse_expr(sigmarkers))
+        sig_genes <- markers %>%
+            filter(!!parse_expr(sigmarkers)) %>%
+            pull(gene) %>%
+            unique()
+        markers <- markers %>% filter(gene %in% sig_genes)
     }
 
     if (nrow(markers) == 0) {
