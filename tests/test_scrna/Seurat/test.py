@@ -243,10 +243,18 @@ class CellTypeAnnotationDirect2(CellTypeAnnotation_):
 class TopExpressingGenes(TopExpressingGenes_):
     requires = CellTypeAnnotation
     envs = {
+        "enrich_plots": {
+            "Bar Plot": {
+                "plot_type": "bar",
+                "ncol": 1,
+                "top_term": 10,
+                "descr": "Bar plot of enriched terms for top expressing genes.",
+            },
+        },
         "cases": {
             "Cluster": {},
             "SubsetError": {"subset": "seurat_clusters == 'c100'", "error": False},
-        }
+        },
     }
 
 

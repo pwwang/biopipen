@@ -1551,6 +1551,7 @@ class TopExpressingGenes(Proc):
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
                 Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
+            - descr: A description of the plot to be shown above the plot image.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
