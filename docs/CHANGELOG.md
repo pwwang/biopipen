@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.3.6
+
+- feat(scrna.PseudoBulkDEG): add description parameter for plots in PseudoBulkDEG process
+- feat(scrna.ScFGSEA): add description parameter for pathway enrichment plots
+- feat(scrna.MarkersFinder): add description parameter for marker plots
+- feat(scrna.TopExpressingGenes): add description parameter for enrichment visualization plots
+
 ## 1.3.5
 
 - fix(scrna.MarkersFinder): add support for filtering significant markers in all-marker processing

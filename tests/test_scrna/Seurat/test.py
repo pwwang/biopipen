@@ -243,10 +243,18 @@ class CellTypeAnnotationDirect2(CellTypeAnnotation_):
 class TopExpressingGenes(TopExpressingGenes_):
     requires = CellTypeAnnotation
     envs = {
+        "enrich_plots": {
+            "Bar Plot": {
+                "plot_type": "bar",
+                "ncol": 1,
+                "top_term": 10,
+                "descr": "Bar plot of enriched terms for top expressing genes.",
+            },
+        },
         "cases": {
             "Cluster": {},
             "SubsetError": {"subset": "seurat_clusters == 'c100'", "error": False},
-        }
+        },
     }
 
 
@@ -279,11 +287,12 @@ class ClusterMarkers(MarkersFinder):
                 "error": False,
                 "sigmarkers": "p_val_adj < 0.05 & avg_log2FC > 0",
                 "marker_plots": {
-                    "Heatmap": {"plot_type": "heatmap"},
+                    "Heatmap": {"plot_type": "heatmap", "descr": "Heatmap showing marker expression per cluster."},
                 },
                 "allmarker_plots": {
                     "Heatmap": {
                         "plot_type": "heatmap",
+                        "descr": "Heatmap showing top markers across all clusters.",
                     },
                 },
             },
@@ -317,9 +326,11 @@ class DEGSingleComparisonWithEach(MarkersFinder):
         "allmarker_plots": {
             "Heatmap": {
                 "plot_type": "heatmap",
+                "descr": "Heatmap showing DEGs across each comparison.",
             },
             "Dot": {
                 "plot_type": "dot",
+                "descr": "Dot plot showing DEGs across each comparison.",
             },
         },
     }
@@ -341,6 +352,7 @@ class DEG(MarkersFinder):
                     "Venn": {
                         "sigmarkers": "abs(avg_log2FC) > 1",
                         "plot_type": "venn",
+                        "descr": "Venn diagram of overlapping significant markers across groups.",
                     },
                 },
             },
@@ -466,22 +478,26 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
         "allmarker_plots": {
             "Heatmap": {
                 "plot_type": "heatmap",
+                "descr": "Heatmap showing DEGs across each group.",
             },
         },
         "allenrich_plots": {
             "Heatmap (KEGG)": {
                 "db": "KEGG",
                 "plot_type": "heatmap",
+                "descr": "Heatmap of enriched KEGG terms across groups.",
             },
             "Heatmap (Hallmark)": {
                 "db": "Hallmark",
                 "plot_type": "heatmap",
+                "descr": "Heatmap of enriched Hallmark terms across groups.",
             },
         },
         "overlaps": {
             "Venn": {
                 "sigmarkers": "abs(log2FC) > 1",
                 "plot_type": "venn",
+                "descr": "Venn diagram of overlapping DEGs across groups.",
             },
         },
     }
@@ -573,6 +589,7 @@ class ScFGSEAEach(ScFGSEA_):
                     "Heatmap": {
                         "plot_type": "heatmap",
                         "signif_only": False,
+                        "descr": "Heatmap of pathway enrichment across clusters.",
                     },
                 },
             }

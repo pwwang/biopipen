@@ -294,15 +294,20 @@ process_markers <- function(markers, info, case) {
     )
 
     for (plotname in names(case$marker_plots)) {
-        plotargs <- case$marker_plots[[plotname]]
+        plotargs <- extract_vars(case$marker_plots[[plotname]], "descr", allow_nonexisting = TRUE)
         plotargs$degs <- markers
         rownames(plotargs$degs) <- make.unique(markers$gene)
         plotargs$outprefix <- file.path(info$prefix, paste0("degs.", slugify(plotname)))
         do_call(VizBulkDEGs, plotargs)
+        contents <- list()
+        if (!is.null(descr)) {
+            contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+        }
+        contents[[length(contents) + 1]] <- reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code)
         reporter$add2(
             list(
                 name = plotname,
-                contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
+                contents = contents),
             hs = c(info$section, info$name),
             hs2 = ifelse(is.null(case$ident), "DEGs", paste0("DEGs (", case$ident, ")")),
             ui = "tabs"
@@ -377,16 +382,24 @@ process_markers <- function(markers, info, case) {
                 for (db in dbs) {
                     plots <- list()
                     for (plotname in names(case$enrich_plots)) {
-                        plotargs <- case$enrich_plots[[plotname]]
+                        plotargs <- extract_vars(case$enrich_plots[[plotname]], "descr", allow_nonexisting = TRUE)
                         plotargs$data <- enrich[enrich$Database == db, , drop = FALSE]
 
                         p <- do_call(VizEnrichment, plotargs)
 
                         if (plotargs$plot_type == "bar") {
                             attr(p, "height") <- attr(p, "height") / 1.5
+                            descr <- descr %||% glue::glue(
+                                "The bar plot shows the top enriched terms in database '{db}', ",
+                                "the x-axis shows the -log10 of the adjusted p-values, ",
+                                "and the y-axis shows the term names. The number next to each bar indicates the overlap gene count."
+                            )
                         }
                         outprefix <- file.path(info$prefix, paste0("enrich.", slugify(db), ".", slugify(plotname)))
                         save_plot(p, outprefix, plotargs$devpars, formats = "png")
+                        if (!is.null(descr)) {
+                            plots[[length(plots) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+                        }
                         plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
                     }
                     reporter$add2(
@@ -422,14 +435,19 @@ process_allmarkers <- function(markers, plotcases, casename, groupname) {
     info <- case_info(name, outdir, create = TRUE)
 
     for (plotname in names(plotcases)) {
-        plotargs <- plotcases[[plotname]]
+        plotargs <- extract_vars(plotcases[[plotname]], "descr", allow_nonexisting = TRUE)
         plotargs$degs <- markers
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
         do_call(VizBulkDEGs, plotargs)
+        contents <- list()
+        if (!is.null(descr)) {
+            contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+        }
+        contents[[length(contents) + 1]] <- reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code)
         reporter$add2(
             list(
                 name = plotname,
-                contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))
+                contents = contents
             ),
             hs = c(info$section, info$name),
             ui = "tabs"
@@ -446,7 +464,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
         plots <- list()
         for (plotname in names(plotcases)) {
             plotargs <- plotcases[[plotname]]
-            plotargs <- extract_vars(plotargs, "devpars", plotdb = "db", plotdbs = "dbs", allow_nonexisting = TRUE)
+            plotargs <- extract_vars(plotargs, "descr", "devpars", plotdb = "db", plotdbs = "dbs", allow_nonexisting = TRUE)
             plotdb <- plotdb %||% plotdbs
             if (is.null(plotdb) || any(sapply(plotdb, function(x) { grepl(tolower(x), tolower(db), fixed = TRUE) }))) {
                 log$info("  {plotname} ({db}) ...")
@@ -460,6 +478,9 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
                 p <- do_call(VizEnrichment, plotargs)
                 outprefix <- file.path(info$prefix, paste0("allenrich.", slugify(db), ".", slugify(plotname)))
                 save_plot(p, outprefix, devpars, formats = "png")
+                if (!is.null(descr)) {
+                    plots[[length(plots) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+                }
                 plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
             }
         }
@@ -479,7 +500,7 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
     for (plotname in names(ovcases)) {
         args <- extract_vars(
             ovcases[[plotname]],
-            sigm = "sigmarkers", "more_formats", "save_code", "devpars", "plot_type",
+            "descr", sigm = "sigmarkers", "more_formats", "save_code", "devpars", "plot_type",
             allow_nonexisting = TRUE
         )
 
@@ -522,10 +543,16 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
             }
         }
 
+        contents <- list()
+        if (!is.null(descr)) {
+            contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+        }
+        contents[[length(contents) + 1]] <- reporter$image(prefix, more_formats, save_code)
+
         reporter$add2(
             list(
                 name = plotname,
-                contents = list(reporter$image(prefix, more_formats, save_code))
+                contents = contents
             ),
             hs = c(info$section, info$name),
             ui = "tabs"

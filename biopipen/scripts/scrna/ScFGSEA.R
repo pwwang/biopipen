@@ -171,7 +171,7 @@ do_case <- function(name) {
 
         for (plotname in names(case$alleach_plots)) {
             plotargs <- case$alleach_plots[[plotname]]
-            plotargs <- extract_vars(plotargs, "devpars")
+            plotargs <- extract_vars(plotargs, "descr", "devpars", allow_nonexisting = TRUE)
             plotargs$gsea_results <- gseas
             plotargs$group_by <- case$each
             if (plotargs$plot_type == "heatmap") {
@@ -183,8 +183,9 @@ do_case <- function(name) {
 
             outprefix <- file.path(info$prefix, paste0("all.", slugify(plotname)))
             save_plot(p, outprefix, devpars, formats = "png")
+            descr <- descr %||% paste0("Pathways for all ", case$each, ".")
             reporter$add2(
-                list(kind = "descr", content = paste0("Pathways for all ", case$each, ".")),
+                list(kind = "descr", content = descr),
                 list(kind = "image", src = paste0(outprefix, ".png")),
                 hs = c(info$section, info$name),
                 hs2 = plotname
