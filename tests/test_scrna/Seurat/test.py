@@ -287,11 +287,12 @@ class ClusterMarkers(MarkersFinder):
                 "error": False,
                 "sigmarkers": "p_val_adj < 0.05 & avg_log2FC > 0",
                 "marker_plots": {
-                    "Heatmap": {"plot_type": "heatmap"},
+                    "Heatmap": {"plot_type": "heatmap", "descr": "Heatmap showing marker expression per cluster."},
                 },
                 "allmarker_plots": {
                     "Heatmap": {
                         "plot_type": "heatmap",
+                        "descr": "Heatmap showing top markers across all clusters.",
                     },
                 },
             },
@@ -325,9 +326,11 @@ class DEGSingleComparisonWithEach(MarkersFinder):
         "allmarker_plots": {
             "Heatmap": {
                 "plot_type": "heatmap",
+                "descr": "Heatmap showing DEGs across each comparison.",
             },
             "Dot": {
                 "plot_type": "dot",
+                "descr": "Dot plot showing DEGs across each comparison.",
             },
         },
     }
@@ -349,6 +352,7 @@ class DEG(MarkersFinder):
                     "Venn": {
                         "sigmarkers": "abs(avg_log2FC) > 1",
                         "plot_type": "venn",
+                        "descr": "Venn diagram of overlapping significant markers across groups.",
                     },
                 },
             },

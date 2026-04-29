@@ -270,16 +270,21 @@ process_markers <- function(markers, info, case) {
 
     if (nrow(markers) > 0) {
         for (plotname in names(case$marker_plots)) {
-            plotargs <- case$marker_plots[[plotname]]
+            plotargs <- extract_vars(case$marker_plots[[plotname]], "descr", allow_nonexisting = TRUE)
             plotargs$markers <- markers
             plotargs$object <- case$object
             plotargs$comparison_by <- case$group_by
             plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
             do_call(VizDEGs, plotargs)
+            contents <- list()
+            if (!is.null(descr)) {
+                contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+            }
+            contents[[length(contents) + 1]] <- reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code)
             reporter$add2(
                 list(
                     name = plotname,
-                    contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))),
+                    contents = contents),
                 hs = c(info$section, info$name),
                 hs2 = ifelse(is.null(case$ident), "Markers", paste0("Markers (", case$ident, ")")),
                 ui = "tabs"
@@ -423,7 +428,7 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
 
     for (plotname in names(plotcases)) {
         log$info("  {plotname} ...")
-        plotargs <- plotcases[[plotname]]
+        plotargs <- extract_vars(plotcases[[plotname]], "descr", allow_nonexisting = TRUE)
         plotargs$markers <- markers
         plotargs$object <- object
         plotargs$comparison_by <- comparison_by
@@ -435,10 +440,15 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
         }
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
         do_call(VizDEGs, plotargs)
+        contents <- list()
+        if (!is.null(descr)) {
+            contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+        }
+        contents[[length(contents) + 1]] <- reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code)
         reporter$add2(
             list(
                 name = plotname,
-                contents = list(reporter$image(plotargs$outprefix, plotargs$more_formats, plotargs$save_code))
+                contents = contents
             ),
             hs = c(info$section, info$name),
             ui = "tabs"
@@ -456,7 +466,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
         db = sub("\\.gmt$", "", db)
         for (plotname in names(plotcases)) {
             plotargs <- plotcases[[plotname]]
-            plotargs <- extract_vars(plotargs, "devpars", plotdb = "db", plotdbs = "dbs", allow_nonexisting = TRUE)
+            plotargs <- extract_vars(plotargs, "descr", "devpars", plotdb = "db", plotdbs = "dbs", allow_nonexisting = TRUE)
             plotdb <- plotdb %||% plotdbs
             if (is.null(plotdb) || any(sapply(plotdb, function(x) { grepl(tolower(x), tolower(db), fixed = TRUE) }))) {
                 log$info("  {plotname} ({db}) ...")
@@ -470,6 +480,9 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
                 p <- do_call(VizEnrichment, plotargs)
                 outprefix <- file.path(info$prefix, paste0("allenrich.", slugify(db), ".", slugify(plotname)))
                 save_plot(p, outprefix, devpars, formats = "png")
+                if (!is.null(descr)) {
+                    plots[[length(plots) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+                }
                 plots[[length(plots) + 1]] <- reporter$image(outprefix, c(), FALSE)
             }
         }
@@ -490,7 +503,7 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
         log$info("  {plotname} ...")
         args <- extract_vars(
             ovcases[[plotname]],
-            sigm = "sigmarkers", "more_formats", "save_code", "devpars", "plot_type",
+            "descr", sigm = "sigmarkers", "more_formats", "save_code", "devpars", "plot_type",
             allow_nonexisting = TRUE
         )
 
@@ -533,10 +546,16 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
             }
         }
 
+        contents <- list()
+        if (!is.null(descr)) {
+            contents[[length(contents) + 1]] <- list(kind = "descr", content = glue::glue(descr))
+        }
+        contents[[length(contents) + 1]] <- reporter$image(prefix, more_formats, save_code)
+
         reporter$add2(
             list(
                 name = plotname,
-                contents = list(reporter$image(prefix, more_formats, save_code))
+                contents = contents
             ),
             hs = c(info$section, info$name),
             ui = "tabs"
