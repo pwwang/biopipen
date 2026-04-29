@@ -3460,6 +3460,7 @@ class PseudoBulkDEG(Proc):
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+            - descr: A description of the plot to be shown above the plot image.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
@@ -3473,6 +3474,7 @@ class PseudoBulkDEG(Proc):
             The keys are the names of the cases and the values are the dicts inherited from `allmarker_plots_defaults`.
         allenrich_plots_defaults (ns): Default options for the plots to generate for the enrichment analysis.
             - plot_type: The type of the plot.
+            - descr: A description of the plot to be shown above the plot image.
             - devpars (ns): The device parameters for the plots.
                 - res (type=int): The resolution of the plots.
                 - height (type=int): The height of the plots.
@@ -3488,6 +3490,7 @@ class PseudoBulkDEG(Proc):
                 See <https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
                 There are two additional types available - `volcano_pct` and `volcano_log2fc`.
+            - descr: A description of the plot to be shown above the plot image.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
@@ -3506,6 +3509,7 @@ class PseudoBulkDEG(Proc):
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/scplotter/reference/EnrichmentPlot.html>.
                 Available types are `bar`, `dot`, `lollipop`, `network`, `enrichmap` and `wordcloud`.
+            - descr: A description of the plot to be shown above the plot image.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
             - devpars (ns): The device parameters for the plots.
@@ -3520,6 +3524,7 @@ class PseudoBulkDEG(Proc):
             This means either `ident_1` should be empty, so that they can be expanded to multiple comparisons.
             - sigmarkers: The expression to filter the significant markers for each case.
                 If not provided, `envs.sigmarkers` will be used.
+            - descr: A description of the plot to be shown above the plot image.
             - plot_type (choice): The type of the plot to generate for the overlaps.
                 - venn: Use `plotthis::VennDiagram()`.
                 - upset: Use `plotthis::UpsetPlot()`.

@@ -478,22 +478,26 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
         "allmarker_plots": {
             "Heatmap": {
                 "plot_type": "heatmap",
+                "descr": "Heatmap showing DEGs across each group.",
             },
         },
         "allenrich_plots": {
             "Heatmap (KEGG)": {
                 "db": "KEGG",
                 "plot_type": "heatmap",
+                "descr": "Heatmap of enriched KEGG terms across groups.",
             },
             "Heatmap (Hallmark)": {
                 "db": "Hallmark",
                 "plot_type": "heatmap",
+                "descr": "Heatmap of enriched Hallmark terms across groups.",
             },
         },
         "overlaps": {
             "Venn": {
                 "sigmarkers": "abs(log2FC) > 1",
                 "plot_type": "venn",
+                "descr": "Venn diagram of overlapping DEGs across groups.",
             },
         },
     }
