@@ -1,5 +1,10 @@
 # Change Log
 
+
+## 1.3.7
+
+- fix(scrna.MarkersFinder): improve filtering of significant markers in marker processing
+
 ## 1.3.6
 
 - feat(scrna.PseudoBulkDEG): add description parameter for plots in PseudoBulkDEG process
