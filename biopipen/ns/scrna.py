@@ -243,6 +243,13 @@ class SeuratPreparing(Proc):
                 - scvi: Same as `scVIIntegration`.
             - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
+        ambient_removal (choice): The tool used to perform ambient RNA removal.
+            Currently only supports `decontX` from `celda` package.
+            - decontX: Use `decontX` to perform ambient RNA removal.
+
+        decontX (ns): Arguments for `decontX()`.
+            - <more>: See <https://rdrr.io/bioc/celda/man/decontX.html>
+
         doublet_detector (choice): The doublet detector to use.
             - none: Do not use any doublet detector.
             - DoubletFinder: Use `DoubletFinder` to detect doublets.
@@ -331,6 +338,8 @@ class SeuratPreparing(Proc):
             "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
+        "ambient_removal": None,
+        "decontX": {},
         "doublet_detector": "none",
         "DoubletFinder": {"PCs": 10, "pN": 0.25, "doublets": 0.075, "ncores": 1},
         "scDblFinder": {"dbr": 0.075, "ncores": 1},

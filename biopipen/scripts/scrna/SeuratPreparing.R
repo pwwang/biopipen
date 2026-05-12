@@ -88,6 +88,8 @@ sobj <- LoadSeuratAndPerformQC(
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
     ccs_args = envs$ccs_args,
+    ambient_removal = envs$ambient_removal,
+    decontXArgs = envs$decontX,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
