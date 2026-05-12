@@ -40,7 +40,7 @@ class SeuratPreparing(Proc):
 
     This process will -
     - Prepare the seurat object
-    - Apply QC to the data
+    - Apply QC to the data (gene, cell, and contamination)
     - Integrate the data from different samples
 
     See also
@@ -169,15 +169,17 @@ class SeuratPreparing(Proc):
         qc_plots (type=json): The plots for QC metrics.
             It should be a json (or python dict) with the keys as the names of the plots and
             the values also as dicts with the following keys:
-            * kind: The kind of QC. Either `gene` or `cell` (default).
+            * kind: The kind of QC. Either `gene`, `cell` (default), or `contam`/`contamination`.
             * devpars: The device parameters for the plot. A dict with `res`, `height`, and `width`.
             * more_formats: The formats to save the plots other than `png`.
             * save_code: Whether to save the code to reproduce the plot.
             * other arguments passed to
             [`biopipen.utils::VizSeuratCellQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html)
-            when `kind` is `cell` or
+            when `kind` is `cell`,
             [`biopipen.utils::VizSeuratGeneQC`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html)
-            when `kind` is `gene`.
+            when `kind` is `gene`, or
+            [`biopipen.utils::RunSeuratContamination`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratContamination.html)
+            when `kind` is `contam`/`contamination`.
 
         use_sct (flag): Whether use SCTransform routine to integrate samples or not.
             Before the following procedures, the `RNA` layer will be split by samples.
@@ -243,12 +245,26 @@ class SeuratPreparing(Proc):
                 - scvi: Same as `scVIIntegration`.
             - <more>: See <https://satijalab.org/seurat/reference/integratelayers>
 
-        ambient_removal (choice): The tool used to perform ambient RNA removal.
-            Currently only supports `decontX` from `celda` package.
-            - decontX: Use `decontX` to perform ambient RNA removal.
+        contam_correction (choice): The tool used to perform contamination correction.
+            If None or not specified, no contamination correction will be performed.
+            - decontX: Use `decontX` to perform contamination correction.
+                See: https://www.camplab.net/decontx/
+            - scCDC: Use `scCDC` to perform contamination correction.
+                See: https://github.com/ZJU-UoE-CCW-LAB/scCDC
 
         decontX (ns): Arguments for `decontX()`.
             - <more>: See <https://rdrr.io/bioc/celda/man/decontX.html>
+
+        scCDC (ns): Arguments for `scCDC` functions:
+            - Detection (ns): arguments for `scCDC::ContaminationDetection()`
+                - <more>: See https://github.com/ZJU-UoE-CCW-LAB/scCDC/blob/main/R/Contamination_Detection.R#L273
+            - Correction (ns): arguments for `scCDC::ContaminationCorrection()`
+                - <more>: See https://github.com/ZJU-UoE-CCW-LAB/scCDC/blob/main/R/Contamination_Correction.R#L147
+            - Quantification (ns): arguments for `scCDC::ContaminationQuantification()`
+                - <more>: See https://github.com/ZJU-UoE-CCW-LAB/scCDC/blob/main/R/Contamination_Quantification.R#L60
+
+        keep_contam_assay (flag): Whether to keep the "Contaminated" (original) assay after QC is finished.
+            If kept, we can use it to visualize some marker expressions for comparisons.
 
         doublet_detector (choice): The doublet detector to use.
             - none: Do not use any doublet detector.
@@ -338,8 +354,10 @@ class SeuratPreparing(Proc):
             "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
-        "ambient_removal": None,
+        "contam_correction": None,
         "decontX": {},
+        "scCDC": {"Detection": {}, "Quantification": {}, "Correction": {}},
+        "keep_contam_assay": False,
         "doublet_detector": "none",
         "DoubletFinder": {"PCs": 10, "pN": 0.25, "doublets": 0.075, "ncores": 1},
         "scDblFinder": {"dbr": 0.075, "ncores": 1},
