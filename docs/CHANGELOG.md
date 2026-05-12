@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.8
+
+- feat(scrna.SeuratPreparing): add ambient RNA removal and decontX arguments
+- ci(docker): update workflow trigger to include release events
+
 ## 1.3.7
 
 - fix(scrna.MarkersFinder): improve filtering of significant markers in marker processing
