@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.3.8
+
+- ci(docker): update workflow trigger to include release events
+- feat(scrna.SeuratPreparing): add ambient RNA removal and decontX arguments
+- chore: bump pipen to v1.1.16 (xqute to v2.1.0, which introduces timeout as scheduler_opts)
+- ci: update CACHE_NUMBER for conda environment to force updates
+- feat(scrna.SeuratPreparing): added scCDC contamination correction and contam QC plots
+- chore(tests): removed duplicate r-tidyseurat dependency
+- test(scrna): added contam_correction and qc_plots to Seurat tests
+
 ## 1.3.7
 
 - fix(scrna.MarkersFinder): improve filtering of significant markers in marker processing

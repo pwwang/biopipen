@@ -29,7 +29,7 @@ dependencies:
   - conda-forge::r-snow
   - conda-forge::r-upsetr
   - conda-forge::r-vegan
-  - conda-forge::r-tidyseurat
+  # - conda-forge::r-tidyseurat  # required by r-biopipen.utils already
   - conda-forge::r-hgnchelper
   - conda-forge::r-harmony
   - conda-forge::git

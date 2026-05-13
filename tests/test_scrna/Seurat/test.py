@@ -86,6 +86,13 @@ class SeuratPreparing(SeuratPreparing_):
         "cell_qc": "runif(n()) < 0.5",
         "IntegrateLayers": {"method": "rpca", "k-weight": 30},
         "use_sct": True,
+        "contam_correction": "decontX",
+        "qc_plots": {
+            "Contamination": {
+                "kind": "contam",
+                "plot_type": "bar",
+            }
+        },
         "SCTransform": {"vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"]},
         "ccs_args": {
             # Insufficient data values to produce 24 bins when using sct
@@ -174,6 +181,13 @@ class SeuratPreparing3(SeuratPreparing_):
     requires = PrepareMetafile
     envs = {
         "mutaters": {"X": "1"},
+        "contam_correction": "scCDC",
+        "qc_plots": {
+            "Contamination": {
+                "kind": "contam",
+                "plot_type": "bar",
+            }
+        },
         "cell_qc": "runif(n()) < 0.5",
         "cell_qc_per_sample": True,
         "doublet_detector": "scDblFinder",

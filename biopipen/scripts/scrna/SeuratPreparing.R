@@ -88,6 +88,9 @@ sobj <- LoadSeuratAndPerformQC(
     cell_qc = envs$cell_qc,
     gene_qc = envs$gene_qc,
     ccs_args = envs$ccs_args,
+    contam_correction = envs$contam_correction,
+    decontXArgs = envs$decontX,
+    scCDCArgs = envs$scCDC,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
@@ -157,11 +160,14 @@ for (pname in names(envs$qc_plots)) {
     extract_vars(args, "kind", "devpars", "more_formats", "save_code", "descr")
     if (kind == "gene") kind <- "gene_qc"
     if (kind == "cell") kind <- "cell_qc"
+    if (kind == "contam") kind <- "contamination"
     args$object <- sobj
     plot_fn <- if (kind == "cell_qc") {
         gglogger::register(VizSeuratCellQC)
-    } else {
+    } else if (kind == "gene_qc") {
         gglogger::register(VizSeuratGeneQC)
+    } else {
+        gglogger::register(VizSeuratContamination)
     }
     p <- do_call(plot_fn, args)
     prefix <- file.path(qcdir, paste0(slugify(pname), ".", kind))
@@ -181,13 +187,17 @@ for (pname in names(envs$qc_plots)) {
             )
         ),
         h1 = "Filters and QC",
-        h2 = ifelse(kind == "cell_qc", "Cell-level Quality Control", "Gene-level Quality Control"),
+        h2 = ifelse(
+            kind == "cell_qc",
+            "Cell-level Quality Control",
+            ifelse(kind == "contamination", "Contamination", "Gene-level Quality Control")
+        ),
         ui = "tabs"
     )
 }
 
 log$info("Filtering with QC criteria ...")
-sobj <- FinishSeuratQC(sobj)
+sobj <- FinishSeuratQC(sobj, keep_contam_assay = envs$keep_contam_assay)
 
 sobj <- RunSeuratTransformation(
     sobj,
