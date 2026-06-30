@@ -9,7 +9,8 @@ joboutdir <- {{ job.outdir | r }}
 envs <- {{ envs | r }}
 envs <- extract_vars(
     envs,
-    "magnitude", "specificity", "devpars", "subset", "cases", "more_formats", "descr"
+    "magnitude", "specificity", "ligand_expr", "receptor_expr",
+    "devpars", "subset", "cases", "more_formats", "descr"
 )
 
 ccc <- read.table(cccfile, header=TRUE, sep="\t", check.names = FALSE)
@@ -21,6 +22,8 @@ if (length(ccc) == 0) {
 defaults <- list(
     magnitude = NULL,
     specificity = NULL,
+    ligand_expr = ligand_expr,
+    receptor_expr = receptor_expr,
     subset = subset,
     descr = descr,
     more_formats = more_formats,
