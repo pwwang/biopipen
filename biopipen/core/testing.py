@@ -1,10 +1,15 @@
 """Provide utilities for testing."""
-# import tempfile
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, TYPE_CHECKING
 from functools import wraps
 from pathlib import Path
 
 from pipen import Pipen  # type: ignore
+from pipen.pluginmgr import plugin
+
+if TYPE_CHECKING:
+    from pipen import Proc
 
 TESTING_INDEX_INIT = 1
 TESTING_PARENT_DIR = Path(__file__).parent.parent.parent.joinpath("tests", "running")
@@ -12,6 +17,22 @@ TESTING_PARENT_DIR.mkdir(parents=True, exist_ok=True)
 TESTING_DIR = str(TESTING_PARENT_DIR.joinpath("biopipen-tests-%(index)s"))
 RSCRIPT_DIR = TESTING_PARENT_DIR.joinpath("biopipen-tests-rscripts")
 RSCRIPT_DIR.mkdir(exist_ok=True)
+
+
+class PipenShowSessionInfoAfterFail:
+    """A plugin to show session info after a test fails"""
+
+    name = "sinfo"
+    priority = 99999
+
+    @plugin.impl
+    async def on_proc_done(self, proc: Proc, succeeded) -> None:
+        if not succeeded:
+            session_info_file = Path(proc.workdir).joinpath("0", "job.runinfo.session")
+            if session_info_file.exists():
+                print("\n\n==================== Session Info ====================")
+                print(session_info_file.read_text())
+                print("======================================================\n\n")
 
 
 def _find_testing_index(new):
@@ -53,6 +74,7 @@ def get_pipeline(testfile, loglevel="debug", enable_report=False, **kwargs):
             "use `enable_report` instead."
         )
     plugins.append(f"{report_plugin_prefix}report")
+    plugins.append(PipenShowSessionInfoAfterFail())
     kws = {
         "name": name,
         "workdir": workdir,
