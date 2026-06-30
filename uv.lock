@@ -1585,14 +1585,14 @@ wheels = [
 
 [[package]]
 name = "pipen-runinfo"
-version = "1.1.3"
+version = "1.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pipen" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/59/59/3851e75ba147724e3bd72a6e1e8fc43d7d078287f4cf20eb00dd5314139f/pipen_runinfo-1.1.3.tar.gz", hash = "sha256:7f5df9da4d4fd1bea69a240dba2d982ffe0464ac09acf82b71da817e1d558e4d", size = 188459, upload-time = "2026-04-18T07:48:24.324Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/55/57187454e02c5e60696377789ec45a1d9311cc9ef37115697be1a2ad0777/pipen_runinfo-1.1.4.tar.gz", hash = "sha256:844dfbcdafaf8abaccde5c9a23a2404430af4dfaaf11db533d5b33db4f40d2ec", size = 217565, upload-time = "2026-06-30T20:25:00.14Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/8f/93682605310927662de6fe1ff3ebdf63364a42179773a53ae6a0fe0ff8fe/pipen_runinfo-1.1.3-py3-none-any.whl", hash = "sha256:a1e44244a8022b0396db6bb94b6539a8a1840c91270cf4693dad018cc7e600b2", size = 7009, upload-time = "2026-04-18T07:48:25.215Z" },
+    { url = "https://files.pythonhosted.org/packages/82/8f/6def938f05430d56ec0faea946323008e06ee59f4f97a07f0a3ac60bd30e/pipen_runinfo-1.1.4-py3-none-any.whl", hash = "sha256:756ea1aa854a34bba0cf4281caabfc1b4ae004b8ae951500ade60ebadfbb1bd9", size = 7005, upload-time = "2026-06-30T20:24:59.253Z" },
 ]
 
 [[package]]
