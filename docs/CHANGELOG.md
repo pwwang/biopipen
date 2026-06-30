@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.9
+
+- feat(scrna.CellCellCommunicationPlots): add ligand and receptor expression parameters for linked heatmap
+- chore: use uniformed access to plott data by plotthis v0.12.2
+- fix(ci): prevent docker workflow from triggering 3x on release
+
 ## 1.3.8
 
 - ci(docker): update workflow trigger to include release events
