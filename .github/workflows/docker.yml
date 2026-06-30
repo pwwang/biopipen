@@ -1,6 +1,10 @@
 name: docker
 
-on: [push, release]
+on:
+  push:
+    branches: [master, dev]
+  release:
+    types: [published]
 
 jobs:
 

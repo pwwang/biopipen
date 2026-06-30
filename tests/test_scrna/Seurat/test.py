@@ -389,7 +389,7 @@ class ModuleScoreCalculator(ModuleScoreCalculator_):
             # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
             # "Activation": {"features": "IFNG"},
             # "Proliferation": {"features": "STMN1,TUBB"},
-            "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4},
+            "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4, "nbin": 10},
         }
     }
 

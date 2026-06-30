@@ -62,8 +62,8 @@ def _assert_output(seq1: str, seq2: str, proc: str):
         assert s1 == s2, f"{proc} output line {i + 1} mismatch: {s1!r} != {s2!r}"
 
 
-def _testing_proc(proc: str, exp: str):
-    out = pipeline().outdir.joinpath(proc, "unnamed.txt")
+def _testing_proc(pipen, proc: str, exp: str):
+    out = pipen.outdir.joinpath(proc, "unnamed.txt")
     assert out.is_file(), out
     out = out.read_text()
     _assert_output(out, exp, proc)
@@ -78,7 +78,7 @@ def testing(pipen):
         "c1\tENSG00000227232.5\tWASH7P\n"
         "d\tnonexist\tnonexist\n"
     )
-    _testing_proc("GeneNameConversion1", exp1)
+    _testing_proc(pipen, "GeneNameConversion1", exp1)
 
     exp2 = (
         "Meta\tEnsg\n"
@@ -88,7 +88,7 @@ def testing(pipen):
         "c1\tWASH7P\n"
         "d\tNA\n"
     )
-    _testing_proc("GeneNameConversion2", exp2)
+    _testing_proc(pipen, "GeneNameConversion2", exp2)
 
     exp3 = (
         "query\tsymbol\n"
@@ -98,7 +98,7 @@ def testing(pipen):
         "ENSG00000227232.5\tWASH7P\n"
         "nonexist\tNA\n"
     )
-    _testing_proc("GeneNameConversion3", exp3)
+    _testing_proc(pipen, "GeneNameConversion3", exp3)
 
 
 if __name__ == "__main__":

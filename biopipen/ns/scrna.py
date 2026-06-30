@@ -3230,6 +3230,10 @@ class CellCellCommunicationPlots(Proc):
             <https://liana-py.readthedocs.io/en/latest/notebooks/basic_usage.html#Tileplot>
         specificity: The column name in the data to use as the specificity of the communication.
             By default, the last column will be used. If the method doesn't have a specificity, set it to None.
+        ligand_expr: The name of the column containing the mean (or otherwise summarized) expression of the ligand.
+            Only used when plot_type = "linkedheatmap".
+        receptor_expr: The name of the column containing the mean (or otherwise summarized) expression of the receptor.
+            Only used when plot_type = "linkedheatmap".
         devpars (ns): The parameters for the plot.
             - res (type=int): The resolution of the plot
             - height (type=int): The height of the plot
@@ -3254,6 +3258,8 @@ class CellCellCommunicationPlots(Proc):
         "subset": None,
         "magnitude": None,
         "specificity": None,
+        "ligand_expr": "ligand_means",
+        "receptor_expr": "receptor_means",
         "devpars": {"res": 100},
         "more_formats": [],
         "descr": "Cell-cell communication plot",

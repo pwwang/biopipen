@@ -131,7 +131,7 @@ do_one_features <- function(name) {
         }
 
         if (save_data) {
-            pdata <- attr(p, "data") %||% p$data
+            pdata <- p$data
             if (!inherits(pdata, "data.frame") && !inherits(pdata, "matrix")) {
                 stop("'save_data = TRUE' is not supported for plot_type: ", case$plot_type)
             }

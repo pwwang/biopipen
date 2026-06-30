@@ -29,9 +29,12 @@ class CellCellCommunicationAnndata(CellCellCommunication_):
 class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
     requires = CellCellCommunicationAnndata
     envs = {
+        "ligand_expr": "ligand_trimean",
+        "receptor_expr": "receptor_trimean",
         "cases": {
             "Heatmap::Heatmap": {"plot_type": "heatmap"},
             "Heatmap::HeatmapB": {"plot_type": "heatmap", "method": "interaction"},
+            "Heatmap::LinkedHeatmap": {"plot_type": "linkedheatmap"},
             "DotPlot::DotPlot": {"plot_type": "dot"},
             "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
             "Network::Network": {"plot_type": "network"},
@@ -53,9 +56,12 @@ class CellCellCommunicationSeurat(CellCellCommunication_):
 class CellCellCommunicationSeuratPlots(CellCellCommunicationPlots_):
     requires = CellCellCommunicationSeurat
     envs = {
+        "ligand_expr": "ligand_trimean",
+        "receptor_expr": "receptor_trimean",
         "cases": {
             "Heatmap::Heatmap": {"plot_type": "heatmap"},
             "Heatmap::HeatmapB": {"plot_type": "heatmap", "method": "interaction"},
+            "Heatmap::LinkedHeatmap": {"plot_type": "linkedheatmap"},
             "DotPlot::DotPlot": {"plot_type": "dot"},
             "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
             "Network::Network": {"plot_type": "network"},

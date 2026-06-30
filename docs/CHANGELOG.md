@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.3.9
+
+- feat(scrna.CellCellCommunicationPlots): add ligand and receptor expression parameters for linked heatmap
+- chore: use uniformed access to plott data by plotthis v0.12.2
+- fix(ci): prevent docker workflow from triggering 3x on release
+- test: add PipenShowSessionInfoAfterFail plugin to display session info on test failure
+- test(scrna.ModuleScoreCalculator): add nbin parameter to SomeModule configuration
+- test(gene.GeneNameConversion): update _testing_proc to accept pipen as parameter for better flexibility
+- chore(deps): bump pipen-runinfo to 1.1.4
+
 ## 1.3.8
 
 - ci(docker): update workflow trigger to include release events
@@ -554,6 +564,7 @@
 ## 0.34.0
 
 ### New Features
+
 - feat(scrna): add ScVelo analysis for RNA velocity and Slingshot for trajectory inference
 - feat(tcr): add ScRepCombiningExpression for combining TCR/BCR and expression data, and ScRepLoading for multiple TCR/BCR data formats
 - feat(scrna): add ScRepLoading with support for multiple formats and improved logging
@@ -566,6 +577,7 @@
 - feat: add common Svelte report template for job reporting using JSON reports
 
 ### Enhancements
+
 - enh(bam.CNAClinic): change `envs.binsize` to bp instead of kbp
 - enh(cnv): replace ggplot2 with plotthis for improved plotting in AneuploidyScoreSummary and TMADScoreSummary
 - enh(scrna): adopt biopipen.utils.R v0.1.0 across multiple processes
@@ -574,6 +586,7 @@
 - enh(tcr.ClonalStats): support qs2 format for output
 
 ### Bug Fixes
+
 - fix(cnv.TMADScore): correct output filename
 - fix(bam): fix report template and argument handling in CNVpytor, CNAClinic, and ControlFREEC
 - fix(cnv.AneuploidyScore): replace ggplot with plotthis and add error handling for chromosome detection
@@ -583,11 +596,13 @@
 - fix(scrna.SeuratClusterStats): improve data handling and plot saving functionality
 
 ### Refactoring
+
 - refactor(scrna.CellCellCommunicationPlots): use scplotter::CCCPlot
 - refactor(tcr.CDR3AAPhyschem): adopt input from ScRepCombiningExpression
 - refactor: remove utility R scripts and use biopipen.utils.R package
 
 ### Development & Infrastructure
+
 - chore(deps): update dependencies and specify versions for bioconductor packages
 - chore(docker): refactor Dockerfiles to streamline base image usage and dependency installation
 - chore: use filter 'r' for R input/output paths instead of 'quote' in scripts
@@ -2067,3 +2082,4 @@
 ## 0.1.0
 
 - Adopt pipen 0.2+
+
