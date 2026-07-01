@@ -19,6 +19,11 @@ if (length(ccc) == 0) {
     stop("No data found in the input file: ", cccfile)
 }
 
+default_ligand_expr <- "ligand_means"
+default_receptor_expr <- "receptor_means"
+default_ligand_expr2 <- "ligand_trimean"
+default_receptor_expr2 <- "receptor_trimean"
+
 defaults <- list(
     magnitude = NULL,
     specificity = NULL,
@@ -69,6 +74,21 @@ do_case <- function(name) {
     if (is.null(case$specificity)) {
         case$specificity <- NULL
     }
+    if (is.null(case$ligand_expr)) {
+        if (default_ligand_expr %in% colnames(case$data)) {
+            case$ligand_expr <- default_ligand_expr
+        } else if (default_ligand_expr2 %in% colnames(case$data)) {
+            case$ligand_expr <- default_ligand_expr2
+        }
+    }
+    if (is.null(case$receptor_expr)) {
+        if (default_receptor_expr %in% colnames(case$data)) {
+            case$receptor_expr <- default_receptor_expr
+        } else if (default_receptor_expr2 %in% colnames(case$data)) {
+            case$receptor_expr <- default_receptor_expr2
+        }
+    }
+
     p <- do_call(scplotter::CCCPlot, case)
     save_plot(
         p, info$prefix,
