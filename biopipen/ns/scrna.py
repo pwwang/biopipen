@@ -3381,6 +3381,8 @@ class Slingshot(Proc):
         dims (type=auto): The dimensions to use for the analysis.
             A list or a string with comma separated values.
             Consecutive numbers can be specified with a colon (`:`) or a dash (`-`).
+            Or a single number greater than 1, which will be expanded to `1:number`.
+            If `None`, all dimensions will be used.
         start: The starting group for the Slingshot analysis.
         end: The ending group for the Slingshot analysis.
         prefix: The prefix to add to the column names of the resulting pseudotime variable.
@@ -3395,7 +3397,7 @@ class Slingshot(Proc):
     envs = {
         "group_by": None,
         "reduction": None,
-        "dims": [1, 2],
+        "dims": None,
         "start": None,
         "end": None,
         "prefix": None,
