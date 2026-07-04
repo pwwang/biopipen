@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.10
+
+- feat(scrna.Slingshot): enhance dims parameter handling for Slingshot analysis
+- feat(scrna.CellCellCommunicationPlots): improve default ligand and receptor expression columns determination
+
 ## 1.3.9
 
 - feat(scrna.CellCellCommunicationPlots): add ligand and receptor expression parameters for linked heatmap

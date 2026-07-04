@@ -25,10 +25,14 @@ group_by <- group_by %||% biopipen.utils::GetIdentityColumn(srt)
 
 if (is.null(group_by) || !group_by %in% colnames(srt@meta.data)) {
     stop(paste("Grouping column", group_by, "not found in the Seurat object"))
+} else {
+    log$info("Using group_by: {group_by}")
 }
 
 reduction <- reduction %||% scplotter:::default_dimreduc(srt)
-dims <- biopipen.utils:::.expand_number(dims)
+if (!is.null(dims)) {
+    dims <- biopipen.utils:::.expand_number(dims)
+}
 
 if (is.null(prefix)) {
     prefix <- ""
@@ -39,9 +43,20 @@ if (is.null(prefix)) {
 log$info("Filtering cells in NA group_by ...")
 srt_sub <- srt[, !is.na(srt[[group_by, drop = TRUE]])]
 
+clusterLabels <- as.character(srt_sub[[group_by, drop = TRUE]])
+small_clusters <- names(table(clusterLabels))[table(clusterLabels) < 2]
+if (length(small_clusters) > 0) {
+    log$warn("Dropping clusters with less than 2 cells: {paste(small_clusters, collapse = ', ')}")
+    srt_sub <- scplotter:::subset_seurat(srt_sub, subset = !(!!rlang::sym(group_by) %in% small_clusters))
+}
+
 log$info("Running Slingshot ...")
 sl <- slingshot(
-    data = as.data.frame(srt_sub[[reduction]]@cell.embeddings[, dims]),
+    data = if (!is.null(dims)) {
+        as.data.frame(srt_sub[[reduction]]@cell.embeddings[, dims])
+    } else {
+        as.data.frame(srt_sub[[reduction]]@cell.embeddings)
+    },
     clusterLabels = as.character(srt_sub[[group_by, drop = TRUE]]),
     start.clus = start, end.clus = end
 )
