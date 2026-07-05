@@ -3385,10 +3385,16 @@ class Slingshot(Proc):
             If `None`, all dimensions will be used.
         start: The starting group for the Slingshot analysis.
         end: The ending group for the Slingshot analysis.
-        prefix: The prefix to add to the column names of the resulting pseudotime variable.
         reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
         seed (type=int): The seed for the random number generator.
+        cases: A dictionary of cases to run the analysis.
+            The keys are the names of the cases, which will be served as the
+            prefix to add to the column names of the resulting pseudotime variable.
+            For example, if the case name is `case1`, the resulting pseudotime variable
+            will be stored in the column `case1_LineageX` and `case1_BranchID`.
+            The values are the arguments and will be inherited from the `envs` above, except for `cases`.
+            The default case will be added with the default values under `envs` with an empty prefix.
     """  # noqa: E501
 
     input = "sobjfile:file"
@@ -3400,7 +3406,7 @@ class Slingshot(Proc):
         "dims": None,
         "start": None,
         "end": None,
-        "prefix": None,
+        "cases": {},
         "reverse": False,
         "align_start": False,
         "seed": 8525,

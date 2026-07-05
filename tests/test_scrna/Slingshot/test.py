@@ -52,6 +52,12 @@ class PrepareData(Proc):
 
 class Slingshot(Slingshot_):
     requires = PrepareData
+    envs = {
+        "cases": {
+            "DEFAULT": {},
+            "DIM12": {"dims": [1, 2]},
+        }
+    }
 
 
 def pipeline():
