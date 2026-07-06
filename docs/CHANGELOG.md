@@ -1,5 +1,10 @@
 # Change Log
 
+
+## 1.3.11
+
+- feat(scrna.Slingshot): add support for multiple cases in Slingshot analysis
+
 ## 1.3.10
 
 - feat(scrna.Slingshot): enhance dims parameter handling for Slingshot analysis
