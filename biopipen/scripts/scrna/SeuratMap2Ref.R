@@ -47,12 +47,12 @@ if (is.null(split_by)) {
 }
 
 log$info("Loading reference ...")
-if (endsWith(ref, ".rds") || endsWith(ref, ".RDS") || endsWith(ref, ".qs") || endsWith(ref, ".qs2")) {
+if (endsWith(ref, ".rds") || endsWith(ref, ".RDS") || endsWith(ref, ".Rds") || endsWith(ref, ".qs") || endsWith(ref, ".qs2")) {
     reference <- read_obj(ref)
 } else if (endsWith(ref, ".h5seurat") || endsWith(ref, ".H5Seurat")) {
     reference <- SeuratDisk::LoadH5Seurat(ref)
 } else {
-    stop("Reference file must be .qs, .qs2, .rds, .RDS, .h5seurat or .H5Seurat")
+    stop("Reference file must be .qs, .qs2, .rds, .RDS, .Rds, .h5seurat or .H5Seurat")
 }
 reference <- tryCatch(JoinLayers(reference), error = function(e) {reference})
 Idents(reference) <- reference@meta.data[[use]]
