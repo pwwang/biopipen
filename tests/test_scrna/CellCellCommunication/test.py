@@ -1,5 +1,7 @@
 from biopipen.core.proc import Proc
 from biopipen.core.config import config
+import pandas as pd
+from pathlib import Path
 from biopipen.ns.scrna import (
     CellCellCommunication as CellCellCommunication_,
     CellCellCommunicationPlots as CellCellCommunicationPlots_,
@@ -23,7 +25,24 @@ class PrepareAnnData(Proc):
 
 class CellCellCommunicationAnndata(CellCellCommunication_):
     requires = PrepareAnnData
-    envs = {"groupby": "bulk_labels"}
+    envs = {
+        "groupby": "bulk_labels",
+        "cases": {"DEFAULT": {}, "bulk_labels": {"groupby": "bulk_labels"}},
+    }
+
+
+class CellCellCommunicationAnndataSplitBy(CellCellCommunication_):
+    requires = PrepareAnnData
+    envs = {"groupby": "bulk_labels", "split_by": "phase"}
+
+
+class CellCellCommunicationAnndataSubsetPython(CellCellCommunication_):
+    requires = PrepareAnnData
+    envs = {
+        "groupby": "bulk_labels",
+        "subset_using": "python",
+        "subset": "louvain == '1'",
+    }
 
 
 class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
@@ -32,7 +51,7 @@ class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
         "ligand_expr": "ligand_trimean",
         "receptor_expr": "receptor_trimean",
         "cases": {
-            "Heatmap::Heatmap": {"plot_type": "heatmap"},
+            "Heatmap::Heatmap": {"plot_type": "heatmap", "subset": "Case == 'DEFAULT'"},
             "Heatmap::HeatmapB": {"plot_type": "heatmap", "method": "interaction"},
             "Heatmap::LinkedHeatmap": {"plot_type": "linkedheatmap"},
             "DotPlot::DotPlot": {"plot_type": "dot"},
@@ -79,7 +98,19 @@ def pipeline():
 
 
 def testing(pipen):
-    ...
+    outdir = Path(pipen.outdir)
+    split_res = pd.read_csv(
+        outdir / "CellCellCommunicationAnndataSplitBy" / "toy-ccc.txt",
+        sep="\t",
+    )
+    assert "phase" in split_res.columns
+    assert split_res["phase"].nunique() >= 2
+
+    subset_res = pd.read_csv(
+        outdir / "CellCellCommunicationAnndataSubsetPython" / "toy-ccc.txt",
+        sep="\t",
+    )
+    assert not subset_res.empty
 
 
 if __name__ == "__main__":
