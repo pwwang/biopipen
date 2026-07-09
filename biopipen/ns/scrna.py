@@ -3062,7 +3062,7 @@ class CellCellCommunication(Proc):
     - [LIANA](https://www.biorxiv.org/content/10.1101/2023.08.19.553863v1).
 
     Input:
-        sobjfile: The seurat object file in RDS or h5seurat format or AnnData file.
+        sobjfile: The seurat object file in RDS or AnnData file.
 
     Output:
         outfile: The output file with the 'liana_res' data frame.
@@ -3114,18 +3114,20 @@ class CellCellCommunication(Proc):
             - scseqcomm: alias for `scSeqComm`
             - cellchat: alias for `CellChat`
         subset: An expression in string to subset the cells.
-            When a `.rds` or `.h5seurat` file is provided for `in.sobjfile`, you can provide an expression in `R`,
+            When a `.rds` file is provided for `in.sobjfile`, you can provide an expression in `R`,
             which will be passed to `base::subset()` in `R` to subset the cells.
             But you can always pass an expression in `python` to subset the cells.
             See <https://anndata.readthedocs.io/en/latest/tutorials/notebooks/getting-started.html#subsetting-using-metadata>.
             You should use `adata` to refer to the AnnData object. For example, `adata.obs.groups == "g1"` will subset the cells
             with `groups` equal to `g1`.
-        subset_using: The method to subset the cells.
-            - auto: Automatically detect the method to use.
-                Note that this is not always accurate. We simply check if `[` is in the expression.
-                If so, we use `python` to subset the cells; otherwise, we use `R`.
+        subset_using (choice): The method to subset the cells.
             - python: Use python to subset the cells.
+                The expression will be evaluated by `adata.obs.query()` to subset the cells, e.g.: `groups == "g1"`.
             - r: Use R to subset the cells.
+                A subset expression will be passed to `dplyr::filter()` applying to the metadata of the Seurat object.
+                Note that this is only available when the input is a Seurat object in RDS format and
+                only available for `envs.subset_using`, but not for `cases.<case>.subset_using`.
+            - R: alias for `r`
         split_by: The column name in metadata to split the cells to run the method separately.
             The results will be combined together with this column in the final output.
         assay: The assay to use for the analysis.
@@ -3153,6 +3155,14 @@ class CellCellCommunication(Proc):
         rscript: The path to the Rscript executable used to convert RDS file to AnnData.
             if `in.sobjfile` is an RDS file, it will be converted to AnnData file (h5ad).
             You need `Seurat`, `SeuratDisk` and `digest` installed.
+        cases (type=json): Different cases for the analysis.
+            The keys are the names of the cases, which will be saved in the `Case` column in the output file.
+            The values are the arguments for from `envs` to override the default values, except
+            `method`, `species` and `rscript`, to keep the output from different cases with the same columns.
+            Note that `subset` and `subset_using` will not be inherited from `envs`, and only `subset_using = "python"`
+            is supported for the cases. When using subset in the cases, the data is subsetted after the default subset in `envs` is applied.
+            If no cases are given, a default case will be used, with the arguments from `envs`, and
+            no `Case` column will be added in the output file.
         <more>: Other arguments for the method.
             The arguments are passed to the method directly.
             See the method documentation for more details and also
@@ -3177,6 +3187,7 @@ class CellCellCommunication(Proc):
         "min_cells": 5,
         "n_perms": 1000,
         "rscript": config.lang.rscript,
+        "cases": {},
     }
     script = "file://../scripts/scrna/CellCellCommunication.py"
 
