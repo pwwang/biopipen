@@ -19,6 +19,7 @@ class PrepareAnnData(Proc):
         import scanpy as sc
 
         adata = sc.datasets.pbmc68k_reduced()
+        adata.obs["phase2"] = adata.obs["phase"].copy()
         adata.write_h5ad({{out.outfile | quote}})
     """
 
@@ -33,7 +34,14 @@ class CellCellCommunicationAnndata(CellCellCommunication_):
 
 class CellCellCommunicationAnndataSplitBy(CellCellCommunication_):
     requires = PrepareAnnData
-    envs = {"groupby": "bulk_labels", "split_by": "phase"}
+    envs = {
+        "groupby": "bulk_labels",
+        "cases": {
+            "ByPhase": {"split_by": "phase"},
+            "ByPhase2": {"split_by": "phase2"},
+            "NoSplit": {},
+        },
+    }
 
 
 class CellCellCommunicationAnndataSubsetPython(CellCellCommunication_):
@@ -58,7 +66,7 @@ class CellCellCommunicationAnndataPlots(CellCellCommunicationPlots_):
             "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
             "Network::Network": {"plot_type": "network"},
             "Circos::Circos": {"plot_type": "circos"},
-        }
+        },
     }
 
 
@@ -85,7 +93,7 @@ class CellCellCommunicationSeuratPlots(CellCellCommunicationPlots_):
             "DotPlot::DotPlotB": {"plot_type": "dot", "method": "interaction"},
             "Network::Network": {"plot_type": "network"},
             "Circos::Circos": {"plot_type": "circos"},
-        }
+        },
     }
 
 
@@ -103,8 +111,15 @@ def testing(pipen):
         outdir / "CellCellCommunicationAnndataSplitBy" / "toy-ccc.txt",
         sep="\t",
     )
+    assert "Case" in split_res.columns
     assert "phase" in split_res.columns
+    assert "phase2" in split_res.columns
     assert split_res["phase"].nunique() >= 2
+
+    no_split_rows = split_res[split_res["Case"] == "NoSplit"]
+    assert not no_split_rows.empty
+    assert no_split_rows["phase"].isna().all()
+    assert no_split_rows["phase2"].isna().all()
 
     subset_res = pd.read_csv(
         outdir / "CellCellCommunicationAnndataSubsetPython" / "toy-ccc.txt",

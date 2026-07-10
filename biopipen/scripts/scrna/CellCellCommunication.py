@@ -9,24 +9,85 @@ import scanpy
 import liana
 import liana.method.sc._liana_pipe as _liana_pipe
 
+from importlib.metadata import version as _version
+from packaging.version import parse as _v
+
+# Monkey-patch anndata.AnnData.__init__ to handle `dtype` keyword on anndata >= 0.13.
+# anndata 0.13 removed the `dtype` parameter from AnnData.__init__, but liana
+# still passes `dtype="float32"` as a keyword argument. The legacy_api_wrap
+# decorator only catches `dtype` when passed positionally, not as a keyword,
+# so it leaks through and causes TypeError.
+if _v(_version("anndata")) >= _v("0.13.0"):
+    def _patch_anndata_dtype():
+        import anndata
+        if not hasattr(anndata.AnnData, "_immunopipe_patched"):
+            _orig_init = anndata.AnnData.__init__
+
+            def _patched_init(self, *args, **kwargs):
+                import numpy as np
+                dtype = kwargs.pop("dtype", None)
+                if dtype is not None:
+                    X = kwargs.get("X", args[0] if args else None)
+                    if X is not None:
+                        try:
+                            from scipy import sparse
+                        except ImportError:
+                            sparse = None
+                        if sparse is not None and (
+                            sparse.issparse(X) or isinstance(X, np.ndarray)
+                        ):
+                            if X.dtype != np.dtype(dtype):
+                                kwargs["X"] = X.astype(dtype)
+                        elif isinstance(X, np.ndarray):
+                            if X.dtype != np.dtype(dtype):
+                                kwargs["X"] = X.astype(dtype)
+                        else:
+                            kwargs["X"] = np.asarray(X, dtype)
+                return _orig_init(self, *args, **kwargs)
+
+            anndata.AnnData.__init__ = _patched_init
+            anndata.AnnData._immunopipe_patched = True
+
+    _patch_anndata_dtype()
+
+# patch liana to avoid the error:
+
 # AttributeError: module 'numpy' has no attribute 'product'
 if not hasattr(np, "product"):
     np.product = np.prod
 
 # monkey-patch liana.method.sc._liana_pipe._trimean due to the updates by scipy 1.14
 # https://github.com/scipy/scipy/commit/a660202652deead0f3b4b688eb9fdcdf9f74066c
-def _trimean(a, axis=0):
-    try:
-        arr = a.A
-    except AttributeError:
-        arr = a.toarray()
+# Also patch _get_lr to force mat_max to float32 — in scipy >= 1.14, sparse matrix
+# .max() returns np.float64 instead of np.float32, breaking the isinstance(mat_max,
+# np.float32) gate that triggers cellchat-specific trimean calculation.
+if _v(_version("scipy")) >= _v("1.14.0"):
+    def _trimean(a, axis=0):
+        try:
+            arr = a.A
+        except AttributeError:
+            arr = a.toarray()
 
-    quantiles = np.quantile(arr, q=[0.25, 0.75], axis=axis)
-    median = np.median(arr, axis=axis)
-    return (quantiles[0] + 2 * median + quantiles[1]) / 4
+        quantiles = np.quantile(arr, q=[0.25, 0.75], axis=axis)
+        median = np.median(arr, axis=axis)
+        return (quantiles[0] + 2 * median + quantiles[1]) / 4
 
+    _liana_pipe._trimean = _trimean
 
-_liana_pipe._trimean = _trimean
+    _original_get_lr = _liana_pipe._get_lr
+
+    def _patched_get_lr(
+        adata, resource, groupby_pairs, relevant_cols,
+        mat_mean, mat_max, de_method, base, verbose,
+    ):
+        if mat_max is not None:
+            mat_max = np.float32(mat_max)
+        return _original_get_lr(
+            adata, resource, groupby_pairs, relevant_cols,
+            mat_mean, mat_max, de_method, base, verbose,
+        )
+
+    _liana_pipe._get_lr = _patched_get_lr
 
 
 sobjfile = Path({{in.sobjfile | quote}})  # pyright: ignore  # noqa: E999
@@ -66,6 +127,13 @@ else:
         cases[case_name] = tmp_envs
 
 DEFAULT_ONLY = "DEFAULT" in cases and len(cases) == 1
+ALL_SPLIT_BY_COLS = [
+    case_envs["split_by"]
+    for case_envs in cases.values()
+    if isinstance(case_envs, dict)
+    and case_envs.get("split_by")
+]
+ALL_SPLIT_BY_COLS = list(dict.fromkeys(ALL_SPLIT_BY_COLS))
 
 seurat_ident_col = None
 if sobjfile.suffix.lower() in (".rds", ".qs", "qs2"):
@@ -153,7 +221,8 @@ def do_case(name):
             case["adata"] = adata_split
             method_fun(**case)
             res = adata_split.uns['liana_ccc']
-            res[split_by] = split_val
+            # res[split_by] = split_val
+            res.insert(0, split_by, split_val)  # insert at the first column
 
             if result is None:
                 result = res
@@ -194,6 +263,11 @@ def do_case(name):
         result['mag_score'] = result[mag_score_names[method]]
     if spec_score_names[method] is not None:
         result['spec_score'] = result[spec_score_names[method]]
+
+    for split_col in ALL_SPLIT_BY_COLS:
+        if split_col not in result.columns:
+            # result[split_col] = "NA"
+            result.insert(0, split_col, "NA")  # insert at the first column
 
     if not DEFAULT_ONLY:
         result.insert(0, "Case", name)
