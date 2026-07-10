@@ -127,6 +127,13 @@ else:
         cases[case_name] = tmp_envs
 
 DEFAULT_ONLY = "DEFAULT" in cases and len(cases) == 1
+ALL_SPLIT_BY_COLS = [
+    case_envs["split_by"]
+    for case_envs in cases.values()
+    if isinstance(case_envs, dict)
+    and case_envs.get("split_by")
+]
+ALL_SPLIT_BY_COLS = list(dict.fromkeys(ALL_SPLIT_BY_COLS))
 
 seurat_ident_col = None
 if sobjfile.suffix.lower() in (".rds", ".qs", "qs2"):
@@ -214,7 +221,8 @@ def do_case(name):
             case["adata"] = adata_split
             method_fun(**case)
             res = adata_split.uns['liana_ccc']
-            res[split_by] = split_val
+            # res[split_by] = split_val
+            res.insert(0, split_by, split_val)  # insert at the first column
 
             if result is None:
                 result = res
@@ -255,6 +263,11 @@ def do_case(name):
         result['mag_score'] = result[mag_score_names[method]]
     if spec_score_names[method] is not None:
         result['spec_score'] = result[spec_score_names[method]]
+
+    for split_col in ALL_SPLIT_BY_COLS:
+        if split_col not in result.columns:
+            # result[split_col] = "NA"
+            result.insert(0, split_col, "NA")  # insert at the first column
 
     if not DEFAULT_ONLY:
         result.insert(0, "Case", name)
