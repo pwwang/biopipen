@@ -3778,6 +3778,42 @@ class MQuad(Proc):
     }
 
 
+class MQuadVcf(Proc):
+    """Clonal substructure discovery using single cell mitochondrial variants with MQuad.
+
+    MQuad uses a Mixture Model for Mitochondrial Mutation detection in single-cell omics data.
+
+    MQuad is a tool that detects mitochondrial mutations that are informative for clonal substructure inference. It uses a binomial mixture model to assess the heteroplasmy of mtDNA variants among background noise.
+
+    Input:
+        cellvcf: The output cell vcf from `CellSNPLite` process.
+
+    Output:
+        outdir: The output directory for MQuad results.
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+            It will be passed to `--nproc` option in MQuad.
+        seed (type=int): The seed for the random number generator.
+            It will be passed to `--randSeed` option in MQuad.
+        <more>: Other arguments passed to MQuad.
+            See <https://github.com/single-cell-genetics/MQuad/blob/main/mquad/mquad_CLI.py> for more details.
+    """  # noqa: E501
+
+    input = "cellvcf:file"
+    output = "outdir:dir:{{in.cellvcf | dirname | stem}}.mquad"
+    lang = config.lang.python
+    envs = {
+        "mquad": config.exe.mquad,
+        "ncores": config.misc.ncores,
+        "seed": 8525,
+    }
+    script = "file://../scripts/scrna/MQuadVcf.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/MQuad.svelte",
+    }
+
+
 class MQuadMerge(Proc):
     """Merge multiple MQuad results for multiple samples.
 
