@@ -1440,7 +1440,7 @@ wheels = [
 
 [[package]]
 name = "pipen"
-version = "1.1.16"
+version = "1.1.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argx" },
@@ -1453,9 +1453,9 @@ dependencies = [
     { name = "varname" },
     { name = "xqute" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cd/ff/22e9f339d73d9b44c0961635f32c11724bfd9558c26f7740fda8cde0e8d3/pipen-1.1.16.tar.gz", hash = "sha256:175efb73e5f7c35e71fa1d1dc021d9e55aa861bdac51c726869d5183bbf1636f", size = 763494, upload-time = "2026-05-07T04:50:13.991Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/0f/40d508f2c328433d3db192b001a61ba5cbe9c934382e73211a8a40123232/pipen-1.1.17.tar.gz", hash = "sha256:f321059c1375114c5893315efe4ac4d240569b84786e2b5339172c7d0dce94bd", size = 797478, upload-time = "2026-07-15T00:15:57.682Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/81/605ab449fbc1bde7946904a727fa3fb34938dea5166eb724afea41f8503d/pipen-1.1.16-py3-none-any.whl", hash = "sha256:e9b2d863c85a0efa966756e8f6d3e150bd3f180ee9846bccde86dcb946519ee5", size = 58632, upload-time = "2026-05-07T04:50:15.388Z" },
+    { url = "https://files.pythonhosted.org/packages/22/34/6a5315dc4a86aaec7096ecf2a9b85b375344cb8f83299bba15cb735f97cd/pipen-1.1.17-py3-none-any.whl", hash = "sha256:fdeb03b041cea813524c3a1d484ac3e2199edfdb536f9d691bad3e3328e9adda", size = 58778, upload-time = "2026-07-15T00:15:56.444Z" },
 ]
 
 [[package]]
