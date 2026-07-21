@@ -216,6 +216,14 @@ class CellTypeAnnotation(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationCell(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "cell",
+        "cell_types": str(Path(__file__).parent / "data/celltype_annotation.tsv#1,2,3"),
+    }
+
+
 class CellTypeAnnotationScType(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {

@@ -54,6 +54,8 @@ outtype <- {{envs.outtype | r}}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-celltypist.R" %}
 {% elif envs.tool == "direct" %}
 {% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-direct.R" %}
+{% elif envs.tool == "cell" %}
+{% include biopipen_dir + "/scripts/scrna/CellTypeAnnotation-cell.R" %}
 {% else %}
 stop("Unknown tool: {{envs.tool}}")
 {% endif %}
