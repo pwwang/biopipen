@@ -295,7 +295,7 @@ dependencies = [
     { name = "jinja2-ansible-filters", marker = "python_full_version >= '3.10'" },
     { name = "packaging", marker = "python_full_version >= '3.10'" },
     { name = "pathspec", marker = "python_full_version >= '3.10'" },
-    { name = "platformdirs", version = "4.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "platformdirs", version = "4.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "plumbum", marker = "python_full_version >= '3.10'" },
     { name = "pydantic", marker = "python_full_version >= '3.10'" },
     { name = "pygments", marker = "python_full_version >= '3.10'" },
@@ -946,7 +946,7 @@ dependencies = [
     { name = "importlib-metadata", marker = "python_full_version < '3.10'" },
     { name = "mergedeep" },
     { name = "platformdirs", version = "4.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "platformdirs", version = "4.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "platformdirs", version = "4.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ce/25/b3cccb187655b9393572bde9b09261d267c3bf2f2cdabe347673be5976a6/mkdocs_get_deps-0.2.2.tar.gz", hash = "sha256:8ee8d5f316cdbbb2834bc1df6e69c08fe769a83e040060de26d3c19fad3599a1", size = 11047, upload-time = "2026-03-10T02:46:33.632Z" }
@@ -1440,7 +1440,7 @@ wheels = [
 
 [[package]]
 name = "pipen"
-version = "1.1.17"
+version = "1.1.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argx" },
@@ -1453,9 +1453,9 @@ dependencies = [
     { name = "varname" },
     { name = "xqute" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/0f/40d508f2c328433d3db192b001a61ba5cbe9c934382e73211a8a40123232/pipen-1.1.17.tar.gz", hash = "sha256:f321059c1375114c5893315efe4ac4d240569b84786e2b5339172c7d0dce94bd", size = 797478, upload-time = "2026-07-15T00:15:57.682Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/f9/f21af8b2dc707ca80b3992374a45bbd92496bababa270bbe586f0b6bec28/pipen-1.1.18.tar.gz", hash = "sha256:0d78299cb0ad0087fa9cc854f96937ffafcbfa2962e03eb3cdf2519241ac079f", size = 800714, upload-time = "2026-07-21T19:09:16.908Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/34/6a5315dc4a86aaec7096ecf2a9b85b375344cb8f83299bba15cb735f97cd/pipen-1.1.17-py3-none-any.whl", hash = "sha256:fdeb03b041cea813524c3a1d484ac3e2199edfdb536f9d691bad3e3328e9adda", size = 58778, upload-time = "2026-07-15T00:15:56.444Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/d3/49c58dd0899c65ccd36d7a401c6faaf0992bca0657846fe1308a7fdd0861/pipen-1.1.18-py3-none-any.whl", hash = "sha256:c4f574d5a8483c91e7f994e4a90a267256886eb9d61c3b35d5dfb5e2984723bd", size = 58916, upload-time = "2026-07-21T19:09:15.674Z" },
 ]
 
 [[package]]
@@ -1621,7 +1621,7 @@ wheels = [
 
 [[package]]
 name = "platformdirs"
-version = "4.10.0"
+version = "4.11.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1635,9 +1635,9 @@ resolution-markers = [
     "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.10.*'",
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/47/e4501f49c178ae1d9f4a75073fda4204f52647993f075a9db4d14930e0c5/platformdirs-4.10.0.tar.gz", hash = "sha256:31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7", size = 31224, upload-time = "2026-05-28T03:32:53.587Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/9b/560e4be8e26f6fd133a03630a8df0c663b9e8d61b4ade152b72005aec83b/platformdirs-4.11.0.tar.gz", hash = "sha256:0555d18370482847566ffabcaa53ad7c6c1c29f195989ae1ed634a05f76ea1e0", size = 31953, upload-time = "2026-07-21T13:09:36.565Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/e6/cd9575ac904136b3cbf7aa7ee819ef86eedb7274e46f230e94ea4342e729/platformdirs-4.10.0-py3-none-any.whl", hash = "sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a", size = 22743, upload-time = "2026-05-28T03:32:52.175Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/68/d8d58938dfb1370b266a1a729e6d77a985be23689a0496498ee17b2cbf90/platformdirs-4.11.0-py3-none-any.whl", hash = "sha256:360ccded2b7fce0af0ff80cc8f5942a1c5d99b0e856033acb030bfc634709e74", size = 23247, upload-time = "2026-07-21T13:09:35.422Z" },
 ]
 
 [[package]]
