@@ -48,7 +48,7 @@ celltypes_cols <- sapply(
 celltypes <- celltypes[, celltypes_cols, drop = FALSE]
 cell_id_col <- celltypes_cols[1]
 cell_type_cols <- celltypes_cols[-1]
-ident <- ident %||% cell_type_cols[1]
+ident <- ident %||% as.character(cell_type_cols[1])
 if (!is.null(ident)) {
     if (!ident %in% cell_type_cols) {
         stop(paste0("Identity column '", ident, "' not found in cell type file: ", celltypes_file))
