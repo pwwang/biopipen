@@ -11,18 +11,32 @@ class File2Proc(Proc):
 
     Output:
         outfile: The output symbolic link to the input file
+
+    Envs:
+        copy (flag): Whether to copy the input file to the output file instead of
+            creating a symbolic link.
     """
     input = "infile:file"
     output = "outfile:file:{{in.infile | basename}}"
     lang = config.lang.bash
+    envs = {"copy": False}
     script = """
         # in case of deadlink
-        rm -f {{out.outfile | quote}}
+        rm -rf {{out.outfile | quote}}
         if [[ ! -e {{in.infile | quote}} ]]; then
             echo "File {{in.infile | quote}} does not exist." 1>&2
             exit 1
         fi
-        ln -s {{in.infile | quote}} {{out.outfile | quote}}
+        if [[ "{{envs['copy'] | bool}}" == "True" ]]; then
+            if [[ -d {{in.infile | quote}} ]]; then
+                cp -r {{in.infile | quote}} {{out.outfile | quote}}
+            else
+                cp {{in.infile | quote}} {{out.outfile | quote}}
+            fi
+        else
+            touch "{{out.outfile}}.1"
+            ln -s {{in.infile | quote}} {{out.outfile | quote}}
+        fi
     """
 
 

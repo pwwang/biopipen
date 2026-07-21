@@ -1,5 +1,21 @@
 # Change Log
 
+## 1.3.14
+
+- feat(scrna.CellTypeAnnotation): add support for cell-level annotations
+- feat(tcr.ScRepCombiningExpression): add support for cell ID transformation functions
+- feat(misc.File2Proc): enhance File2Proc to support file copying or symlinking based on envs.copy flag
+- feat(scrna.MQuadVcf): add MQuadVcf process for clonal substructure discovery using mitochondrial variants in VCF files
+- fix(vcf.BcftoolsView): correct warning message formatting for samples_file handling
+- fix(scrna.CellTypeAnnotation): ensure ident is correctly set as character type for cell type columns
+- style(test.bed): format code for better readability and consistency
+- chore: bump pipen to 1.1.18
+
+## 1.3.13
+
+- fix(scrna.CellCellCommunication): add monkey-patch for anndata.AnnData to handle dtype keyword
+- feat(scrna.CellCellCommunication): enhance case handling with additional split options
+
 ## 1.3.12
 
 - feat(scrna.CellCellCommunication): add support for multiple cases in CellCellCommunication analysis

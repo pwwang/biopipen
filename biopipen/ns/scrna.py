@@ -2134,8 +2134,9 @@ class CellTypeAnnotation(Proc):
             - celltypist: Use `celltypist` to annotate cell types.
                 See <https://github.com/Teichlab/celltypist>
             - direct: Directly assign cell types
+            - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         sctype_tissue: The tissue to use for `sctype`.
-            Avaiable tissues should be the first column (`tissueType`) of `sctype_db`.
+            Available tissues should be the first column (`tissueType`) of `sctype_db`.
             If not specified, all rows in `sctype_db` will be used.
         sctype_db: The database to use for sctype.
             Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
@@ -2143,17 +2144,21 @@ class CellTypeAnnotation(Proc):
             If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
             If input data is h5ad, this is required to run cluster-based annotation tools.
             For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
+            For tool `cell`, this can be used to set the Seurat object identity to the specified
+            column in the cell type annotation file (by default, the first cell type column will
+            be set as identity).
         backup_col: The backup column name to store the original identities.
             If not specified, the original identity column will not be stored.
             If `envs.newcol` is specified, this will be ignored.
         hitype_tissue: The tissue to use for `hitype`.
-            Avaiable tissues should be the first column (`tissueType`) of `hitype_db`.
+            Available tissues should be the first column (`tissueType`) of `hitype_db`.
             If not specified, all rows in `hitype_db` will be used.
         hitype_db: The database to use for hitype.
             Compatible with `sctype_db`.
             See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
-        cell_types (type=auto): The cell types to use for direct annotation.
+        cell_types (type=auto): The cell types to use for direct or cell-level annotation.
+            For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
             you want to keep the original cell types. If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell types.
@@ -2165,6 +2170,17 @@ class CellTypeAnnotation(Proc):
             If `tool` is `direct` and `cell_types` is not specified or an empty list,
             the original cell types will be kept and nothing will be changed.
             ///
+
+            For `cell`, it must be a TSV file with cell-level annotations.
+            You can specify the column names after the `#`. For example,
+            `file:///path/to/cell_types.tsv#cell_id,cell_type` will use `cell_id` as the cell id column
+            to match the cell ids in the Seurat object, and `cell_type` as the cell type column to assign the cell types.
+            Multiple cell type columns can be specified, and the first one will be used as the new identity column.
+            You can also use 1-based column index to specify the columns, for example, `file:///path/to/cell_types.tsv#1,3`
+            will use the first column as the cell id column and the third column as the cell type column.
+            If cells in the Seurat object are not found in the cell type file, `NA`s will be assigned to those cells.
+            If not columns are specified, the first two columns will be used as the cell id and cell type columns.
+            Prefix `file://` is optional.
 
         more_cell_types (type=json): The additional cell type annotations to add to the metadata.
             The keys are the new column names and the values are the cell types lists.
@@ -3773,6 +3789,42 @@ class MQuad(Proc):
         "seed": 8525,
     }
     script = "file://../scripts/scrna/MQuad.py"
+    plugin_opts = {
+        "report": "file://../reports/scrna/MQuad.svelte",
+    }
+
+
+class MQuadVcf(Proc):
+    """Clonal substructure discovery using single cell mitochondrial variants with MQuad.
+
+    MQuad uses a Mixture Model for Mitochondrial Mutation detection in single-cell omics data.
+
+    MQuad is a tool that detects mitochondrial mutations that are informative for clonal substructure inference. It uses a binomial mixture model to assess the heteroplasmy of mtDNA variants among background noise.
+
+    Input:
+        cellvcf: The output cell vcf from `CellSNPLite` process.
+
+    Output:
+        outdir: The output directory for MQuad results.
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+            It will be passed to `--nproc` option in MQuad.
+        seed (type=int): The seed for the random number generator.
+            It will be passed to `--randSeed` option in MQuad.
+        <more>: Other arguments passed to MQuad.
+            See <https://github.com/single-cell-genetics/MQuad/blob/main/mquad/mquad_CLI.py> for more details.
+    """  # noqa: E501
+
+    input = "cellvcf:file"
+    output = "outdir:dir:{{in.cellvcf | dirname | stem}}.mquad"
+    lang = config.lang.python
+    envs = {
+        "mquad": config.exe.mquad,
+        "ncores": config.misc.ncores,
+        "seed": 8525,
+    }
+    script = "file://../scripts/scrna/MQuadVcf.py"
     plugin_opts = {
         "report": "file://../reports/scrna/MQuad.svelte",
     }

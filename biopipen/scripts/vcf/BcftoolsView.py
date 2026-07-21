@@ -40,7 +40,7 @@ elif "R" in envs or "regions_file" in envs or "regions-file" in envs:
 if samples_file:
     if "S" in envs or "samples_file" in envs or "samples-file" in envs:
         logger.warning(
-            "Ignoring envs[samples_file/samples-file/S] "
+            r"Ignoring envs\[samples_file/samples-file/S] "
             "because in.samples_file is provided."
         )
         with suppress(KeyError):
