@@ -21,6 +21,16 @@
 - feat(scrna.CellCellCommunication): add support for multiple cases in CellCellCommunication analysis
 - fix(scrna.SeuratMap2Ref): make .Rds legal as reference file
 
+## 1.3.13
+
+- fix(scrna.CellCellCommunication): add monkey-patch for anndata.AnnData to handle dtype keyword
+- feat(scrna.CellCellCommunication): enhance case handling with additional split options
+
+## 1.3.12
+
+- feat(scrna.CellCellCommunication): add support for multiple cases in CellCellCommunication analysis
+- fix(scrna.SeuratMap2Ref): make .Rds legal as reference file
+
 ## 1.3.11
 
 - feat(scrna.Slingshot): add support for multiple cases in Slingshot analysis
