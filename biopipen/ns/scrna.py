@@ -2225,6 +2225,17 @@ class CellTypeAnnotation(Proc):
             in additional to the column name specified in the cell type annotation file (and set as the identity).
             For tool `scsorter`, this can be used to save the cell types to a new column in metadata in addition to
             `scSorter_celltype` (and set as the identity).
+        add_prefix (flag): Whether to add a prefix to the new column names in metadata.
+            Only used when in non-default cases. The prefix will be the case name followed by `_`.
+        cases (type=json): Run multiple cases of cell type annotation on the same Seurat object.
+            The keys are the prefix of column names added to the metadata (unless `add_prefix` is `False`),
+            and the values will inherit the above options.
+            The default case is `DEFAULT`, meaning no prefix will be added to the column names.
+            The annotation from the last case will be set as the identity of the output Seurat object.
+            If any case requires h5ad conversion (e.g., `celltypist`), the object is pre-converted
+            once and shared across those tools.
+        ncores (type=int): Number of cores to use for parallel execution of multiple cases.
+            When > 1, cases are run in parallel via `mclapply`. This is not inherited by individual cases.
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
@@ -2281,8 +2292,11 @@ class CellTypeAnnotation(Proc):
             "over_clustering": None,
             "assay": None,
         },
+        "add_prefix": None,
         "merge": False,
         "newcol": None,
+        "cases": {},
+        "ncores": 1,
         "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"

@@ -1,41 +1,41 @@
-celltypes <- {{envs.cell_types | r}}
-more_cell_types <- {{envs.more_cell_types | r}}
+# CellTypeAnnotation-direct.R — pure R function, no Jinja2 template variables
+# Source'd by CellTypeAnnotation.R
 
-log <- biopipen.utils::get_logger()
+annotate_direct <- function(sobj, ident, cell_types, more_cell_types) {
+    log <- get_logger()
 
-if (is.null(celltypes) || length(celltypes) == 0) {
-    log$warn("No cell types are given!")
-    if (!is.null(more_cell_types) && length(more_cell_types) > 0) {
-        log$warn("`envs.celltypes` is not given, won't process `envs.more_cell_types`!")
+    if (is.null(cell_types) || length(cell_types) == 0) {
+        log$warn("No cell types are given!")
+        if (!is.null(more_cell_types) && length(more_cell_types) > 0) {
+            log$warn(
+                "`cell_types` is not given, won't process `more_cell_types`!"
+            )
+        }
+        return(list(mapping = list()))
     }
 
-    if (merge) {
-        log$warn("Ignoring 'envs.merge' because no cell types are given!")
-    }
-    # create a symbolic link to the input file
-    file.symlink(sobjfile, outfile)
-} else {
-    log$info("Loading Seurat object ...")
-    sobj <- biopipen.utils::read_obj(sobjfile)
-    ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
-    if (is.null(ident)) {
-        sobj@meta.data$Identity <- Idents(sobj)
-        ident <- "Identity"
-    }
     idents <- sobj@meta.data[[ident]]
     if (is.factor(idents)) {
         idents <- levels(idents)
     } else {
         idents <- as.character(unique(idents))
     }
+
     process_celltypes <- function(ct, key = NULL) {
         if (is.list(ct)) {
             nonexisting <- setdiff(names(ct), idents)
             if (length(nonexisting) > 0) {
                 if (is.null(key)) {
-                    log$warn(paste0("The following clusters do not exist: ", paste(nonexisting, collapse = ", ")))
+                    log$warn(paste0(
+                        "The following clusters do not exist: ",
+                        paste(nonexisting, collapse = ", ")
+                    ))
                 } else {
-                    log$warn(paste0("The following clusters for '", key, "' do not exist: ", paste(nonexisting, collapse = ", ")))
+                    log$warn(paste0(
+                        "The following clusters for '", key,
+                        "' do not exist: ",
+                        paste(nonexisting, collapse = ", ")
+                    ))
                 }
                 ct <- ct[setdiff(names(ct), nonexisting)]
             }
@@ -46,9 +46,14 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         } else if (length(ct) > length(idents)) {
             ct <- ct[1:length(idents)]
             if (is.null(key)) {
-                log$warn("The length of cell types is longer than the number of clusters!")
+                log$warn(
+                    "The length of cell types is longer than the number of clusters!"
+                )
             } else {
-                log$warn(paste0("The length of cell types for '", key, "' is longer than the number of clusters!"))
+                log$warn(paste0(
+                    "The length of cell types for '", key,
+                    "' is longer than the number of clusters!"
+                ))
             }
         }
         for (i in seq_along(ct)) {
@@ -64,18 +69,17 @@ if (is.null(celltypes) || length(celltypes) == 0) {
         return(ct)
     }
 
+    more <- NULL
     if (!is.null(more_cell_types) && length(more_cell_types) > 0) {
+        more <- list()
         for (key in names(more_cell_types)) {
             ct <- more_cell_types[[key]]
             ct <- process_celltypes(ct, key)
-            log$info(paste0("Adding additional cell type annotation: '", key, "' ..."))
-            sobj <- RenameSeuratIdents(sobj, mapping = ct, ident = ident, save_as = key, merge = merge)
+            more[[key]] <- ct
         }
     }
 
-    celltypes <- process_celltypes(celltypes)
-    sobj <- RenameSeuratIdents(sobj, mapping = celltypes, ident = ident, save_as = newcol, merge = merge, backup = backup_col)
+    celltypes <- process_celltypes(cell_types)
 
-    log$info("Saving Seurat object ...")
-    biopipen.utils::save_obj(sobj, outfile)
+    list(mapping = celltypes, more = more)
 }

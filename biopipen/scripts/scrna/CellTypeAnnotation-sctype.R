@@ -1,124 +1,116 @@
-library(HGNChelper)
+# CellTypeAnnotation-sctype.R — pure R function, no Jinja2 template variables
+# Source'd by CellTypeAnnotation.R
+# Depends on sctype.R being source'd first (for gene_sets_prepare / sctype_score)
 
-{% include biopipen_dir + "/scripts/scrna/sctype.R" %}
+annotate_sctype <- function(sobj, ident, tissue, db) {
+    library(HGNChelper)
 
-tissue = {{envs.sctype_tissue | r}}
-db = {{envs.sctype_db | r}}
+    log <- get_logger()
 
-if (is.null(db)) { stop("`envs.sctype_args.db` is not set") }
+    if (is.null(db)) { stop("`sctype_db` is not set") }
 
-log <- get_logger()
+    # prepare gene sets
+    log$info("Preparing gene sets...")
+    gs_list <- gene_sets_prepare(db, tissue)
 
-log$info("Reading Seurat object...")
-sobj = biopipen.utils::read_obj(sobjfile)
-ident <- ident %||% biopipen.utils::GetIdentityColumn(sobj)
-if (is.null(ident)) {
-    sobj@meta.data$Identity <- Idents(sobj)
-    ident <- "Identity"
-}
+    scRNAseqData <- GetAssayData(sobj, layer = "scale.data")
+    idents <- as.character(unique(sobj@meta.data[[ident]]))
+    idents <- idents[order(as.numeric(idents))]
 
-# prepare gene sets
-log$info("Preparing gene sets...")
-gs_list = gene_sets_prepare(db, tissue)
+    log$info("Working on different levels of cell type labels ...")
+    cell_types_list <- list()
+    for (i in seq_along(gs_list)) {
+        log$info("- Working on level {i} ...")
+        if (is.null(gs_list[[i]])) next
 
-scRNAseqData = GetAssayData(sobj, layer = "scale.data")
-idents = as.character(unique(sobj@meta.data[[ident]]))
-idents = idents[order(as.numeric(idents))]
+        log$info("  Calculating cell-type scores ...")
+        es.max <- sctype_score(
+            scRNAseqData = scRNAseqData,
+            scaled = TRUE,
+            gs = gs_list[[i]]$gs_positive,
+            gs2 = gs_list[[i]]$gs_negative
+        )
 
-log$info("Working on different levels of cell type labels ...")
-cell_types_list = list()
-for (i in seq_along(gs_list)) {
-    log$info("- Working on level {i} ...")
-    if (is.null(gs_list[[i]])) next
+        log$info("  Merging cell-type scores by cluster ...")
+        cl_resutls <- do_call(
+            "rbind",
+            lapply(
+                idents,
+                function(cl) {
+                    es.max.cl <- sort(
+                        rowSums(es.max[
+                            ,
+                            rownames(sobj@meta.data[
+                                sobj@meta.data[[ident]] == cl,
+                            ])
+                        ]),
+                        decreasing = !0
+                    )
+                    head(data.frame(
+                        cluster = cl,
+                        type = names(es.max.cl),
+                        scores = es.max.cl,
+                        ncells = sum(sobj@meta.data[[ident]] == cl)
+                    ), 10)
+                }
+            )
+        )
 
-    log$info("  Calculating cell-type scores ...")
-    es.max = sctype_score(
-        scRNAseqData = scRNAseqData,
-        scaled = TRUE,
-        gs = gs_list[[i]]$gs_positive,
-        gs2 = gs_list[[i]]$gs_negative
-    )
+        sctype_scores <- cl_resutls %>%
+            group_by(cluster) %>%
+            slice_max(scores, n = 1, with_ties = TRUE)
 
-    log$info("  Merging cell-type scores by cluster ...")
-    cl_resutls = do_call(
-        "rbind",
-        lapply(
+        if (nrow(sctype_scores) > length(idents)) {
+            sctype_scores_count <- sctype_scores %>%
+                count(cluster) %>%
+                filter(n > 1)
+            write("\n########## sctype_scores ###########", stderr())
+            write(capture.output(sctype_scores), stderr())
+            write("\n####### sctype_scores_count ########", stderr())
+            write(capture.output(sctype_scores_count), stderr())
+            write("\n####################################", stderr())
+            log$info(
+                "  Scores tied in the above clusters.",
+                immediate. = TRUE
+            )
+        }
+
+        if (length(gs_list) == 1 || i > 1) {
+            # set low-confident (low ScType score) clusters to "unknown"
+            log$info("  Setting low-confident clusters to 'Unknown'...")
+            sctype_scores$type[
+                as.numeric(as.character(sctype_scores$scores)) <
+                    sctype_scores$ncells / 4
+            ] <- "Unknown"
+        }
+
+        celltypes <- sapply(
             idents,
             function(cl) {
-                es.max.cl = sort(rowSums(es.max[, rownames(sobj@meta.data[sobj@meta.data$seurat_clusters==cl, ])]), decreasing = !0)
-                head(data.frame(cluster = cl, type = names(es.max.cl), scores = es.max.cl, ncells = sum(sobj@meta.data$seurat_clusters==cl)), 10)
+                cl_type <- sctype_scores[sctype_scores$cluster == cl, ]
+                as.character(cl_type$type[1])
             }
         )
-    )
-
-    sctype_scores = cl_resutls %>%
-        group_by(cluster) %>%
-        slice_max(scores, n=1, with_ties=TRUE)
-
-    if (nrow(sctype_scores) > length(idents)) {
-        sctype_scores_count = sctype_scores %>% count(cluster) %>% filter(n > 1)
-        write("\n########## sctype_scores ###########", stderr())
-        write(capture.output(sctype_scores), stderr())
-        write("\n####### sctype_scores_count ########", stderr())
-        write(capture.output(sctype_scores_count), stderr())
-        write("\n####################################", stderr())
-        log$info("  Scores tied in the above clusters.", immediate. = TRUE)
+        names(celltypes) <- idents
+        cell_types_list[[i]] <- celltypes
     }
 
-    if (length(gs_list) == 1 || i > 1) {
-        # set low-confident (low ScType score) clusters to "unknown"
-        log$info("  Setting low-confident clusters to 'Unknown'...")
-        sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < sctype_scores$ncells/4] = "Unknown"
-    }
+    if (length(cell_types_list) == 1) {
+        celltypes <- as.list(cell_types_list[[1]])
+    } else {
+        log$info("Merging cell types at all levels ...")
+        celltypes <- list()
 
-    celltypes = sapply(
-        idents,
-        function (cl) {
-            cl_type = sctype_scores[sctype_scores$cluster == cl, ]
-            as.character(cl_type$type[1])
-        }
-    )
-    names(celltypes) = idents
-    cell_types_list[[i]] = celltypes
-}
-
-if (length(cell_types_list) == 1) {
-    celltypes = as.list(cell_types_list[[1]])
-} else {
-    log$info("Merging cell types at all levels ...")
-    celltypes = list()
-
-    for (i in idents) {
-        celltypes[[i]] = ""
-        for (j in seq_along(cell_types_list)) {
-            idt = cell_types_list[[j]][[i]]
-            if (idt != "Unknown") {
-                celltypes[[i]] = paste(celltypes[[i]], idt)
+        for (i in idents) {
+            celltypes[[i]] <- ""
+            for (j in seq_along(cell_types_list)) {
+                idt <- cell_types_list[[j]][[i]]
+                if (idt != "Unknown") {
+                    celltypes[[i]] <- paste(celltypes[[i]], idt)
+                }
             }
         }
     }
+
+    list(mapping = celltypes)
 }
-
-
-log$info("Renaming cell types...")
-sobj <- biopipen.utils::RenameSeuratIdents(
-    sobj,
-    celltypes,
-    ident = ident, save_as = newcol, merge = merge, backup = backup_col
-)
-
-log$info("Saving the mappings ...")
-write.table(
-    data.frame(
-        Cluster = names(celltypes),
-        Celltype = unlist(celltypes),
-        stringsAsFactors = FALSE
-    ),
-    file = file.path(dirname(outfile), "cluster2celltype.tsv"),
-    sep = "\t",
-    quote = FALSE,
-    row.names = FALSE
-)
-
-log$info("Saving Seurat object...")
-biopipen.utils::save_obj(sobj, outfile)

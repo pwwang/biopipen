@@ -631,6 +631,93 @@ class ScFGSEAEach(ScFGSEA_):
     }
 
 
+class CellTypeAnnotationMultiCase(CellTypeAnnotation_):
+    """Test multi-case annotation with two cluster-based tools"""
+    requires = SeuratClustering
+    envs = {
+        "cases": {
+            "Sctype": {
+                "tool": "sctype",
+                "sctype_tissue": "Immune system",
+                "sctype_db": str(
+                    Path(__file__).parent / "data/ScTypeDB_short.xlsx"
+                ),
+            },
+            "Direct": {
+                "tool": "direct",
+                "cell_types": [
+                    "Naive CD4+ T",
+                    "NA",
+                    "Memory CD4+",
+                    "Naive CD4+ T",
+                    "DC",
+                    "DC",
+                    "CD8+ T",
+                    "NK",
+                    "FCFR3A+ Mono",
+                    "CD8+ T",
+                ],
+            },
+        },
+    }
+
+
+class CellTypeAnnotationMultiCase2(CellTypeAnnotation_):
+    """Test multi-case annotation with add_prefix=False"""
+    requires = SeuratClustering
+    envs = {
+        "add_prefix": False,
+        "cases": {
+            "Sctype": {
+                "tool": "sctype",
+                "sctype_tissue": "Immune system",
+                "sctype_db": str(
+                    Path(__file__).parent / "data/ScTypeDB_short.xlsx"
+                ),
+                "newcol": "CellType_sctype",
+            },
+            "Direct": {
+                "tool": "direct",
+                "cell_types": {
+                    "c1": "Naive CD4+ T",
+                    "c2": "NA",
+                    "c5": "B",
+                },
+                "newcol": "CellType_direct",
+            },
+        },
+    }
+
+
+class CellTypeAnnotationMultiCase3(CellTypeAnnotation_):
+    """Test multi-case annotation with ncores"""
+    requires = SeuratClustering
+    envs = {
+        "ncores": 2,
+        "cases": {
+            "Hitype": {
+                "tool": "hitype",
+                "hitype_db": "hitypedb_pbmc3k",
+            },
+            "Direct": {
+                "tool": "direct",
+                "cell_types": [
+                    "Naive CD4+ T",
+                    "NA",
+                    "Memory CD4+",
+                    "Naive CD4+ T",
+                    "DC",
+                    "DC",
+                    "CD8+ T",
+                    "NK",
+                    "FCFR3A+ Mono",
+                    "CD8+ T",
+                ],
+            },
+        },
+    }
+
+
 def pipeline():
     return get_pipeline(__file__, enable_report=ENABLE_REPORT).set_starts(PrepareSeurat)
 
