@@ -2075,7 +2075,7 @@ class ScFGSEA(Proc):
 
 
 class CellTypeAnnotation(Proc):
-    """Annotate the cell clusters. Currently, four ways are supported:
+    """Annotate the cell clusters. Currently, the following ways are supported:
 
     1. Pass the cell type annotation directly (at cluster-level or cell-level)
     2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type)
@@ -2083,6 +2083,7 @@ class CellTypeAnnotation(Proc):
     4. Use [`hitype`](https://github.com/pwwang/hitype)
     5. Use [`celltypist`](https://github.com/Teichlab/celltypist)
     6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/)
+    7. Use [`SCINA`](https://github.com/jcao89757/SCINA)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2136,6 +2137,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/Teichlab/celltypist>
             - scsorter: Use `scSorter` to annotate cell types.
                 See <https://github.com/pwwang/scSorter>
+            - scina: Use `SCINA` to annotate cell types.
+                See <https://github.com/jcao89757/SCINA>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         sctype_tissue: The tissue to use for `sctype`.
@@ -2165,6 +2168,19 @@ class CellTypeAnnotation(Proc):
             for example, `file:///path/to/scsorter_db.tsv#celltype,marker,weight`.
         scsorter_args (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
             - <more>: Other arguments for [`scSorter::RunScSorter()`](https://github.com/pwwang/scSorter/blob/9baae9f0e0904ddbf3f9bb5dacb9227503a8ce3e/R/scSorter.R#L73).
+        scina_db (type=str): The path to the SCINA signature file.
+            It can be an RDS file containing a named list of
+            signature genes (the names are the cell types and the
+            values are the marker gene symbols), or a CSV file
+            with the markers for each cell type in a column.
+        scina_args (ns): The arguments for `SCINA::SCINA()` if `tool` is `scina`.
+            - max_iter: Maximum number of EM iterations (default: 100).
+            - convergence_n: Stop if assignment stays stable for N consecutive rounds (default: 10).
+            - convergence_rate: Fraction of cells with stable assignment for convergence (default: 0.99).
+            - sensitivity_cutoff: Cutoff (0-1) for removing signatures of absent cell types (default: 1).
+            - rm_overlap (flag): Whether to remove genes shared between multiple signatures (default: TRUE).
+            - allow_unknown (flag): Whether to allow unknown cells (default: TRUE).
+            - <more>: Other arguments for [`SCINA::SCINA()`](https://rdrr.io/cran/SCINA/man/SCINA.html).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2285,6 +2301,8 @@ class CellTypeAnnotation(Proc):
         "hitype_db": None,
         "scsorter_db": None,
         "scsorter_args": {},
+        "scina_db": None,
+        "scina_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,

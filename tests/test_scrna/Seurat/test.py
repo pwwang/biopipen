@@ -577,6 +577,14 @@ class SeuratClusterStatsSCCatch2(SeuratClusterStats_):
     }
 
 
+class CellTypeAnnotationSCINA(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "scina",
+        "scina_db": str(Path(__file__).parent / "data/scina_signatures.csv"),
+    }
+
+
 class ScFGSEASingle(ScFGSEA_):
     requires = SeuratClustering
     envs = {

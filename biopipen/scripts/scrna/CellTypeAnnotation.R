@@ -26,6 +26,8 @@ scsorter_db <- {{envs.scsorter_db | r}}
 scsorter_args <- {{envs.scsorter_args | r}}
 sccatch_args <- {{envs.sccatch_args | r}}
 celltypist_args <- {{envs.celltypist_args | r}}
+scina_db <- {{envs.scina_db | r}}
+scina_args <- {{envs.scina_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -41,6 +43,7 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-celltypis
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scsorter.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-direct.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -56,6 +59,8 @@ defaults <- list(
     scsorter_db = scsorter_db,
     scsorter_args = scsorter_args,
     sccatch_args = sccatch_args,
+    scina_db = scina_db,
+    scina_args = scina_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -64,7 +69,7 @@ defaults <- list(
 cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 
 # Cluster-based tools
-CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "direct")
+CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "direct")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
@@ -135,6 +140,9 @@ run_case <- function(case_name) {
         ),
         scsorter = annotate_scsorter(
             sobj, case$ident, case$scsorter_db, case$scsorter_args
+        ),
+        scina = annotate_scina(
+            sobj, case$ident, case$scina_db, case$scina_args
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types
