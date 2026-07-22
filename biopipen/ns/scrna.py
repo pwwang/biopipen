@@ -2077,11 +2077,12 @@ class ScFGSEA(Proc):
 class CellTypeAnnotation(Proc):
     """Annotate the cell clusters. Currently, four ways are supported:
 
-    1. Pass the cell type annotation directly
+    1. Pass the cell type annotation directly (at cluster-level or cell-level)
     2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type)
     3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
     4. Use [`hitype`](https://github.com/pwwang/hitype)
     5. Use [`celltypist`](https://github.com/Teichlab/celltypist)
+    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2133,6 +2134,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/ZJUFanLab/scCATCH>
             - celltypist: Use `celltypist` to annotate cell types.
                 See <https://github.com/Teichlab/celltypist>
+            - scsorter: Use `scSorter` to annotate cell types.
+                See <https://github.com/pwwang/scSorter>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         sctype_tissue: The tissue to use for `sctype`.
@@ -2154,6 +2157,14 @@ class CellTypeAnnotation(Proc):
             Compatible with `sctype_db`.
             See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
             You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
+        scsorter_db: The database to use for scSorter. It will be loaded and passed to the `anno`
+            argument of `RunScSorter()`. It could be either:
+            * A TSV file with cell type annotations, with columns `Type`, `Marker`, and `Weight`.
+            * A RDS/qs2 file of the annotation data frame with the same columns as above.
+            You can also use `#` followed by the column names to specify the columns as `Type`, `Marker` and `weight` (optional),
+            for example, `file:///path/to/scsorter_db.tsv#celltype,marker,weight`.
+        scsorter_args (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
+            - <more>: Other arguments for [`scSorter::RunScSorter()`](https://github.com/pwwang/scSorter/blob/9baae9f0e0904ddbf3f9bb5dacb9227503a8ce3e/R/scSorter.R#L73).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2212,6 +2223,8 @@ class CellTypeAnnotation(Proc):
             If specified, the original identity column will be kept and `Idents` will be kept as the original identity.
             For tool `cell`, this can be used to save the cell types to a new column in metadata
             in additional to the column name specified in the cell type annotation file (and set as the identity).
+            For tool `scsorter`, this can be used to save the cell types to a new column in metadata in addition to
+            `scSorter_celltype` (and set as the identity).
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
@@ -2259,6 +2272,8 @@ class CellTypeAnnotation(Proc):
         },
         "hitype_tissue": None,
         "hitype_db": None,
+        "scsorter_db": None,
+        "scsorter_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,

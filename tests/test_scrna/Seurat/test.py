@@ -224,6 +224,14 @@ class CellTypeAnnotationCell(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationScSorter(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "scsorter",
+        "scsorter_db": str(Path(__file__).parent / "data/tcell.sccatch.RDS#celltype,gene"),
+    }
+
+
 class CellTypeAnnotationScType(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
