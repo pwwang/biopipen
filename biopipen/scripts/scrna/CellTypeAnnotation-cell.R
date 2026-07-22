@@ -1,4 +1,4 @@
-ident <- {{envs.ident | r}}
+newcol <- {{envs.newcol | r}}
 celltypes <- {{envs.cell_types | r}}
 
 if (!is.character(celltypes)) {
@@ -48,12 +48,6 @@ celltypes_cols <- sapply(
 celltypes <- celltypes[, celltypes_cols, drop = FALSE]
 cell_id_col <- celltypes_cols[1]
 cell_type_cols <- celltypes_cols[-1]
-ident <- ident %||% as.character(cell_type_cols[1])
-if (!is.null(ident)) {
-    if (!ident %in% cell_type_cols) {
-        stop(paste0("Identity column '", ident, "' not found in cell type file: ", celltypes_file))
-    }
-}
 
 log$info("Reading Seurat object...")
 sobj <- biopipen.utils::read_obj(sobjfile)
@@ -95,8 +89,10 @@ celltypes <- rbind(celltypes, missing_celltypes)
 celltypes <- celltypes[match(rownames(sobj@meta.data), celltypes[[cell_id_col]]), cell_type_cols, drop = FALSE]
 sobj@meta.data <- cbind(sobj@meta.data, celltypes)
 
-log$info(paste0("NOTE: Seurat object identity set to: ", ident))
-Idents(sobj) <- ident
+newcol <- newcol %||% as.character(cell_type_cols[1])
+log$info(paste0("NOTE: Seurat object identity set to: ", newcol))
+sobj@meta.data[[newcol]] <- sobj@meta.data[[cell_type_cols[1]]]
+Idents(sobj) <- newcol
 
 log$info(paste0("Saving Seurat object with cell type annotations ..."))
 biopipen.utils::save_obj(sobj, outfile)

@@ -2144,9 +2144,6 @@ class CellTypeAnnotation(Proc):
             If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
             If input data is h5ad, this is required to run cluster-based annotation tools.
             For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
-            For tool `cell`, this can be used to set the Seurat object identity to the specified
-            column in the cell type annotation file (by default, the first cell type column will
-            be set as identity).
         backup_col: The backup column name to store the original identities.
             If not specified, the original identity column will not be stored.
             If `envs.newcol` is specified, this will be ignored.
@@ -2213,6 +2210,8 @@ class CellTypeAnnotation(Proc):
         newcol: The new column name to store the cell types.
             If not specified, the identity column will be overwritten.
             If specified, the original identity column will be kept and `Idents` will be kept as the original identity.
+            For tool `cell`, this can be used to save the cell types to a new column in metadata
+            in additional to the column name specified in the cell type annotation file (and set as the identity).
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
