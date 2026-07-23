@@ -67,6 +67,7 @@ dependencies:
   - bioconda::bioconductor-ruvcorr
   - bioconda::bioconductor-slingshot
   - bioconda::bioconductor-ccplotr
+  - bioconda::bioconductor-singler
   - bioconda::maxit
   - bioconda::truvari
   - bioconda::mquad

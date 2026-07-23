@@ -29,6 +29,8 @@ sccatch_args <- {{envs.sccatch_args | r}}
 celltypist_args <- {{envs.celltypist_args | r}}
 scina_db <- {{envs.scina_db | r}}
 scina_args <- {{envs.scina_args | r}}
+singler_db <- {{envs.singler_db | r}}
+singler_args <- {{envs.singler_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -37,14 +39,15 @@ log <- get_logger()
 # Source all tool function definitions
 biopipen_dir <- {{ biopipen_dir | r }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-hitype.R"))
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sctype.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "sctype.R"))
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sctype.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sccatch.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-celltypist.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scsorter.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-direct.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -62,6 +65,8 @@ defaults <- list(
     sccatch_args = sccatch_args,
     scina_db = scina_db,
     scina_args = scina_args,
+    singler_db = singler_db,
+    singler_args = singler_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -70,7 +75,8 @@ defaults <- list(
 cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 
 # Cluster-based tools
-CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "direct")
+CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "singler", "direct")
+PYTHON_TOOLS <- c("celltypist")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
@@ -93,18 +99,22 @@ outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
 
 # Pre-convert to h5ad if any case needs it
 needs_h5ad <- any(sapply(cases, function(c)
-    identical(c$tool, "celltypist")
+    c$tool %in% PYTHON_TOOLS
 ))
 h5ad_path <- NULL
 if (needs_h5ad) {
-    log$info("Pre-converting Seurat object to h5ad for Python-based tools...")
-    h5ad_path <- paste0(outprefix, ".shared.h5ad")
-    ConvertSeuratToAnnData(
-        sobj,
-        outfile = h5ad_path,
-        assay = celltypist_args$assay,
-        log = log
-    )
+    if (endsWith(tolower(sobjfile), ".h5ad")) {
+        h5ad_path <- sobjfile
+    } else {
+        log$info("Pre-converting Seurat object to h5ad for Python-based tools...")
+        h5ad_path <- paste0(outprefix, ".shared.h5ad")
+        ConvertSeuratToAnnData(
+            sobj,
+            outfile = h5ad_path,
+            assay = assay,
+            log = log
+        )
+    }
 }
 
 # Resolve ident for each case and determine tool type
@@ -146,6 +156,9 @@ run_case <- function(case_name) {
         ),
         scina = annotate_scina(
             sobj, case$ident, case$scina_db, case$scina_args
+        ),
+        singler = annotate_singler(
+            sobj, case$ident, case$singler_db, case$singler_args
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types

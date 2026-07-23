@@ -2084,6 +2084,7 @@ class CellTypeAnnotation(Proc):
     5. Use [`celltypist`](https://github.com/Teichlab/celltypist)
     6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/)
     7. Use [`SCINA`](https://github.com/jcao89757/SCINA)
+    8. Use [`SingleR`](https://github.com/dviraran/SingleR)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2139,6 +2140,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/pwwang/scSorter>
             - scina: Use `SCINA` to annotate cell types.
                 See <https://github.com/jcao89757/SCINA>
+            - singler: Use `SingleR` to annotate cell types.
+                See <https://github.com/dviraran/SingleR>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2186,6 +2189,29 @@ class CellTypeAnnotation(Proc):
             - rm_overlap (flag): Whether to remove genes shared between multiple signatures (default: TRUE).
             - allow_unknown (flag): Whether to allow unknown cells (default: TRUE).
             - <more>: Other arguments for [`SCINA::SCINA()`](https://rdrr.io/cran/SCINA/man/SCINA.html).
+        singler_db (type=str): The path to the SingleR reference file.
+            It can be an RDS, qs, or qs2 file containing a reference object,
+            supporting:
+            * `SummarizedExperiment` (e.g., from the `celldex` package).
+              References can be obtained via `celldex::HumanPrimaryCellAtlasData()`,
+              `celldex::BlueprintEncodeData()`, `celldex::MonacoImmuneData()`,
+              `celldex::DatabaseImmuneCellExpressionData()`,
+              `celldex::NovershternHematopoieticData()`, `celldex::ImmGenData()`,
+              `celldex::MouseRNAseqData()`.
+            * `Seurat` object. Labels are auto-detected from metadata.
+            Save with `saveRDS()` or `biopipen.utils::write_obj()`.
+            Both the Bioconductor and CRAN versions of SingleR are supported
+            and auto-detected at runtime.
+        singler_args (ns): The arguments for `SingleR::SingleR()` if `tool` is `singler`.
+            Both the [Bioconductor](https://bioconductor.org/packages/SingleR)
+            and [CRAN](https://github.com/dviraran/SingleR) versions are
+            auto-detected.
+            - label (type=str): The metadata/colData column name for
+              reference labels. Auto-detected from `label.main`,
+              `label.fine`, `label.ont`, `label` in order.
+            - <more>: See the SingleR documentation for your version:
+              [`Bioconductor`](https://rdrr.io/bioc/SingleR/man/SingleR.html)
+              or [`CRAN`](https://github.com/dviraran/SingleR).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2309,6 +2335,8 @@ class CellTypeAnnotation(Proc):
         "scsorter_args": {},
         "scina_db": None,
         "scina_args": {},
+        "singler_db": None,
+        "singler_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,

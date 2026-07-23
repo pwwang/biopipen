@@ -585,6 +585,14 @@ class CellTypeAnnotationSCINA(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationSingleR(CellTypeAnnotation_):
+    requires = SeuratClustering
+    envs = {
+        "tool": "singler",
+        "singler_db": str(Path(__file__).parent / "data" / "singler_ref.rds"),
+    }
+
+
 class ScFGSEASingle(ScFGSEA_):
     requires = SeuratClustering
     envs = {
