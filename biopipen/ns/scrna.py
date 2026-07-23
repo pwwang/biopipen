@@ -2085,6 +2085,7 @@ class CellTypeAnnotation(Proc):
     6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/)
     7. Use [`SCINA`](https://github.com/jcao89757/SCINA)
     8. Use [`SingleR`](https://github.com/dviraran/SingleR)
+    9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2142,6 +2143,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/jcao89757/SCINA>
             - singler: Use `SingleR` to annotate cell types.
                 See <https://github.com/dviraran/SingleR>
+            - schdeepinsight: Use `scHDeepInsight` to annotate cell types.
+                See <https://github.com/shangruJia/scHDeepInsight>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2212,6 +2215,17 @@ class CellTypeAnnotation(Proc):
             - <more>: See the SingleR documentation for your version:
               [`Bioconductor`](https://rdrr.io/bioc/SingleR/man/SingleR.html)
               or [`CRAN`](https://github.com/dviraran/SingleR).
+        schdeepinsight_ref (type=str): The path to the scHDeepInsight
+            reference RDS file. The bundled `reference.rds` from the
+            scHDeepInsight repo provides immune cell reference.
+            See <https://github.com/shangruJia/scHDeepInsight>.
+        schdeepinsight_args (ns): The arguments for scHDeepInsight
+            if `tool` is `schdeepinsight`.
+            - batch_size (type=int): Batch size for CNN prediction
+              (default: 128).
+            - python (type=str): Path to Python executable with
+              `SCHdeepinsight` installed.
+            - assay (type=str): Assay to use for h5ad conversion.
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2337,6 +2351,8 @@ class CellTypeAnnotation(Proc):
         "scina_args": {},
         "singler_db": None,
         "singler_args": {},
+        "schdeepinsight_ref": None,
+        "schdeepinsight_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,

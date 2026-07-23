@@ -31,6 +31,8 @@ scina_db <- {{envs.scina_db | r}}
 scina_args <- {{envs.scina_args | r}}
 singler_db <- {{envs.singler_db | r}}
 singler_args <- {{envs.singler_args | r}}
+schdeepinsight_ref <- {{envs.schdeepinsight_ref | r}}
+schdeepinsight_args <- {{envs.schdeepinsight_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -48,6 +50,7 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-direct.R"
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -67,6 +70,8 @@ defaults <- list(
     scina_args = scina_args,
     singler_db = singler_db,
     singler_args = singler_args,
+    schdeepinsight_ref = schdeepinsight_ref,
+    schdeepinsight_args = schdeepinsight_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -76,7 +81,7 @@ cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 
 # Cluster-based tools
 CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "singler", "direct")
-PYTHON_TOOLS <- c("celltypist")
+PYTHON_TOOLS <- c("celltypist", "schdeepinsight")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
@@ -159,6 +164,11 @@ run_case <- function(case_name) {
         ),
         singler = annotate_singler(
             sobj, case$ident, case$singler_db, case$singler_args
+        ),
+        schdeepinsight = annotate_schdeepinsight(
+            sobj, case$ident, case$schdeepinsight_ref,
+            case$schdeepinsight_args, outdir,
+            h5ad_path = h5ad_path, case_id = case_name
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types
