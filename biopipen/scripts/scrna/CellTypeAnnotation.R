@@ -33,6 +33,7 @@ singler_db <- {{envs.singler_db | r}}
 singler_args <- {{envs.singler_args | r}}
 schdeepinsight_ref <- {{envs.schdeepinsight_ref | r}}
 schdeepinsight_args <- {{envs.schdeepinsight_args | r}}
+gptcelltype_args <- {{envs.gptcelltype_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -51,6 +52,7 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -72,6 +74,7 @@ defaults <- list(
     singler_args = singler_args,
     schdeepinsight_ref = schdeepinsight_ref,
     schdeepinsight_args = schdeepinsight_args,
+    gptcelltype_args = gptcelltype_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -80,7 +83,7 @@ defaults <- list(
 cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 
 # Cluster-based tools
-CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "singler", "direct")
+CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "singler", "gptcelltype", "direct")
 PYTHON_TOOLS <- c("celltypist", "schdeepinsight")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
@@ -169,6 +172,9 @@ run_case <- function(case_name) {
             sobj, case$ident, case$schdeepinsight_ref,
             case$schdeepinsight_args, outdir,
             h5ad_path = h5ad_path, case_id = case_name
+        ),
+        gptcelltype = annotate_gptcelltype(
+            sobj, case$ident, case$gptcelltype_args
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types

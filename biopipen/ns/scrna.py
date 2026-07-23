@@ -2086,6 +2086,7 @@ class CellTypeAnnotation(Proc):
     7. Use [`SCINA`](https://github.com/jcao89757/SCINA)
     8. Use [`SingleR`](https://github.com/dviraran/SingleR)
     9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight)
+    10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2145,6 +2146,8 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/dviraran/SingleR>
             - schdeepinsight: Use `scHDeepInsight` to annotate cell types.
                 See <https://github.com/shangruJia/scHDeepInsight>
+            - gptcelltype: Use `GPTCelltype` to annotate cell types
+                with GPT-4. See <https://github.com/Winnie09/GPTCelltype>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2226,6 +2229,19 @@ class CellTypeAnnotation(Proc):
             - python (type=str): Path to Python executable with
               `SCHdeepinsight` installed.
             - assay (type=str): Assay to use for h5ad conversion.
+        gptcelltype_args (ns): The arguments for
+            `GPTCelltype::gptcelltype()` if `tool` is `gptcelltype`.
+            - api_key (type=str): OpenAI API key (required).
+            - model (type=str): GPT model (required, e.g.
+              'gpt-4', 'gpt-4o').
+            - base_url (type=str): Custom base URL for
+              OpenAI-compatible providers. Sets
+              `OPENAI_BASE_URL` environment variable.
+            - tissuename (type=str): Tissue name for context.
+            - assay (type=str): Assay to use for
+              `FindAllMarkers()`.
+            - <more>: Additional args passed to
+              `Seurat::FindAllMarkers()`.
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2353,6 +2369,7 @@ class CellTypeAnnotation(Proc):
         "singler_args": {},
         "schdeepinsight_ref": None,
         "schdeepinsight_args": {},
+        "gptcelltype_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,
