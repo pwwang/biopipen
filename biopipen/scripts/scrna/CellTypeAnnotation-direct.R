@@ -39,6 +39,20 @@ annotate_direct <- function(sobj, ident, cell_types, more_cell_types) {
                 }
                 ct <- ct[setdiff(names(ct), nonexisting)]
             }
+            # Fill in missing clusters with their own names
+            missing <- setdiff(idents, names(ct))
+            for (m in missing) {
+                ct[[m]] <- m
+            }
+            # Handle special values: "NA" -> NA, "-" or "" -> cluster name
+            for (n in names(ct)) {
+                if (is.na(ct[[n]])) next
+                if (ct[[n]] == "-" || ct[[n]] == "") {
+                    ct[[n]] <- n
+                } else if (ct[[n]] == "NA") {
+                    ct[[n]] <- NA
+                }
+            }
             return(ct)
         }
         if (length(ct) < length(idents)) {
