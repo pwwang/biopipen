@@ -17,6 +17,7 @@ outtype <- {{envs.outtype | r}}
 cases <- {{envs.cases | r}}
 ncores <- {{envs.ncores | r}}
 
+assay <- {{envs.assay | r}}
 # Tool-specific defaults (Jinja2-substituted)
 sctype_tissue <- {{envs.sctype_tissue | r}}
 sctype_db <- {{envs.sctype_db | r}}
@@ -123,6 +124,8 @@ run_case <- function(case_name) {
     case <- cases[[case_name]]
 
     log$info("Running annotation for case: {case_name}")
+    case$celltypist_args$assay <- case$celltypist_args$assay %||% assay
+    case$scsorter_args$assay <- case$scsorter_args$assay %||% assay
 
     result <- switch(case$tool,
         hitype = annotate_hitype(

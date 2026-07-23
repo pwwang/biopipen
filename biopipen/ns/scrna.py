@@ -2141,6 +2141,11 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/jcao89757/SCINA>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
+        assay: The assay to use for the analysis. If not specified, the default assay will be used.
+            Will not be inherited by the cases under `envs.cases`.
+            To use a different assay for a case, specify it in the case args.
+            This will be also used to convert Seurat object to h5ad if the input is Seurat object
+            and the output is h5ad.
         sctype_tissue: The tissue to use for `sctype`.
             Available tissues should be the first column (`tissueType`) of `sctype_db`.
             If not specified, all rows in `sctype_db` will be used.
@@ -2284,6 +2289,7 @@ class CellTypeAnnotation(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "hitype",
+        "assay": None,
         "sctype_tissue": None,
         "sctype_db": config.ref.sctype_db,
         "ident": None,
