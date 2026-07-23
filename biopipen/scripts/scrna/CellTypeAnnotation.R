@@ -40,6 +40,8 @@ scbert_ref <- {{envs.scbert_ref | r}}
 scbert_model <- {{envs.scbert_model | r}}
 scbert_label_dict <- {{envs.scbert_label_dict | r}}
 scbert_args <- {{envs.scbert_args | r}}
+cellid_db <- {{envs.cellid_db | r}}
+cellid_args <- {{envs.cellid_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -75,6 +77,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcellty
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scbert.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scbert.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellid.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellid.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -103,6 +107,8 @@ defaults <- list(
     scbert_model = scbert_model,
     scbert_label_dict = scbert_label_dict,
     scbert_args = scbert_args,
+    cellid_db = cellid_db,
+    cellid_args = cellid_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -211,6 +217,9 @@ run_case <- function(case_name) {
             sobj, case$ident, case$scbert_ref, case$scbert_model,
             case$scbert_label_dict, case$scbert_args, outdir,
             h5ad_path = h5ad_path, case_id = case_name
+        ),
+        cellid = annotate_cellid(
+            sobj, case$ident, case$cellid_db, case$cellid_args
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types

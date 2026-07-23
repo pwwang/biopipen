@@ -2089,6 +2089,7 @@ class CellTypeAnnotation(Proc):
     10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype)
     11. Use [`cellassign`](https://github.com/Irrationone/cellassign)
     12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT)
+    13. Use [`CelliD`](https://github.com/RausellLab/CelliD)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2156,6 +2157,9 @@ class CellTypeAnnotation(Proc):
             - scbert: Use `scBERT` to annotate cell types with a
                 BERT-based transformer model.
                 See <https://github.com/TencentAILabHealthcare/scBERT>
+            - cellid: Use `CelliD` to annotate cell types with MCA-based
+                per-cell gene signature enrichment.
+                See <https://github.com/RausellLab/CelliD>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2296,6 +2300,25 @@ class CellTypeAnnotation(Proc):
             - unassign_thres (type=float): Confidence
               threshold for unassigned cells (default: 0.5).
             - <more>: Additional args to the wrapper script.
+        cellid_db (type=str): The path to the marker gene set
+            file for `cellid`. Supports:
+            * RDS/qs2 file: a named list (cell type → vector
+              of marker genes)
+            * CSV/TSV file: with columns `gene` and `cell_type`
+        cellid_args (ns): The arguments for CelliD
+            if `tool` is `cellid`.
+            - nmcs (type=int): Number of MCA components
+              (default: 50).
+            - n_features (type=int): Top n features per
+              cell for hypergeometric test (default: 200).
+            - dims (type=auto): MCA dimensions to use
+              (default: seq(nmcs)).
+            - min_size (type=int): Min overlapping genes
+              (default: 10).
+            - log_trans (flag): -log10 transform p-values
+              (default: TRUE).
+            - p_adjust (flag): Benjamini-Hochberg correction
+              (default: TRUE).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2430,6 +2453,8 @@ class CellTypeAnnotation(Proc):
         "scbert_model": None,
         "scbert_label_dict": None,
         "scbert_args": {},
+        "cellid_db": None,
+        "cellid_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,
