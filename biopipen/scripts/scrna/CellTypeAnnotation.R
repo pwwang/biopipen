@@ -36,6 +36,10 @@ schdeepinsight_args <- {{envs.schdeepinsight_args | r}}
 gptcelltype_args <- {{envs.gptcelltype_args | r}}
 cellassign_db <- {{envs.cellassign_db | r}}
 cellassign_args <- {{envs.cellassign_args | r}}
+scbert_ref <- {{envs.scbert_ref | r}}
+scbert_model <- {{envs.scbert_model | r}}
+scbert_label_dict <- {{envs.scbert_label_dict | r}}
+scbert_args <- {{envs.scbert_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -69,6 +73,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepin
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellassign.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scbert.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scbert.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -93,6 +99,10 @@ defaults <- list(
     gptcelltype_args = gptcelltype_args,
     cellassign_db = cellassign_db,
     cellassign_args = cellassign_args,
+    scbert_ref = scbert_ref,
+    scbert_model = scbert_model,
+    scbert_label_dict = scbert_label_dict,
+    scbert_args = scbert_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -102,7 +112,7 @@ cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 
 # Cluster-based tools
 CLUSTER_TOOLS <- c("hitype", "sctype", "sccatch", "scina", "singler", "gptcelltype", "direct")
-PYTHON_TOOLS <- c("celltypist", "schdeepinsight")
+PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
@@ -196,6 +206,11 @@ run_case <- function(case_name) {
         ),
         cellassign = annotate_cellassign(
             sobj, case$ident, case$cellassign_db, case$cellassign_args
+        ),
+        scbert = annotate_scbert(
+            sobj, case$ident, case$scbert_ref, case$scbert_model,
+            case$scbert_label_dict, case$scbert_args, outdir,
+            h5ad_path = h5ad_path, case_id = case_name
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types

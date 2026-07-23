@@ -2088,6 +2088,7 @@ class CellTypeAnnotation(Proc):
     9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight)
     10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype)
     11. Use [`cellassign`](https://github.com/Irrationone/cellassign)
+    12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2152,6 +2153,9 @@ class CellTypeAnnotation(Proc):
             - cellassign: Use `cellassign` to annotate cell types
                 with a probabilistic model.
                 See <https://github.com/Irrationone/cellassign>
+            - scbert: Use `scBERT` to annotate cell types with a
+                BERT-based transformer model.
+                See <https://github.com/TencentAILabHealthcare/scBERT>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2269,6 +2273,29 @@ class CellTypeAnnotation(Proc):
             - verbose (flag): Print progress (default: TRUE).
             - <more>: Additional args to
               `cellassign::cellassign()`.
+        scbert_ref (type=str): The path to the scBERT repo
+            directory (containing `performer_pytorch/`).
+        scbert_model (type=str): The path to the fine-tuned
+            model checkpoint (.pth file).
+        scbert_label_dict (type=str): The path to the label
+            dictionary pickle file (maps class indices to cell
+            type names).
+        scbert_args (ns): The arguments for scBERT inference
+            if `tool` is `scbert`.
+            - python (type=str): Path to Python with scBERT
+              dependencies (torch, scanpy, etc.).
+            - bin_num (type=int): Number of bins for
+              expression embedding (default: 5).
+            - gene_num (type=int): Number of genes expected
+              by the model (default: 16906).
+            - seed (type=int): Random seed (default: 2021).
+            - pos_embed (flag): Use Gene2vec positional
+              encoding (default: TRUE).
+            - novel_type (flag): Enable novel cell type
+              detection (default: FALSE).
+            - unassign_thres (type=float): Confidence
+              threshold for unassigned cells (default: 0.5).
+            - <more>: Additional args to the wrapper script.
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2399,6 +2426,10 @@ class CellTypeAnnotation(Proc):
         "gptcelltype_args": {},
         "cellassign_db": None,
         "cellassign_args": {},
+        "scbert_ref": None,
+        "scbert_model": None,
+        "scbert_label_dict": None,
+        "scbert_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,
