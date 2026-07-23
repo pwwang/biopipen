@@ -34,6 +34,8 @@ singler_args <- {{envs.singler_args | r}}
 schdeepinsight_ref <- {{envs.schdeepinsight_ref | r}}
 schdeepinsight_args <- {{envs.schdeepinsight_args | r}}
 gptcelltype_args <- {{envs.gptcelltype_args | r}}
+cellassign_db <- {{envs.cellassign_db | r}}
+cellassign_args <- {{envs.cellassign_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
@@ -65,6 +67,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellassign.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
 defaults <- list(
@@ -87,6 +91,8 @@ defaults <- list(
     schdeepinsight_ref = schdeepinsight_ref,
     schdeepinsight_args = schdeepinsight_args,
     gptcelltype_args = gptcelltype_args,
+    cellassign_db = cellassign_db,
+    cellassign_args = cellassign_args,
     celltypist_args = celltypist_args,
     cell_types = cell_types,
     more_cell_types = more_cell_types
@@ -187,6 +193,9 @@ run_case <- function(case_name) {
         ),
         gptcelltype = annotate_gptcelltype(
             sobj, case$ident, case$gptcelltype_args
+        ),
+        cellassign = annotate_cellassign(
+            sobj, case$ident, case$cellassign_db, case$cellassign_args
         ),
         direct = annotate_direct(
             sobj, case$ident, case$cell_types, case$more_cell_types

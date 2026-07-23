@@ -1,0 +1,104 @@
+# CellTypeAnnotation-cellassign.R — pure R function, no Jinja2 template variables
+# Source'd by CellTypeAnnotation.R
+
+# Helper: load marker gene info from a file
+load_marker_info <- function(db_path, log) {
+    if (startsWith(db_path, "file://")) {
+        db_path <- sub("^file://", "", db_path)
+    }
+    if (!file.exists(db_path)) {
+        stop(paste0("Marker gene info file does not exist: ", db_path))
+    }
+    ext <- tolower(tools::file_ext(db_path))
+    if (ext %in% c("csv", "tsv", "txt")) {
+        log$info("Loading marker gene info from CSV/TSV...")
+        sep <- if (ext == "csv") "," else "\t"
+        df <- read.table(
+            db_path, header = TRUE, sep = sep, stringsAsFactors = FALSE
+        )
+        if (!"gene" %in% colnames(df) || !"cell_type" %in% colnames(df)) {
+            stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
+        }
+        marker_list <- split(df$gene, df$cell_type)
+        return(marker_list)
+    }
+    # Otherwise load as RDS/qs/qs2
+    log$info("Loading marker gene info from R object file...")
+    obj <- read_obj(db_path)
+    if (!is.list(obj) && !is.matrix(obj)) {
+        stop("Marker gene info must be a named list or binary matrix.")
+    }
+    return(obj)
+}
+
+annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
+    library(cellassign)
+
+    log <- get_logger()
+
+    if (is.null(cellassign_db)) {
+        stop("`cellassign_db` is required for cellassign annotation")
+    }
+
+    # Load marker gene info
+    marker_gene_info <- load_marker_info(cellassign_db, log)
+
+    # Get raw counts
+    assay <- cellassign_args$assay %||% DefaultAssay(sobj)
+    log$info("Extracting raw counts from assay: {assay}")
+    counts <- GetAssayData(sobj, assay = assay, slot = "counts")
+
+    # Filter to marker genes present in data
+    if (is.list(marker_gene_info)) {
+        all_markers <- unique(unlist(marker_gene_info))
+    } else if (is.matrix(marker_gene_info)) {
+        all_markers <- rownames(marker_gene_info)
+    } else {
+        stop("marker_gene_info must be a named list or binary matrix.")
+    }
+    common_genes <- intersect(all_markers, rownames(counts))
+    if (length(common_genes) == 0) {
+        stop("None of the marker genes are found in the expression data.")
+    }
+    log$info(
+        "Found {length(common_genes)} / {length(all_markers)} marker genes in data"
+    )
+
+    # Filter counts and marker_gene_info to common genes
+    counts <- counts[common_genes, , drop = FALSE]
+    if (is.list(marker_gene_info)) {
+        marker_gene_info <- lapply(
+            marker_gene_info,
+            function(gs) intersect(gs, common_genes)
+        )
+        marker_gene_info <- marker_gene_info[lengths(marker_gene_info) > 0]
+    } else {
+        marker_gene_info <- marker_gene_info[common_genes, , drop = FALSE]
+    }
+
+    # Extract extra args for cellassign()
+    extra_args <- cellassign_args
+    extra_args$assay <- NULL  # already handled
+
+    # Run cellassign
+    log$info("Running cellassign...")
+    fit <- do_call(cellassign, c(
+        list(
+            exprs_obj = as.matrix(counts),
+            marker_gene_info = marker_gene_info
+        ),
+        extra_args
+    ))
+
+    # Build cell annotations
+    cell_types <- fit$cell_type
+    result <- data.frame(
+        cellassign_celltype = cell_types,
+        row.names = names(cell_types)
+    )
+
+    list(
+        cell_annotations = result,
+        annotation_col = "cellassign_celltype"
+    )
+}

@@ -2087,6 +2087,7 @@ class CellTypeAnnotation(Proc):
     8. Use [`SingleR`](https://github.com/dviraran/SingleR)
     9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight)
     10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype)
+    11. Use [`cellassign`](https://github.com/Irrationone/cellassign)
 
     The annotated cell types will replace the original identity column in the metadata,
     so that the downstream processes will use the annotated cell types.
@@ -2148,6 +2149,9 @@ class CellTypeAnnotation(Proc):
                 See <https://github.com/shangruJia/scHDeepInsight>
             - gptcelltype: Use `GPTCelltype` to annotate cell types
                 with GPT-4. See <https://github.com/Winnie09/GPTCelltype>
+            - cellassign: Use `cellassign` to annotate cell types
+                with a probabilistic model.
+                See <https://github.com/Irrationone/cellassign>
             - direct: Directly assign cell types
             - cell: Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
@@ -2242,6 +2246,29 @@ class CellTypeAnnotation(Proc):
               `FindAllMarkers()`.
             - <more>: Additional args passed to
               `Seurat::FindAllMarkers()`.
+        cellassign_db (type=str): The path to the marker gene info
+            file for `cellassign`. Supports:
+            * RDS/qs2 file: a binary gene×celltype matrix or a
+              named list (cell type → vector of marker genes)
+            * CSV/TSV file: with columns `gene` and `cell_type`
+        cellassign_args (ns): The arguments for
+            `cellassign::cellassign()` if `tool` is `cellassign`.
+            - assay (type=str): Assay to extract raw counts from.
+            - min_delta (type=int): Min log-fold change for marker
+              overexpression (default: 2).
+            - B (type=int): Number of RBF dispersion bases
+              (default: 10).
+            - shrinkage (flag): Hierarchical shrinkage on delta
+              (default: TRUE).
+            - n_batches (type=int): Data subsample batches
+              (default: 1).
+            - learning_rate (type=float): ADAM learning rate
+              (default: 0.1).
+            - max_iter_em (type=int): Max EM iterations
+              (default: 20).
+            - verbose (flag): Print progress (default: TRUE).
+            - <more>: Additional args to
+              `cellassign::cellassign()`.
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -2370,6 +2397,8 @@ class CellTypeAnnotation(Proc):
         "schdeepinsight_ref": None,
         "schdeepinsight_args": {},
         "gptcelltype_args": {},
+        "cellassign_db": None,
+        "cellassign_args": {},
         "celltypist_args": {
             "model": None,
             "python": config.lang.python,
