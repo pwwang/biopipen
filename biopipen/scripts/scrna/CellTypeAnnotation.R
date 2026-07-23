@@ -41,17 +41,29 @@ log <- get_logger()
 
 # Source all tool function definitions
 biopipen_dir <- {{ biopipen_dir | r }}
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-hitype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-hitype.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "sctype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "sctype.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-sctype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sctype.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-sccatch.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sccatch.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-celltypist.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-celltypist.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scsorter.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scsorter.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scina.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-direct.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scina.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-singler.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R"))
 
 # Build defaults list for expand_cases (exclude ncores — not inherited)
@@ -323,6 +335,36 @@ for (res in results) {
             )
         }
     }
+}
+
+# Save cluster-to-cell-type mappings from all cluster-based cases
+# Collect mappings per case
+case_mappings <- list()
+all_clusters <- character(0)
+for (res in results) {
+    if (is.null(res)) next
+    if (res$is_cluster_based && !is.null(res$mapping)) {
+        case_mappings[[res$name]] <- res$mapping
+        all_clusters <- union(all_clusters, names(res$mapping))
+    }
+}
+if (length(case_mappings) > 0) {
+    all_clusters <- sort(all_clusters)
+    cluster_df <- data.frame(
+        Cluster = all_clusters,
+        stringsAsFactors = FALSE
+    )
+    for (case_name in names(case_mappings)) {
+        cluster_df[[case_name]] <- sapply(all_clusters, function(cl) {
+            case_mappings[[case_name]][[cl]] %||% NA_character_
+        })
+    }
+    tsv_file <- paste0(outprefix, ".cluster2celltype.tsv")
+    write.table(
+        cluster_df, tsv_file,
+        sep = "\t", quote = FALSE, row.names = FALSE
+    )
+    log$info("Saved cluster-to-cell-type mappings to: {basename(tsv_file)}")
 }
 
 # Set identity to last case's annotation column
