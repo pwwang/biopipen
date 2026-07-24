@@ -123,6 +123,14 @@ class CellTypeAnnotationSingleR(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationCelliD(CellTypeAnnotation_):
+    requires = PrepData
+    envs = {
+        "tool": "cellid",
+        "cellid_db": str(Path(__file__).parent / "data/cellid_markers.csv"),
+    }
+
+
 class CellTypeAnnotationMultiCase(CellTypeAnnotation_):
     """Test multi-case annotation with two cluster-based tools"""
 

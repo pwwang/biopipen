@@ -1,0 +1,60 @@
+gene,cell_type
+CD3D,T cells
+CD3E,T cells
+CD3G,T cells
+CD2,T cells
+CD7,T cells
+LCK,T cells
+LAT,T cells
+TRAC,T cells
+TRBC1,T cells
+TRBC2,T cells
+IL7R,T cells
+CD28,T cells
+CD79A,B cells
+CD79B,B cells
+MS4A1,B cells
+CD19,B cells
+CD22,B cells
+BANK1,B cells
+BLNK,B cells
+PAX5,B cells
+CD74,B cells
+HLA-DRA,B cells
+CD40,B cells
+MEF2C,B cells
+NKG7,NK cells
+GNLY,NK cells
+KLRD1,NK cells
+KLRF1,NK cells
+KLRB1,NK cells
+PRF1,NK cells
+GZMB,NK cells
+GZMA,NK cells
+NCR1,NK cells
+FCGR3A,NK cells
+CD160,NK cells
+SH2D1B,NK cells
+CD14,Monocytes
+LYZ,Monocytes
+S100A9,Monocytes
+S100A8,Monocytes
+CSF1R,Monocytes
+CD68,Monocytes
+ITGAM,Monocytes
+TLR2,Monocytes
+TLR4,Monocytes
+VCAN,Monocytes
+FCN1,Monocytes
+FCER1A,DC
+CST3,DC
+CLEC10A,DC
+CLEC4C,DC
+NRP1,DC
+THBD,DC
+FLT3,DC
+IRF8,DC
+IRF4,DC
+BATF3,DC
+ID2,DC
+LILRA4,DC

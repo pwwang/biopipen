@@ -80,6 +80,7 @@ dependencies:
   - pwwang::r-sccatch
   - pwwang::r-scsorter
   - pwwang::r-scina
+  - pwwang::r-cellid
   - pwwang::r-aneuploidyscore
   - pwwang::r-biopipen.utils  # R utilities for biopipen and runinfo
   - pwwang::bioconductor-data-packages

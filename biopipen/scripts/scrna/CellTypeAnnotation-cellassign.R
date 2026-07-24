@@ -46,7 +46,7 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     # Get raw counts
     assay <- cellassign_args$assay %||% DefaultAssay(sobj)
     log$info("Extracting raw counts from assay: {assay}")
-    counts <- GetAssayData(sobj, assay = assay, slot = "counts")
+    counts <- GetAssayData(sobj, assay = assay, layer = "counts")
 
     # Filter to marker genes present in data
     if (is.list(marker_gene_info)) {
