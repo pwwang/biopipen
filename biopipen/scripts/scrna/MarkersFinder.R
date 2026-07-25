@@ -436,6 +436,7 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
         plotargs$markers <- markers
         plotargs$object <- object
         plotargs$comparison_by <- comparison_by
+        plotargs$plot_type <- plotargs$plot_type %||% "heatmap_log2fc"
         if (
             subset_by_group ||
             plotargs$plot_type %in% c("jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct")
