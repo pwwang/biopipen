@@ -56,8 +56,23 @@ is_seurat <- inherits(metadata, "Seurat")
 
 meta_cols <- if (is_seurat) colnames(metadata@meta.data) else colnames(metadata)
 if (!"Sample" %in% meta_cols) {
-    stop("Error: Column `Sample` is not found in ", ifelse(is_seurat, "Seurat object's meta.data.", "metafile."))
+    if (is_seurat) {
+        log$warn(paste0(
+            "Column `Sample` is not found in Seurat object's meta.data. ",
+            "Will use orig.ident of meta.data as `Sample`."
+        ))
+        metadata@meta.data$Sample <- metadata@meta.data$orig.ident
+    } else {
+        log$warn(paste0(
+            "Column `Sample` is not found in metafile. ",
+            "Will use uniformed 'Sample' value as `Sample`."
+        ))
+        metadata$Sample <- "Sample"
+    }
 }
+nsamples <- length(unique(metadata$Sample))
+envs$no_integration <- envs$no_integration %||% (nsamples <= 1)
+
 if (!"RNAData" %in% meta_cols && !is_seurat) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }

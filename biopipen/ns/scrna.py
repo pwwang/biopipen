@@ -196,6 +196,8 @@ class SeuratPreparing(Proc):
             See <https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis>
 
         no_integration (flag): Whether to skip integration or not.
+            By default, if there are multiple samples, integration will be performed. If `no_integration` is `True`, the samples will be merged without integration.
+            If there is only one sample, integration will be skipped regardless of the value of `no_integration`.
         NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
@@ -343,7 +345,7 @@ class SeuratPreparing(Proc):
             },
         },
         "use_sct": False,
-        "no_integration": False,
+        "no_integration": None,
         "NormalizeData": {},
         "FindVariableFeatures": {},
         "ScaleData": {},
