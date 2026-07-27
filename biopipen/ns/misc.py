@@ -34,7 +34,6 @@ class File2Proc(Proc):
                 cp {{in.infile | quote}} {{out.outfile | quote}}
             fi
         else
-            touch "{{out.outfile}}.1"
             ln -s {{in.infile | quote}} {{out.outfile | quote}}
         fi
     """
