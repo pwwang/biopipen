@@ -2263,6 +2263,7 @@ class CellTypeAnnotation(Proc):
             * CSV/TSV file: with columns `gene` and `cell_type`
         cellassign_args (ns): The arguments for
             `cellassign::cellassign()` if `tool` is `cellassign`.
+            - python (type=str): Path to Python with `tensorflow` installed.
             - assay (type=str): Assay to extract raw counts from.
             - min_delta (type=int): Min log-fold change for marker
               overexpression (default: 2).
@@ -2450,7 +2451,9 @@ class CellTypeAnnotation(Proc):
         "schdeepinsight_args": {},
         "gptcelltype_args": {},
         "cellassign_db": None,
-        "cellassign_args": {},
+        "cellassign_args": {
+            "python": config.lang.python,
+        },
         "scbert_ref": None,
         "scbert_model": None,
         "scbert_label_dict": None,

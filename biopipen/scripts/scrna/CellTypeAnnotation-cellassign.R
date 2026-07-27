@@ -32,6 +32,13 @@ load_marker_info <- function(db_path, log) {
 }
 
 annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
+    python <- cellassign_args$python %||% Sys.which("python")
+    if (python == "") {
+        stop("Python executable not found. Please specify `cellassign_args$python`.")
+    }
+    # load the right Python environment with tensorflow installed
+    Sys.setenv(RETICULATE_PYTHON = python)
+
     library(cellassign)
 
     log <- get_logger()
@@ -46,7 +53,7 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     # Get raw counts
     assay <- cellassign_args$assay %||% DefaultAssay(sobj)
     log$info("Extracting raw counts from assay: {assay}")
-    counts <- GetAssayData(sobj, assay = assay, layer = "counts")
+    counts <- as.matrix(GetAssayData(sobj, assay = assay, layer = "counts"))
 
     # Filter to marker genes present in data
     if (is.list(marker_gene_info)) {
@@ -64,6 +71,9 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
         "Found {length(common_genes)} / {length(all_markers)} marker genes in data"
     )
 
+    sce_obj <- SingleCellExperiment::SingleCellExperiment(assays = list(counts = counts))
+    s <- SingleCellExperiment::sizeFactors(sce_obj)
+    cellassign_args$s <- s
     # Filter counts and marker_gene_info to common genes
     counts <- counts[common_genes, , drop = FALSE]
     if (is.list(marker_gene_info)) {
@@ -84,7 +94,7 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     log$info("Running cellassign...")
     fit <- do_call(cellassign, c(
         list(
-            exprs_obj = as.matrix(counts),
+            exprs_obj = counts,
             marker_gene_info = marker_gene_info
         ),
         extra_args
