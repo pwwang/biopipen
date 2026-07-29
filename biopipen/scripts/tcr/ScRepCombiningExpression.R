@@ -74,6 +74,7 @@ obj$VDJ_Presence <- !is.na(obj$CTaa)
 if (!is.null(group_by)) {
     log$info("Calculating clonal proportion per group ...")
     cp_name <- paste0(group_by, "ClonalProportion")
+    log$info("- {cp_name} ...")
     df <- obj@meta.data %>%
         dplyr::group_by(!!sym(group_by)) %>%
         mutate(!!cp_name := clonalFrequency / sum(!is.na(CTaa))) %>%
@@ -81,6 +82,7 @@ if (!is.null(group_by)) {
     obj@meta.data[[cp_name]] <- df[[cp_name]]
 
     cs_name <- paste0(group_by, "CloneSize")
+    log$info("- {cs_name} ...")
     cloneSize <- c(None = 0, sort(cloneSize))
     for (x in seq_along(cloneSize)) {
         names(cloneSize)[x] <- paste0(
