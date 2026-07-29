@@ -1992,15 +1992,15 @@ wheels = [
 
 [[package]]
 name = "python-simpleconf"
-version = "0.9.4"
+version = "0.9.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "diot" },
     { name = "panpath" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/00/48c130d13fe36b3a0bf870e1dd8bcaf9624822deaebd07d1c73369849917/python_simpleconf-0.9.4.tar.gz", hash = "sha256:ed2b1696f79509dd0354f5aaa27d00c4da8aa36b5e437168f05ddc65edc755a3", size = 230405, upload-time = "2026-07-27T19:32:36.98Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/f5/ccfb4a2c1e0bf82496a32df7b51f1ce8d9098f7c3c194b8681489fd1f2cd/python_simpleconf-0.9.5.tar.gz", hash = "sha256:8ad16937a8744aaf6456bea65b33c1340fa6f06c22b6174cc1b98a05482ab37a", size = 230589, upload-time = "2026-07-29T20:31:11.484Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/8d/544fc9989e2d3772772afe3cb57382d153e4d0115689cdfa0c84a893e3c8/python_simpleconf-0.9.4-py3-none-any.whl", hash = "sha256:690910040c972168e2a2bbe3231c17029f143d59996f5eec19693a4a9d8fe2df", size = 19844, upload-time = "2026-07-27T19:32:35.642Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/92/c3dfb1510cec188ccf5387724641b38fcac457167c2c3f43ea0bb7cf1ccb/python_simpleconf-0.9.5-py3-none-any.whl", hash = "sha256:9734b549e18f9b58a181749891d2b3c3a6186979aada8d7911259a42dc8710b4", size = 19983, upload-time = "2026-07-29T20:31:10.169Z" },
 ]
 
 [package.optional-dependencies]
