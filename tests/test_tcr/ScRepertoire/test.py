@@ -2,6 +2,7 @@ from pipen import Proc
 from biopipen.core.config import config
 from biopipen.ns.tcr import (
     ScRepLoading as ScRepLoading_,
+    ScRepCombiningExpression as ScRepCombiningExpression_,
     ClonalStats as ClonalStats_,
 )
 from biopipen.core.testing import get_pipeline
@@ -9,6 +10,7 @@ from biopipen.core.testing import get_pipeline
 
 class ContigPreparation(Proc):
     """Prepare the contig files for ScRepLoading"""
+
     input = "seed:var"
     input_data = [8525]
     output = "metafile:file:metafile.tsv, contigdir:dir:contigs"
@@ -43,14 +45,37 @@ class ScRepLoading(ScRepLoading_):
     requires = ContigPreparation
 
 
+class ScExpression(Proc):
+    """Load the expression data for ScRepCombiningExpression"""
+
+    input = "seed:var"
+    input_data = [8525]
+    output = "exprfile:file:exprfile.rds"
+    lang = config.lang.rscript
+    script = """
+        library(Seurat)
+        library(scRepertoire)
+        exprfile <- {{out.exprfile | quote}}
+
+        data(scRep_example)
+        scRep_example$Sample <- scRep_example$orig.ident
+        scRep_example <- UpdateSeuratObject(scRep_example)
+        saveRDS(scRep_example, exprfile)
+    """
+
+
+class ScRepCombiningExpression(ScRepCombiningExpression_):
+    requires = ScRepLoading, ScExpression
+
+
 class ClonalStats(ClonalStats_):
-    requires = ScRepLoading
+    requires = ScRepCombiningExpression
     envs_depth = 2
     envs = {
         "cases": {
-            "CDR3 Length by Type": {
+            "CDR3 Length by cloneSize": {
                 "viz_type": "length",
-                "group_by": "Type",
+                "group_by": "cloneSize",
                 "plot_type": "box",
             },
             "Clonal Volume": {
@@ -63,11 +88,12 @@ class ClonalStats(ClonalStats_):
 
 
 def pipeline():
-    return get_pipeline(__file__, enable_report=False).set_starts(ContigPreparation)
+    return get_pipeline(__file__, enable_report=False).set_starts(
+        ContigPreparation, ScExpression
+    )
 
 
-def testing(pipen):
-    ...
+def testing(pipen): ...
 
 
 if __name__ == "__main__":
