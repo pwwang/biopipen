@@ -3618,6 +3618,11 @@ class Slingshot(Proc):
         reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
         seed (type=int): The seed for the random number generator.
+        subset: An expression in string to subset the cells.
+        split_by: The column name in metadata to split the cells to run the method separately.
+            After run, the results will be combined together with this column in the final output.
+            The lineages will be all stored in the columns `<prefix>_LineageX` and `<prefix>_BranchID`.
+            If a lineage is not found in a split, the corresponding columns will be filled with `NA`.
         cases: A dictionary of cases to run the analysis.
             The keys are the names of the cases, which will be served as the
             prefix to add to the column names of the resulting pseudotime variable.
@@ -3636,6 +3641,8 @@ class Slingshot(Proc):
         "dims": None,
         "start": None,
         "end": None,
+        "subset": None,
+        "split_by": None,
         "cases": {},
         "reverse": False,
         "align_start": False,
