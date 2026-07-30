@@ -1,5 +1,36 @@
 # Change Log
 
+
+## 1.4.0a3
+
+- fix(scrna.Slingshot): handle varying lineage outputs for case splits
+- 1.4.0a2
+- feat(scrna.Slingshot): add support for cell subsetting and splitting in Slingshot analysis
+- feat(tcr.ScRepCombiningExpression): add logging for clonal proportion and clone size calculations
+- chore(deps): bump python-simpleconf to version 0.9.5
+- 1.4.0a1
+- chore: bump up deps
+- feat(tcr.ScRepCombiningExpression): add group-based clonal proportion calculation and enhance clone size handling
+- fix(misc.File2Proc): remove unnecessary touch command before creating symbolic link
+- feat(scrna.CellTypeAnnotation): add support for specifying Python executable in cellassign_args
+- feat(scrna.SeuratPreparing): enhance sample handling by using orig.ident or a uniformed value when 'Sample' column is missing
+- chore(scrna.MarkersFinder): set default plot type to heatmap_log2fc for marker plots
+- test(scrna.CellTypeAnnotation): add support for CelliD tool in cell type annotation
+- test(scrna.CellTypeAnnotation): move tool-specific tests to dedicated test_scrna/CellTypeAnnotation
+- feat(scrna.CellTypeAnnotation): add support for CelliD tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for scBERT tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for cellassign tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for saving cluster-to-cell-type mappings
+- fix(scrna.CellTypeAnnotation): enhance handling of missing clusters and special values in direct cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for GPTCelltype in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for scHDeepInsight in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for SingleR in cell type annotation
+- feat(scrna.CellTypeAnnotation): add assay parameter for analysis and case-specific usage
+- feat(scrna.CellTypeAnnotation): add support for SCINA in cell type annotation
+- feat(scrna.CellTypeAnnotation): support multiple case of annotations
+- feat(scrna.CellTypeAnnotation): add support for scSorter tool in cell type annotation
+- fix(scrna.CellTypeAnnotation): update identity column handling for cell type annotations
+
 ## 1.4.0a2
 
 - feat(scrna.Slingshot): add support for cell subsetting and splitting in Slingshot analysis
