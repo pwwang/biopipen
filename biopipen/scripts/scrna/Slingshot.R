@@ -117,7 +117,24 @@ do_case <- function(prefix) {
         for (split in splits) {
             srt_split <- scplotter:::subset_seurat(srt_sub, subset = !!rlang::sym(case$split_by) == split)
             result_split <- do_case_split(prefix, case, srt_split, split = split)
-            result <- rbind(result, result_split)
+            # result <- rbind(result, result_split)
+            # <prefix>_Lineage1, <prefix>_Lineage2, ..., <prefix>_BranchID
+            # The number of lineages may vary for different splits, so we need to handle this case.
+            if (is.null(result)) {
+                result <- result_split
+            } else {
+                # Align columns by name, fill missing columns with NA
+                all_cols <- union(colnames(result), colnames(result_split))
+                missing_cols_result <- setdiff(all_cols, colnames(result))
+                missing_cols_split <- setdiff(all_cols, colnames(result_split))
+                if (length(missing_cols_result) > 0) {
+                    result[missing_cols_result] <- NA
+                }
+                if (length(missing_cols_split) > 0) {
+                    result_split[missing_cols_split] <- NA
+                }
+                result <- rbind(result, result_split)
+            }
         }
         return(result)
     } else {
