@@ -1,7 +1,11 @@
 # Change Log
 
-## 1.4.0a1
+## 1.4.0a2
 
+- feat(scrna.Slingshot): add support for cell subsetting and splitting in Slingshot analysis
+- feat(tcr.ScRepCombiningExpression): add logging for clonal proportion and clone size calculations
+- chore(deps): bump python-simpleconf to version 0.9.5
+- chore: bump up deps
 - feat(tcr.ScRepCombiningExpression): add group-based clonal proportion calculation and enhance clone size handling
 - fix(misc.File2Proc): remove unnecessary touch command before creating symbolic link
 - feat(scrna.CellTypeAnnotation): add support for specifying Python executable in cellassign_args
