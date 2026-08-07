@@ -72,3 +72,6 @@ docs = [
     "mygene>=3.2.2",
     "pymdown-extensions>=10.21.2",
 ]
+
+[tool.uv]
+prerelease = "allow"
