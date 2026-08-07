@@ -2103,9 +2103,9 @@ class CellTypeAnnotation(Proc):
 
     ///
 
-    If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
+    If you are using cluster-based tool, a text file containing the mapping from
     the original identity to the new cell types will be generated and saved to
-    `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
+    a tsv file under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
 
     Examples:
         ```toml
