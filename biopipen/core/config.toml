@@ -51,6 +51,8 @@ plink2 = "plink2"
 tabix = "tabix"
 # sambamba
 sambamba = "sambamba"
+# samplot
+samplot = "samplot"
 # samtools
 samtools = "samtools"
 # python path where magic-impute is installed

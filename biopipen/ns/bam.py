@@ -404,3 +404,42 @@ class SamtoolsView(Proc):
         "index": True,
     }
     script = "file://../scripts/bam/SamtoolsView.py"
+
+
+class SamplotBam(Proc):
+    """Plot bam file using samplot
+
+    Input:
+        bamfiles: The bam files
+
+    Output:
+        outfile: The output plot file
+            at chrom:start-end.
+
+    Envs:
+        samplot: Path to samplot executable
+        titles (list): The titles for each bam file, in the same order as bamfiles
+        chrom: The chromosome to plot
+        start: The start position to plot
+        end: The end position to plot
+        same_yaxis_scales (flag): Whether to use the same y-axis scales for
+            all bam files
+        <more>: Other arguments passed to the samplot tool
+            See `samplot plot` command.
+    """
+    input = "bamfiles:files"
+    output = "outfile:file:{{envs.chrome}}_{{envs.start}}_{{envs.end}}.samplot.png"
+    lang = config.lang.python
+    envs = {
+        "samplot": config.exe.samplot,
+        "titles": [],
+        "chrom": None,
+        "start": None,
+        "end": None,
+        "same_yaxis_scales": True,
+    }
+    script = "file://../scripts/bam/Samplot.py"
+
+
+# Alias. It also works for VCF files
+Samplot = SamplotBam
