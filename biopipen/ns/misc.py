@@ -45,10 +45,25 @@ class Glob2Dir(Proc):
     input = "pattern:var"
     output = "outdir:dir:from_glob"
     lang = config.lang.bash
+    envs = {"copy": False}
     script = """
         for infile in {{in.pattern}}; do
-            if [[ -e $infile ]]; then
-                ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+            if [[ "{{envs['copy'] | bool}}" == "True" ]]; then
+                echo "Copying $infile to {{out.outdir}}"
+                if [[ -d $infile ]]; then
+                    cp -r $infile "{{out.outdir}}"
+                elif [[ -f $infile ]]; then
+                    cp $infile "{{out.outdir}}"
+                else
+                    echo "  File $infile does not exist."
+                fi
+            else
+                echo "- Linking $infile to {{out.outdir}}"
+                if [[ -e $infile ]]; then
+                    ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+                else
+                    echo "  File $infile does not exist."
+                fi
             fi
         done
     """
