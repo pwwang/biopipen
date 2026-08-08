@@ -14,7 +14,7 @@ outfile: str = {{ out.outfile | quote }}  # pyright: ignore
 envs: dict = {{ envs | dict | repr }}  # pyright: ignore
 samplot: str = envs.pop("samplot", "samplot")
 titles: list[str] = envs.pop("titles", [])
-chrome: str | None = envs.pop("chrome", None)
+chrom: str | None = envs.pop("chrom", None)
 start: int | None = envs.pop("start", None)
 end: int | None = envs.pop("end", None)
 
@@ -27,12 +27,12 @@ if len(titles) != len(bamfiles):
 envs["b"] = bamfiles
 envs["o"] = outfile
 envs["titles"] = titles
-envs["chrom"] = chrome
+envs["chrom"] = chrom
 envs["start"] = start
 envs["end"] = end
 
-if not chrome or start is None or end is None:
-    raise ValueError("chrome, start, and end must be specified.")
+if not chrom or start is None or end is None:
+    raise ValueError("chrom, start, and end must be specified.")
 
 # patch samplot to fix:
 # Traceback (most recent call last):
