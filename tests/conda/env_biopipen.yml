@@ -71,6 +71,7 @@ dependencies:
   - bioconda::maxit
   - bioconda::truvari
   - bioconda::mquad
+  - bioconda::samplot
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
   - pwwang::r-ggradar
