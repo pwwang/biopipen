@@ -1488,14 +1488,14 @@ wheels = [
 
 [[package]]
 name = "panpath"
-version = "0.4.11"
+version = "0.4.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/a9/91854a72f1240629a1272d42fcd37d28e030cfa7c89fc9f5592a5058e105/panpath-0.4.11.tar.gz", hash = "sha256:c2b0ed083aff6ec7345ce0fc5d8394ac949011e6030d77d9285c19ba5b194f08", size = 79519, upload-time = "2026-04-16T21:49:56.961Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/c6/24a5da9cc39176b4e44faffc47fa837bb047e22d1412a195a88c455e6900/panpath-0.4.12.tar.gz", hash = "sha256:2165116e09c1056f474aa4e062d38d2b9f176429cc1d5a6fac578c10f4b6484b", size = 521417, upload-time = "2026-08-11T08:00:40.024Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/92/99d61965b8352d1c241fc1fec88362d6b2ebca2d4dd3cc3d71ea33d034c1/panpath-0.4.11-py3-none-any.whl", hash = "sha256:aaa461f1670be7b55851c5aa74f222cf40db057b6a8e779490fb7b12472d39c2", size = 64854, upload-time = "2026-04-16T21:49:55.716Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/24/410cef597b6a2fb16c0d7c1081e0c62ad6c94996086bb7796c3fe387747a/panpath-0.4.12-py3-none-any.whl", hash = "sha256:2282bf4e6db9e9a0b394c0fd7c63d5c3556c22616b756b07e699eaedd3d96e21", size = 64747, upload-time = "2026-08-11T08:00:38.887Z" },
 ]
 
 [[package]]
@@ -1534,7 +1534,7 @@ wheels = [
 
 [[package]]
 name = "pipen"
-version = "1.2.0a5"
+version = "1.2.0a6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argx" },
@@ -1547,9 +1547,9 @@ dependencies = [
     { name = "varname" },
     { name = "xqute" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/43/52/8b9db35099ff0818ec4445d427a78e5c27f6bde5dedcf0318ba8f6f198f5/pipen-1.2.0a5.tar.gz", hash = "sha256:fa9be439dd6fb5311acc28fcd90f14ab62bf1d95f15202d7dda26186b6f699d2", size = 732686, upload-time = "2026-08-06T05:42:09.225Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/72/a41250c0ebd2de7cdff778302ec02424a4077919c63eb5c57897403b82ce/pipen-1.2.0a6.tar.gz", hash = "sha256:06c31f7b76a591efc8dda62d0954be91a4a058573a4c8e4babc965a3d9d1b5e2", size = 738981, upload-time = "2026-08-11T19:23:54.436Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/cb/fb04099ce54143b080024bfb91d27e7dbd5149d8bc53435fb3a23df22fb2/pipen-1.2.0a5-py3-none-any.whl", hash = "sha256:7b57da04307e4a19257d4998b9ee80d8f94bbfdd4df9607a61bfa81d0f144b7f", size = 58840, upload-time = "2026-08-06T05:42:06.991Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/f0/04b43db7b98de034133522c1826da16635761d78042aca396b1d59061beb/pipen-1.2.0a6-py3-none-any.whl", hash = "sha256:2d55a3ef66089c52e558f2774e2588cd689fe159129670be042f3c71a2affcb6", size = 59090, upload-time = "2026-08-11T19:23:52.516Z" },
 ]
 
 [[package]]
@@ -1662,7 +1662,7 @@ wheels = [
 
 [[package]]
 name = "pipen-report"
-version = "1.2.3"
+version = "1.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "copier", version = "9.10.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1674,9 +1674,9 @@ dependencies = [
     { name = "pipen" },
     { name = "python-slugify" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/60/efb558dde8f394905d8a54fa2e9356c257e30f27910d6826cca88949b52c/pipen_report-1.2.3.tar.gz", hash = "sha256:3097c8caac5a7cf13f6f56b6b624dd65b01ff616fd1ac178f2adce0a4d61375e", size = 5834580, upload-time = "2026-08-06T15:33:03.238Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/2f/883aae931a6f17fbe42a811ddd382044699586c127b2d9acfbf409e6c476/pipen_report-1.2.4.tar.gz", hash = "sha256:11955519066fbd4e6271feaa441f4eb711feeb522cf7817e13a33e273e0af36b", size = 5980901, upload-time = "2026-08-12T03:14:06.528Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/42/d109077464cdb61975d9becff581bb0ee0f50191b8768851a628f75b84ae/pipen_report-1.2.3-py3-none-any.whl", hash = "sha256:e742dab402d161d9ec51538849c843cf011bebcaa514a4ba60944223811b8e3a", size = 84677, upload-time = "2026-08-06T15:33:01.941Z" },
+    { url = "https://files.pythonhosted.org/packages/05/79/94541fe9a57c3dae1e5be940609071c57c651b374cf42d4d07c19dd7bd90/pipen_report-1.2.4-py3-none-any.whl", hash = "sha256:5360648106bfa0fcef68c8ed2364b135485e566096896a846f028bfd1c8d3567", size = 84752, upload-time = "2026-08-12T03:14:04.775Z" },
 ]
 
 [[package]]
@@ -2874,7 +2874,7 @@ wheels = [
 
 [[package]]
 name = "xqute"
-version = "2.2.0a6"
+version = "2.2.0a8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -2884,9 +2884,9 @@ dependencies = [
     { name = "simplug" },
     { name = "uvloop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/0f/6770df3a290473931d7597fb87b87e8de2db6fb9a4a0c1640a41bdad8022/xqute-2.2.0a6.tar.gz", hash = "sha256:c72a31085a5419d6ca48fbbdac23445399fc9464cf1f85768feb066b8bf9e6e0", size = 612752, upload-time = "2026-08-05T15:59:22.757Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/68/7cd8e9a6f05bb710d59c8d11368981cc6c714688f4f9073b6af770afcb5a/xqute-2.2.0a8.tar.gz", hash = "sha256:c7c2a1e5a96767662412a1dac8aa66f2a2b240bb1573be08c7ba24bf67fd9489", size = 617444, upload-time = "2026-08-11T18:45:17.611Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/af/134289c3590eb9dd7b1d3b5f93f075c53b428377dc47e86955baee4ea0c8/xqute-2.2.0a6-py3-none-any.whl", hash = "sha256:9c31b4da251a84543e3cc2eaa773f2624a0e3a658e717c4ae5c4884e09b8ccc0", size = 46410, upload-time = "2026-08-05T15:59:20.524Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/7a/2f21ed5d927fa3fcf153d7a5543acc226a7448b48e89d27d8ca4c2a0b6df/xqute-2.2.0a8-py3-none-any.whl", hash = "sha256:19249fd672afc10c36e37f3a956cc1a6d9e0ff5d4521873cf2770e892ae5e810", size = 47886, upload-time = "2026-08-11T18:45:15.643Z" },
 ]
 
 [[package]]
