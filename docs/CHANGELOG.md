@@ -1,5 +1,29 @@
 # Change Log
 
+## 1.4.0a5
+
+- fix: correct variable name from 'chrome' to 'chrom' in Samplot.py
+- chore: bump up liquidpy to 0.10.0
+- feat(bam): add Bedtools coverage and summary processing for BAM files (BedtoolsCoverageBam and BedtoolsCoverageBamSummary)
+- chore: bump pipen-report to 1.2.4
+- fix(bam.BedtoolsCoverageBamSummary): update envs extraction to handle keys with dashes as dots
+- feat(scrna.CellCellCommunication): enhance CellCellCommunication to support multiple split_by columns in analysis
+
+## 1.4.0a4
+
+- docs(CellTypeAnnotation): update documentation for output file naming
+- chore: bump pipen to v1.2
+- feat(misc.Glob2Dir): enhance file handling with copy option and improved error messages
+- feat(bam): add Samplot integration for visualizing BAM files and implement necessary environment setup
+- chore(deps): update platformdirs to version 4.11.1
+- docs: update logo
+- docs: update logo size for better visibility
+- chore(deps): add samplot dependency for enhanced BAM file visualization
+- docs: enhance README with additional badges and usage examples (force docker-test)
+- test: remove LOCAL_ONLY variable from run.env for samplot test
+- ci: update docker-test-deps to include output for changed files
+- chore(deps): add filelock dependency for improved file handling
+- docs: update favicon.ico for improved branding
 
 ## 1.4.0a3
 
