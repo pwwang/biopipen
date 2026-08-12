@@ -166,8 +166,11 @@ cases <- lapply(cases, function(case) {
     }
     case$is_cluster_based <- case$tool %in% CLUSTER_TOOLS ||
         (identical(case$tool, "celltypist") &&
-         (!is.null(case$celltypist_args$over_clustering) &&
-          !isFALSE(case$celltypist_args$over_clustering)))
+          (
+            (!is.null(case$celltypist_args$over_clustering) && !isFALSE(case$celltypist_args$over_clustering)) ||
+            !is.null(case$ident)
+          )
+        )
     case
 })
 
