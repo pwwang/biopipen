@@ -6,7 +6,7 @@ covfiles <- {{in.covfiles | each: str | r}}
 outdir <- {{out.outdir | str | r}}
 joboutdir <- {{job.outdir | r}}
 
-envs <- {{envs | r}}
+envs <- {{envs | r: todot="-"}}
 
 log <- get_logger()
 reporter <- get_reporter()
