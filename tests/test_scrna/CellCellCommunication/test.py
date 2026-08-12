@@ -44,6 +44,16 @@ class CellCellCommunicationAnndataSplitBy(CellCellCommunication_):
     }
 
 
+class CellCellCommunicationAnndataSplitByMulti(CellCellCommunication_):
+    requires = PrepareAnnData
+    envs = {
+        "groupby": "bulk_labels",
+        "cases": {
+            "ByPhasePhase2": {"split_by": ["phase", "phase2"]},
+        },
+    }
+
+
 class CellCellCommunicationAnndataSubsetPython(CellCellCommunication_):
     requires = PrepareAnnData
     envs = {
@@ -120,6 +130,17 @@ def testing(pipen):
     assert not no_split_rows.empty
     assert no_split_rows["phase"].isna().all()
     assert no_split_rows["phase2"].isna().all()
+
+    multi_res = pd.read_csv(
+        outdir / "CellCellCommunicationAnndataSplitByMulti" / "toy-ccc.txt",
+        sep="\t",
+    )
+    assert "phase" in multi_res.columns
+    assert "phase2" in multi_res.columns
+    assert "phase_phase2" not in multi_res.columns
+    assert multi_res["phase"].nunique() >= 2
+    assert multi_res["phase2"].nunique() >= 2
+    assert (multi_res["phase"] == multi_res["phase2"]).all()
 
     subset_res = pd.read_csv(
         outdir / "CellCellCommunicationAnndataSubsetPython" / "toy-ccc.txt",

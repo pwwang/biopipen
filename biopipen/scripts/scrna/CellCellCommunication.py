@@ -127,12 +127,13 @@ else:
         cases[case_name] = tmp_envs
 
 DEFAULT_ONLY = "DEFAULT" in cases and len(cases) == 1
-ALL_SPLIT_BY_COLS = [
-    case_envs["split_by"]
-    for case_envs in cases.values()
-    if isinstance(case_envs, dict)
-    and case_envs.get("split_by")
-]
+ALL_SPLIT_BY_COLS = []
+for case_envs in cases.values():
+    if isinstance(case_envs, dict) and case_envs.get("split_by"):
+        split_by = case_envs["split_by"]
+        if isinstance(split_by, str):
+            split_by = [split_by]
+        ALL_SPLIT_BY_COLS.extend(split_by)
 ALL_SPLIT_BY_COLS = list(dict.fromkeys(ALL_SPLIT_BY_COLS))
 
 seurat_ident_col = None
@@ -211,18 +212,41 @@ def do_case(name):
 
     split_by = case.pop("split_by", None)
     if split_by:
-        split_vals = case_adata.obs[split_by].dropna().unique()
+        if isinstance(split_by, str):
+            split_by = [split_by]
+
+        # Keep only cells with all split columns non-NA (matches previous behavior)
+        split_obs = case_adata.obs[split_by].dropna()
+
+        # Pick a separator that no value contains, so the composite keys can
+        # be separated back into the original column values unambiguously.
+        sep = "_"
+        all_vals = set()
+        for col in split_by:
+            all_vals.update(split_obs[col].astype(str).unique())
+        while any(sep in v for v in all_vals):
+            sep += "_"
+
+        split_key = split_obs[split_by[0]].astype(str)
+        for col in split_by[1:]:
+            split_key = split_key + sep + split_obs[col].astype(str)
+
         result: pd.DataFrame = None  # type: ignore
-        for split_val in split_vals:
-            logger.info(f"  Running {method} for {split_by} = {split_val} ...")
-            adata_split = case_adata[case_adata.obs[split_by] == split_val]
-            # case_adata = adata_split
+        for split_val in split_key.unique():
+            vals = split_val.split(sep)
+            logger.info(f"  Running {method} for {split_by} = {vals} ...")
+            # split_key only covers the dropna'd rows; align the mask with the obs index
+            mask = (split_key == split_val).reindex(case_adata.obs.index, fill_value=False)
+            adata_split = case_adata[mask]
 
             case["adata"] = adata_split
             method_fun(**case)
             res = adata_split.uns['liana_ccc']
-            # res[split_by] = split_val
-            res.insert(0, split_by, split_val)  # insert at the first column
+
+            # Separate the key back into the original values of each column
+            orig_vals = split_obs.loc[split_key == split_val].iloc[0]
+            for col in reversed(split_by):
+                res.insert(0, col, orig_vals[col])  # insert at the first column
 
             if result is None:
                 result = res

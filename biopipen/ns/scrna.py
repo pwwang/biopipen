@@ -3347,8 +3347,11 @@ class CellCellCommunication(Proc):
                 Note that this is only available when the input is a Seurat object in RDS format and
                 only available for `envs.subset_using`, but not for `cases.<case>.subset_using`.
             - R: alias for `r`
-        split_by: The column name in metadata to split the cells to run the method separately.
+        split_by (auto): The column names in metadata to split the cells to run the method separately.
             The results will be combined together with this column in the final output.
+            Multiple columns can be provided as a list and the data will be split by the combination of the columns
+            (the column values are concatenated only for the splitting).
+            In the final output, each column will be recovered with its original values.
         assay: The assay to use for the analysis.
             Only works for Seurat object.
         seed (type=int): The seed for the random number generator.
