@@ -1,5 +1,66 @@
 # Change Log
 
+
+## 1.4.0a7
+
+- feat(scrna.CellCellCommunication): enhance output table handling by inheriting factor levels from categorical columns
+- feat(utils.misc): add write_table and read_table functions for DataFrame handling
+- docs(README): update logo image size for better display
+- 1.4.0a6
+- fix(scrna.MarkersFinder): update comparison_by to use case$group_by instead of group_by
+- chore: bump pipen to 1.2.0 and xqute to 2.2.0
+- fix(scrna.CellTypeAnnotation): fix celltypist to be not treated as cluster-based when over_clustering is not given
+- 1.4.0a5
+- feat(scrna.CellCellCommunication): enhance CellCellCommunication to support multiple split_by columns in analysis
+- fix(bam.BedtoolsCoverageBamSummary): update envs extraction to handle keys with dashes as dots
+- chore: bump pipen-report to 1.2.4
+- feat(bam): add Bedtools coverage and summary processing for BAM files (BedtoolsCoverageBam and BedtoolsCoverageBamSummary)
+- chore: bump up liquidpy to 0.10.0
+- fix: correct variable name from 'chrome' to 'chrom' in Samplot.py
+- 1.4.0a4
+- docs: update favicon.ico for improved branding
+- chore(deps): add filelock dependency for improved file handling
+- ci: update docker-test-deps to include output for changed files
+- test: remove LOCAL_ONLY variable from run.env for samplot test
+- docs: enhance README with additional badges and usage examples (force docker-test)
+- chore(deps): add samplot dependency for enhanced BAM file visualization
+- docs: update logo size for better visibility
+- docs: update logo
+- chore(deps): update platformdirs to version 4.11.1
+- feat(bam): add Samplot integration for visualizing BAM files and implement necessary environment setup
+- feat(misc.Glob2Dir): enhance file handling with copy option and improved error messages
+- chore: bump pipen to v1.2
+- docs(CellTypeAnnotation): update documentation for output file naming
+- 1.4.0a3
+- chore(deps): bump markdown to version 3.10.3
+- fix(scrna.Slingshot): handle varying lineage outputs for case splits
+- 1.4.0a2
+- feat(scrna.Slingshot): add support for cell subsetting and splitting in Slingshot analysis
+- feat(tcr.ScRepCombiningExpression): add logging for clonal proportion and clone size calculations
+- chore(deps): bump python-simpleconf to version 0.9.5
+- 1.4.0a1
+- chore: bump up deps
+- feat(tcr.ScRepCombiningExpression): add group-based clonal proportion calculation and enhance clone size handling
+- fix(misc.File2Proc): remove unnecessary touch command before creating symbolic link
+- feat(scrna.CellTypeAnnotation): add support for specifying Python executable in cellassign_args
+- feat(scrna.SeuratPreparing): enhance sample handling by using orig.ident or a uniformed value when 'Sample' column is missing
+- chore(scrna.MarkersFinder): set default plot type to heatmap_log2fc for marker plots
+- test(scrna.CellTypeAnnotation): add support for CelliD tool in cell type annotation
+- test(scrna.CellTypeAnnotation): move tool-specific tests to dedicated test_scrna/CellTypeAnnotation
+- feat(scrna.CellTypeAnnotation): add support for CelliD tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for scBERT tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for cellassign tool in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for saving cluster-to-cell-type mappings
+- fix(scrna.CellTypeAnnotation): enhance handling of missing clusters and special values in direct cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for GPTCelltype in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for scHDeepInsight in cell type annotation
+- feat(scrna.CellTypeAnnotation): add support for SingleR in cell type annotation
+- feat(scrna.CellTypeAnnotation): add assay parameter for analysis and case-specific usage
+- feat(scrna.CellTypeAnnotation): add support for SCINA in cell type annotation
+- feat(scrna.CellTypeAnnotation): support multiple case of annotations
+- feat(scrna.CellTypeAnnotation): add support for scSorter tool in cell type annotation
+- fix(scrna.CellTypeAnnotation): update identity column handling for cell type annotations
+
 ## 1.4.0a6
 
 - fix(scrna.MarkersFinder): update comparison_by to use case$group_by instead of group_by
