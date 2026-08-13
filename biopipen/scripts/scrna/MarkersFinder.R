@@ -613,7 +613,7 @@ run_case <- function(name) {
                     process_allmarkers(
                         markers,
                         object = if (is.null(original_subset)) srtobj else filter(srtobj, !!parse_expr(original_subset)),
-                        comparison_by = group_by,
+                        comparison_by = case$group_by,
                         allmarker_plots,
                         name,
                         each,
