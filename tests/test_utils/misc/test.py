@@ -1,8 +1,9 @@
 from unittest import TestCase, main
 from pathlib import Path
+from io import StringIO
 import tempfile
 import sys
-from biopipen.utils.misc import require_package, run_command
+from biopipen.utils.misc import require_package, run_command, write_table, read_table
 
 
 class TestUtilsMisc(TestCase):
@@ -218,6 +219,72 @@ class TestUtilsMisc(TestCase):
         # Test that list elements are converted to strings
         result = run_command(["echo", 123, 456], stdout="RETURN", print_command=False)
         self.assertEqual(result.strip(), "123 456")
+
+    def setUp(self):
+        import pandas as pd
+        self.df = pd.DataFrame({
+            'A': pd.Categorical(['a', 'b', 'a'], categories=['a', 'b', 'c']),
+            'B': [1, 2, 3]
+        })
+
+    def test_write_table_str(self):
+        # No factor levels, no path -> no leading newline
+        result = write_table(self.df[['B']], index=False)
+        self.assertEqual(result, "B\n1\n2\n3\n")
+        # With factor levels
+        result = write_table(self.df, index=False)
+        self.assertEqual(
+            result,
+            "# factor-levels: A=a|b|c\nA,B\na,1\nb,2\na,3\n"
+        )
+
+    def test_write_table_path(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv') as f:
+            path = f.name
+        try:
+            write_table(self.df, path, index=False)
+            self.assertEqual(
+                Path(path).read_text(),
+                "# factor-levels: A=a|b|c\nA,B\na,1\nb,2\na,3\n"
+            )
+        finally:
+            Path(path).unlink()
+
+    def test_write_table_buffer(self):
+        buf = StringIO()
+        write_table(self.df, buf, index=False)
+        buf.seek(0)
+        self.assertEqual(
+            buf.getvalue(),
+            "# factor-levels: A=a|b|c\nA,B\na,1\nb,2\na,3\n"
+        )
+
+    def test_read_table_path(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv') as f:
+            path = f.name
+        try:
+            write_table(self.df, path)
+            df = read_table(path)
+            self.assertEqual(
+                df['A'].cat.categories.tolist(), ['a', 'b', 'c']
+            )
+            self.assertEqual(df['B'].tolist(), [1, 2, 3])
+        finally:
+            Path(path).unlink()
+
+    def test_read_table_buffer(self):
+        buf = StringIO()
+        write_table(self.df, buf)
+        buf.seek(0)
+        df = read_table(buf)
+        self.assertEqual(df['A'].cat.categories.tolist(), ['a', 'b', 'c'])
+        self.assertEqual(df['B'].tolist(), [1, 2, 3])
+
+    def test_read_table_no_factor_levels(self):
+        # Plain csv with no factor-level lines
+        buf = StringIO("B\n1\n2\n3\n")
+        df = read_table(buf)
+        self.assertEqual(df['B'].tolist(), [1, 2, 3])
 
 
 if __name__ == "__main__":
