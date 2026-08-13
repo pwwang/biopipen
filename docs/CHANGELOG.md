@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.4.0a6
+
+- fix(scrna.MarkersFinder): update comparison_by to use case$group_by instead of group_by
+- chore: bump pipen to 1.2.0 and xqute to 2.2.0
+- fix(scrna.CellTypeAnnotation): fix celltypist to be not treated as cluster-based when over_clustering is not given
+
 ## 1.4.0a5
 
 - fix: correct variable name from 'chrome' to 'chrom' in Samplot.py
