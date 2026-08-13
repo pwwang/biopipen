@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="160" src="https://github.com/pwwang/biopipen/blob/dev/docs/img/logo.png?raw=true">
+  <img width="240px" src="https://github.com/pwwang/biopipen/blob/dev/docs/img/logo.png?raw=true" />
 </p>
 <p align="center">
   A set of processes/pipelines for bioinformatics based on
