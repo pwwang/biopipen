@@ -13,7 +13,7 @@ envs <- extract_vars(
     "devpars", "subset", "cases", "more_formats", "descr"
 )
 
-ccc <- read.table(cccfile, header=TRUE, sep="\t", check.names = FALSE)
+ccc <- read_table(cccfile, header=TRUE, sep="\t", check.names = FALSE)
 
 if (length(ccc) == 0) {
     stop("No data found in the input file: ", cccfile)

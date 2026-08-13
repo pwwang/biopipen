@@ -1,6 +1,6 @@
 from diot import Diot  # noqa
 from pathlib import Path
-from biopipen.utils.misc import logger
+from biopipen.utils.misc import logger, write_table
 from biopipen.scripts.scrna.seurat_anndata_conversion import convert_seurat_to_anndata
 import os
 import numpy as np
@@ -301,5 +301,32 @@ def do_case(name):
 
 final_result = pd.concat([do_case(name) for name in cases], ignore_index=True)
 
+# Inherit factor levels from the categorical obs columns for the split_by and
+# source/target columns, so the levels are preserved in the output table
+# (see `write_table`/`read_table` in `biopipen.utils.misc`)
+cat_cols = {}
+for col in ALL_SPLIT_BY_COLS:
+    obs_col = adata.obs.get(col)
+    if obs_col is not None and isinstance(obs_col.dtype, pd.CategoricalDtype):
+        cat_cols[col] = obs_col.cat.categories.tolist()
+
+groupbys = list(dict.fromkeys(
+    case_envs.get("groupby")
+    for case_envs in cases.values()
+    if case_envs.get("groupby") in adata.obs.columns
+))
+if groupbys and all(
+    isinstance(adata.obs[gb].dtype, pd.CategoricalDtype) for gb in groupbys
+):
+    cats = []
+    for gb in groupbys:
+        cats.extend(c for c in adata.obs[gb].cat.categories if c not in cats)
+    cat_cols.update({"source": cats, "target": cats})
+
+for col, cats in cat_cols.items():
+    if col not in final_result.columns:
+        continue
+    final_result[col] = pd.Categorical(final_result[col], categories=cats)
+
 logger.info("Saving the final result ...")
-final_result.to_csv(outfile, sep="\t", index=False)
+write_table(final_result, outfile, sep="\t", index=False)
