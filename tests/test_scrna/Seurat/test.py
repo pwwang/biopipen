@@ -270,6 +270,21 @@ class ClusterMarkers(MarkersFinder):
                 "allmarker_plots": {
                     "Heatmap": {
                         "plot_type": "heatmap",
+                        "subset_by": "seurat_clusters",
+                        "show_column_names": False,
+                        "show_row_names": "none",
+                        "comparison_by": "seurat_clusters",
+                        "cutoff": 0.05,
+                        "column_annotation": {
+                            ".col": {"name": False},
+                        },
+                        "row_annotation": {
+                            ".row.split": {
+                                "type": "rownames",
+                                "params": {"wrap_by": 4, "labels_rot": 0},
+                            },
+                        },
+                        "devpars": {"height": 800, "width": 1200},
                         "descr": "Heatmap showing top markers across all clusters.",
                     },
                 },
