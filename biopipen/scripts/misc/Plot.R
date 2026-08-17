@@ -20,13 +20,13 @@ envs$save_code <- NULL
 envs$read_opts <- NULL
 
 if (endsWith(datafile, ".qs") || endsWith(datafile, ".qs2") ||
-    endsWith(datafile, ".rds") || endsWith(datafile, ".RDS")) {
-    envs$data <- read_obj(datafile)
+    endsWith(datafile, ".rds") || endsWith(datafile, ".RDS") || endsWith(datafile, ".Rds")) {
+    read_opts <- list()
 } else {
     read_opts <- read_opts %||% list()
-    read_opts$file <- datafile
-    envs$data <- do.call(read.table, read_opts)
 }
+read_opts$file <- datafile
+envs$data <- do_call(read_obj, read_opts)
 
 if (fn == "ManhattanPlot" && !is.null(envs$chromosomes)) {
     norm_chroms <- function(chrs) {
