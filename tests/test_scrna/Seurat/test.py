@@ -93,7 +93,11 @@ class SeuratPreparing(SeuratPreparing_):
                 "plot_type": "bar",
             }
         },
-        "SCTransform": {"vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"]},
+        "SCTransform": {
+            "return-only-var-genes": True,
+            "min_cells": 3,
+            "vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"],
+        },
         "ccs_args": {
             # Insufficient data values to produce 24 bins when using sct
             "trans_args": {"use_sct": False},
@@ -268,11 +272,15 @@ class ClusterMarkers(MarkersFinder):
                     "Heatmap": {"plot_type": "heatmap", "descr": "Heatmap showing marker expression per cluster."},
                 },
                 "allmarker_plots": {
+                    "Heatmap_log2fc": {
+                        "plot_type": "heatmap_log2fc",
+                    },
                     "Heatmap": {
                         "plot_type": "heatmap",
                         "subset_by": "seurat_clusters",
                         "show_column_names": False,
                         "show_row_names": "none",
+                        "order_by": "desc(avg_log2FC)",
                         "comparison_by": "seurat_clusters",
                         "cutoff": 0.05,
                         "column_annotation": {
@@ -284,6 +292,16 @@ class ClusterMarkers(MarkersFinder):
                                 "params": {"wrap_by": 4, "labels_rot": 0},
                             },
                         },
+                        "devpars": {"height": 800, "width": 1200},
+                        "descr": "Heatmap showing top markers across all clusters.",
+                    },
+                    "Heatmap (bars)": {
+                        "plot_type": "heatmap",
+                        "subset_by": "seurat_clusters:NULL",
+                        "order_by": "desc(avg_log2FC)",
+                        "comparison_by": "seurat_clusters",
+                        "cell_type": "bars",
+                        "cutoff": 0.05,
                         "devpars": {"height": 800, "width": 1200},
                         "descr": "Heatmap showing top markers across all clusters.",
                     },
@@ -421,6 +439,14 @@ class SeuratClusterStats(SeuratClusterStats_):
             "Feature plot": {"plot_type": "dim", "features": "SRSF7"},
             "Dot plot": {"plot_type": "dot"},
             "Heatmap": {"plot_type": "heatmap"},
+            "Heatmap (no scale.data)": {
+                # The features that don't exist in scale.data
+                # The pipeline is going to run GetResidual for them.
+                "features": [
+                    "MEFV", "CCDC130", "BTBD1", "AC074138.3", "POM121C"
+                ],
+                "plot_type": "heatmap"
+            },
         },
         "dimplots": {
             "3d": {"dims": [1, 2, 3], "label": True},
