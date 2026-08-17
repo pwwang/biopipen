@@ -208,6 +208,7 @@ class SeuratPreparing(Proc):
 
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            You can specify `features` to scale specific features, or set it to `"__all__"` to scale all features.
             - <more>: See <https://satijalab.org/seurat/reference/scaledata>
 
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
