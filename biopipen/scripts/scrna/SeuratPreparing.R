@@ -38,20 +38,7 @@ reporter$add(
     h1 = "Filters and QC"
 )
 
-metadata <- tryCatch({
-    log$debug("Trying to read Seurat object from metafile ...")
-    read_obj(metafile)
-}, error = function(e) {
-    log$debug("Failed to read Seurat object from metafile: {e$message}")
-    log$debug("Reading metafile as a table (sample info) ...")
-    read.table(
-        metafile,
-        header = TRUE,
-        row.names = NULL,
-        sep = "\t",
-        check.names = FALSE
-    )
-})
+metadata <- read_obj(metafile)
 is_seurat <- inherits(metadata, "Seurat")
 
 meta_cols <- if (is_seurat) colnames(metadata@meta.data) else colnames(metadata)
