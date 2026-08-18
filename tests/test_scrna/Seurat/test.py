@@ -455,7 +455,7 @@ class SeuratClusterStats(SeuratClusterStats_):
                 # The features that don't exist in scale.data
                 # The pipeline is going to run GetResidual for them.
                 "features": [
-                    "MEFV", "CCDC130", "BTBD1", "AC074138.3", "POM121C"
+                    "MEFV", "CCDC130", "BTBD1", "POM121C"
                 ],
                 "plot_type": "heatmap"
             },
