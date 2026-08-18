@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.0a10
+
+- chore(scrna.SeuratClusterStats): change log level to debug for missing features in scale.data
+
 ## 1.4.0a9
 
 - fix(scrna.SeuratClusterStats): update missing features check to use GetAssayData for scale.data
