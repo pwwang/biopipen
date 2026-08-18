@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.4.0a8
+
+- feat(scrna.MarkersFinder): add select_overall option for overall top markers selection in heatmap plots
+- fix(misc.Plot): correct data reading logic for .rds files and ensure proper handling of read options
+- refactor(scrna.SeuratPreparing): simplify metadata reading by removing tryCatch block
+- test(scrna.Seurat): enhance SCTransform configuration and add new heatmap options for ClusterMarkers
+- feat(scrna.SeuratClusterStats): add handling for missing features in scale.data during feature processing
+- chore(scrna.SeuratPreparing): remove unnecessary parameters from SCTransform configuration (missing features from scale.data will be handled downstream)
+- docs(scrna.SeuratPreparing): update ScaleData documentation to clarify feature scaling options
+- test(scrna.MarkersFinder): enhance ClusterMarkers heatmap configuration with additional parameters
 
 ## 1.4.0a7
 
