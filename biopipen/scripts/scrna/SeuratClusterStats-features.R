@@ -122,8 +122,8 @@ do_one_features <- function(name) {
                 rownames(GetAssayData(case$object, assay = assay, layer = "scale.data"))
             )
             if (length(missing_features) > 0) {
-                log$info("  Some features do not exist in scale.data, trying to add them ...")
-                case$object <- EnsureSeuratScaleData(case$object, case$features, assay = assay)
+                log$debug("  Some features do not exist in scale.data, trying to add them ...")
+                case$object <- EnsureSeuratScaleData(case$object, missing_features, assay = assay)
             }
         }
 
