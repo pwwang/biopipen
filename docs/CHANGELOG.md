@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.0a9
+
+- fix(scrna.SeuratClusterStats): update missing features check to use GetAssayData for scale.data
+
 ## 1.4.0a8
 
 - feat(scrna.MarkersFinder): add select_overall option for overall top markers selection in heatmap plots
