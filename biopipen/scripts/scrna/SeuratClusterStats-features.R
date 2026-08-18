@@ -117,7 +117,10 @@ do_one_features <- function(name) {
         }
         if (is.null(case$layer) || identical(case$layer, "scale.data")) {
             assay <- case$assay %||% DefaultAssay(case$object)
-            missing_features <- setdiff(case$features, rownames(case$object[[assay]]@scale.data))
+            missing_features <- setdiff(
+                case$features,
+                rownames(GetAssayData(case$object, assay = assay, layer = "scale.data"))
+            )
             if (length(missing_features) > 0) {
                 log$info("  Some features do not exist in scale.data, trying to add them ...")
                 case$object <- EnsureSeuratScaleData(case$object, case$features, assay = assay)
