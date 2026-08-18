@@ -413,7 +413,7 @@ process_markers <- function(markers, info, case) {
     }
 }
 
-process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, subset_by_group = TRUE, sigmarkers = NULL) {
+process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, each_by_group = TRUE, sigmarkers = NULL) {
     name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
 
@@ -432,16 +432,26 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
 
     for (plotname in names(plotcases)) {
         log$info("  {plotname} ...")
-        plotargs <- extract_vars(plotcases[[plotname]], "descr", allow_nonexisting = TRUE)
-        plotargs$markers <- markers
+        plotargs <- extract_vars(plotcases[[plotname]], "descr", "select_overall", allow_nonexisting = TRUE)
+        if (isTRUE(select_overall)) {
+            genes <- markers %>%
+                arrange(!!parse_expr(plotargs$order_by %||% "desc(abs(avg_log2FC))")) %>%
+                pull(gene) %>%
+                unique()
+            n_select <- plotargs$select <- plotargs$select %||% 20
+            genes <- genes[1:min(length(genes), n_select)]
+            plotargs$markers <- markers %>% filter(gene %in% genes)
+        } else {
+            plotargs$markers <- markers
+        }
         plotargs$object <- object
         plotargs$comparison_by <- comparison_by
         plotargs$plot_type <- plotargs$plot_type %||% "heatmap_log2fc"
         if (
-            subset_by_group ||
+            each_by_group ||
             plotargs$plot_type %in% c("jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct")
         ) {
-            plotargs$subset_by <- plotargs$subset_by %||% groupname
+            plotargs$each <- plotargs$each %||% groupname
         }
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
         do_call(VizDEGs, plotargs)
@@ -738,7 +748,7 @@ run_case <- function(name) {
                 plotcases = allmarker_plots,
                 casename = name,
                 groupname = case$group_by,
-                subset_by_group = FALSE,
+                each_by_group = FALSE,
                 sigmarkers = sigmarkers)
         }
 

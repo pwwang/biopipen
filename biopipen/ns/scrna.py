@@ -1377,9 +1377,14 @@ class MarkersFinder(Proc):
             use `min-pct` instead of `min.pct`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
+            To reproduce what [`Seurat::DoHeatmap()`](https://satijalab.org/seurat/reference/doheatmap) does, you can
+            `select_overall = True` to select the top N (default: 20) markers all together (instead of selecting top N markers for each cluster),
+            and set `plot_type = "heatmap"` and `cell_type = "bars"` to plot the heatmap of the top N markers.
+            You may also want to use `order_by` to order the markers and `select = N` to select the top N markers.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
+            - select_overall (flag): Whether to select the top N markers from all clusters together.
             - descr: A description of the plot to be shown above the plot image.
             - more_formats (type=list): The extra formats to save the plot in.
             - save_code (flag): Whether to save the code to generate the plot.
@@ -1485,6 +1490,7 @@ class MarkersFinder(Proc):
         "rest": {},
         "allmarker_plots_defaults": {
             "plot_type": None,
+            "select_overall": False,
             "more_formats": [],
             "save_code": False,
             "devpars": {"res": 100},
