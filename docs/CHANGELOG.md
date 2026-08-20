@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.4.0a11
+
+- fix(scrna.MarkersFinder): adopt scplotter 0.8.0-2
+- test(scrna.SeuratClusterStats): remove feature from scale.data check for test stability
+
 ## 1.4.0a10
 
 - chore(scrna.SeuratClusterStats): change log level to debug for missing features in scale.data
