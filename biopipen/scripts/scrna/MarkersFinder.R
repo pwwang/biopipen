@@ -273,7 +273,7 @@ process_markers <- function(markers, info, case) {
             plotargs <- extract_vars(case$marker_plots[[plotname]], "descr", allow_nonexisting = TRUE)
             plotargs$markers <- markers
             plotargs$object <- case$object
-            plotargs$comparison_by <- case$group_by
+            plotargs$each <- case$group_by
             plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
             do_call(VizDEGs, plotargs)
             contents <- list()
@@ -413,7 +413,7 @@ process_markers <- function(markers, info, case) {
     }
 }
 
-process_allmarkers <- function(markers, object, comparison_by, plotcases, casename, groupname, each_by_group = TRUE, sigmarkers = NULL) {
+process_allmarkers <- function(markers, object, group_by, plotcases, casename, groupname, each_by_group = TRUE, sigmarkers = NULL) {
     name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
 
@@ -445,7 +445,7 @@ process_allmarkers <- function(markers, object, comparison_by, plotcases, casena
             plotargs$markers <- markers
         }
         plotargs$object <- object
-        plotargs$comparison_by <- comparison_by
+        plotargs$each <- group_by
         plotargs$plot_type <- plotargs$plot_type %||% "heatmap_log2fc"
         if (
             each_by_group ||
@@ -623,7 +623,7 @@ run_case <- function(name) {
                     process_allmarkers(
                         markers,
                         object = if (is.null(original_subset)) srtobj else filter(srtobj, !!parse_expr(original_subset)),
-                        comparison_by = case$group_by,
+                        group_by = case$group_by,
                         allmarker_plots,
                         name,
                         each,
@@ -744,7 +744,7 @@ run_case <- function(name) {
             process_allmarkers(
                 markers,
                 object = subobj,
-                comparison_by = case$group_by,
+                group_by = case$group_by,
                 plotcases = allmarker_plots,
                 casename = name,
                 groupname = case$group_by,

@@ -282,7 +282,6 @@ class ClusterMarkers(MarkersFinder):
                         "show_column_names": False,
                         "show_row_names": "none",
                         "order_by": "desc(avg_log2FC)",
-                        "comparison_by": "seurat_clusters",
                         "cutoff": 0.05,
                         "column_annotation": {
                             ".col": {"name": False},
@@ -300,8 +299,8 @@ class ClusterMarkers(MarkersFinder):
                         "plot_type": "heatmap",
                         "select_overall": True,
                         "order_by": "desc(avg_log2FC)",
-                        "comparison_by": "seurat_clusters",
                         "show_column_names": "inplace",
+                        "flatten_markers": True,
                         "cell_type": "bars",
                         "cutoff": 0.05,
                         "devpars": {"height": 500, "width": 1200},
@@ -309,9 +308,8 @@ class ClusterMarkers(MarkersFinder):
                     },
                     "Heatmap (bars)": {
                         "plot_type": "heatmap",
-                        "each": "seurat_clusters:NULL",
+                        "each": "seurat_clusters",
                         "order_by": "desc(avg_log2FC)",
-                        "comparison_by": "seurat_clusters",
                         "cell_type": "bars",
                         "cutoff": 0.05,
                         "devpars": {"height": 1200, "width": 1500},
