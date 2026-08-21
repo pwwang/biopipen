@@ -1,5 +1,10 @@
 # Change Log
 
+
+## 1.4.0a12
+
+- feat(scrna.MarkersFinder): enhance logging for marker processing and enrichment analysis
+
 ## 1.4.0a11
 
 - fix(scrna.MarkersFinder): adopt scplotter 0.8.0-2
