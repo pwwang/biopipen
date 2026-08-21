@@ -246,6 +246,7 @@ process_markers <- function(markers, info, case) {
     markers$gene <- as.character(markers$gene)
     markers <- markers[order(markers$p_val_adj, -abs(markers$avg_log2FC)), ]
 
+    log$info("  Saving markers ...")
     # Save markers
     write.table(markers, file.path(info$prefix, "markers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -270,6 +271,7 @@ process_markers <- function(markers, info, case) {
 
     if (nrow(markers) > 0) {
         for (plotname in names(case$marker_plots)) {
+            log$info("  Generating plot: {plotname} ...")
             plotargs <- extract_vars(case$marker_plots[[plotname]], "descr", allow_nonexisting = TRUE)
             plotargs$markers <- markers
             plotargs$object <- case$object
@@ -338,6 +340,7 @@ process_markers <- function(markers, info, case) {
         }
         return(empty)
     } else {
+        log$info("  Performing enrichment analysis ...")
         tryCatch({
             enrich <- RunEnrichment(
                 significant_markers,
@@ -363,6 +366,7 @@ process_markers <- function(markers, info, case) {
                         plotargs <- extract_vars(case$enrich_plots[[plotname]], "descr", allow_nonexisting = TRUE)
                         plotargs$data <- enrich[enrich$Database == db, , drop = FALSE]
 
+                        log$info("  Generating enrichment plot: {plotname} for database: {db} ...")
                         p <- tryCatch(
                             do_call(VizEnrichment, plotargs),
                             error = function(e) {
@@ -580,7 +584,8 @@ process_overlaps <- function(markers, ovcases, casename, groupname) {
 
 run_case <- function(name) {
     case <- cases[[name]]
-    log$info("Case: {name} ...")
+    log$info("------------------------------")
+    log$info("+ Case: {name} ...")
 
     case <- extract_vars(
         case,
@@ -690,6 +695,8 @@ run_case <- function(name) {
     case$subset <- subset_
     case$object <- srtobj
     case$object_sig <- obj_sig
+    case$log <- log
+    case$log_prefix <- "  "
     markers <- tryCatch({
         do_call(RunSeuratDEAnalysis, case)
     }, error = function(e) {
@@ -709,6 +716,7 @@ run_case <- function(name) {
 
     # filter errors already popped up in DE analysis with subset
     subobj <- if (is.null(subset_)) srtobj else tryCatch({
+        log$info("  Subsetting Seurat object for visualization ...")
         filter(srtobj, !!parse_expr(subset_))
     }, error = function(e) {
         # errors should be popped by RunSeuratDEAnalysis
