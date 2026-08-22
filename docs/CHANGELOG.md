@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.0a13
+
+- fix(scrna.MarkersFinder): improve marker processing and plotting logic for better clarity and performance
+- fix(scrna.MarkersFinder): update marker selection parameter to 'each' for consistency
 
 ## 1.4.0a12
 
