@@ -63,6 +63,7 @@ class PrepareMetafile(Proc):
         indir = {{in.indir | quote}}
         metafile = {{out.metafile | quote}}
         with open(metafile, "w") as f:
+            f.write("# factor-levels: Group=Group1|Group2\\n")
             f.write("Sample\\tGroup\\tEach\\tRNAData\\n")
             for s in os.listdir(indir):
                 if os.path.isdir(os.path.join(indir, s)):

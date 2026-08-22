@@ -244,20 +244,22 @@ process_markers <- function(markers, info, case) {
     #     mutate(gene = as.character(gene)) %>%
     #     arrange(p_val_adj, desc(abs(avg_log2FC)))
     markers$gene <- as.character(markers$gene)
-    markers <- markers[order(markers$p_val_adj, -abs(markers$avg_log2FC)), ]
+    markers <- arrange(markers, desc(!!parse_expr(case$sigmarkers)), desc(abs(avg_log2FC)), p_val_adj, p_val)
 
     log$info("  Saving markers ...")
     # Save markers
-    write.table(markers, file.path(info$prefix, "markers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+    write_table(markers, file.path(info$prefix, "markers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
-    sigmarkers <- markers %>% filter(!!parse_expr(case$sigmarkers))
-    write.table(sigmarkers, file.path(info$prefix, "sigmarkers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+    sigmarkers <- markers %>%
+        filter(!!parse_expr(case$sigmarkers)) %>%
+        arrange(desc(abs(avg_log2FC)))
+    write_table(sigmarkers, file.path(info$prefix, "sigmarkers.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
     reporter$add2(
         list(
             name = "Table",
             contents = list(
                 list(kind = "descr", content = paste0(
-                    "Showing top 100 markers ordered by p_val_adj ascendingly, then abs(avg_log2FC) descendingly. ",
+                    "Showing top 100 (if more than 100) markers ordered by abs(avg_log2FC) descendingly. ",
                     "Use 'Download the entire data' button to download all significant markers by '",
                     html_escape(case$sigmarkers), "'."
                 )),
@@ -270,13 +272,31 @@ process_markers <- function(markers, info, case) {
     )
 
     if (nrow(markers) > 0) {
+        has_comparison <- grepl(":", markers[[case$group_by]][1], fixed = TRUE)
         for (plotname in names(case$marker_plots)) {
             log$info("  Generating plot: {plotname} ...")
             plotargs <- extract_vars(case$marker_plots[[plotname]], "descr", allow_nonexisting = TRUE)
             plotargs$markers <- markers
             plotargs$object <- case$object
-            plotargs$each <- case$group_by
+            plotargs$order_by <- plotargs$order_by %||% c(paste0("desc(", case$sigmarkers, ")"), "desc(abs(avg_log2FC))", "p_val_adj", "p_val")
+            if (has_comparison) {
+                plotargs$group_by <- plotargs$group_by %||% paste0(case$group_by, ":", case$group_by)
+            } else {
+                plotargs$group_by <- plotargs$group_by %||% case$group_by
+            }
+            plotargs$object$.cells <- "All"
+            plotargs$each <- plotargs$each %||% ":.cells"
+            plotargs$column_annotation <- plotargs$column_annotation %||% list()
+            plotargs$column_annotation$.cells <- plotargs$column_annotation$.cells %||% FALSE
             plotargs$outprefix <- file.path(info$prefix, paste0("markers.", slugify(plotname)))
+            if (identical(plotargs$plot_type, "dot")) {
+                plotargs$devpars <- plotargs$devpars %||% list()
+                plotargs$devpars$width <- plotargs$devpars$width %||% "x1.5"
+                plotargs$devpars$height <- plotargs$devpars$height %||% "x1.5"
+            }
+            plotargs$cache <- plotargs$cache %||% case$cache
+            plotargs$log <- log
+            plotargs$log_prefix <- "  ! "
             do_call(VizDEGs, plotargs)
             contents <- list()
             if (!is.null(descr)) {
@@ -346,7 +366,7 @@ process_markers <- function(markers, info, case) {
                 significant_markers,
                 dbs = case$dbs, style = case$enrich_style)
 
-            write.table(enrich, file.path(info$prefix, "enrich.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+            write_table(enrich, file.path(info$prefix, "enrich.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
             reporter$add2(
                 list(
                     name = "Table",
@@ -417,8 +437,21 @@ process_markers <- function(markers, info, case) {
     }
 }
 
-process_allmarkers <- function(markers, object, group_by, plotcases, casename, groupname, each_by_group = TRUE, sigmarkers = NULL) {
-    name <- paste0(casename, "::", paste0(groupname, " (All Markers)"))
+process_allmarkers <- function(
+    markers,    # The markers data frame
+    object,     # The Seurat object
+    group_by,   # The grouping variable for the markers
+    plotcases,  # The plotting cases for all markers
+    casename,   # The name of the case
+    eachname,   # The name of each
+    # Whether ident_1 is provided or not
+    # If not, that means group_by is each
+    # The analysis was run against each ident_1 in group_by
+    no_ident_1 = FALSE,
+    sigmarkers = NULL,  # Optional filtering expression for significant markers
+    cache = NULL  # The cache object
+) {
+    name <- paste0(casename, "::", paste0(eachname, " (All Markers)"))
     info <- case_info(name, outdir, create = TRUE)
 
     if (!is.null(sigmarkers)) {
@@ -436,28 +469,23 @@ process_allmarkers <- function(markers, object, group_by, plotcases, casename, g
 
     for (plotname in names(plotcases)) {
         log$info("  {plotname} ...")
-        plotargs <- extract_vars(plotcases[[plotname]], "descr", "select_overall", allow_nonexisting = TRUE)
-        if (isTRUE(select_overall)) {
-            genes <- markers %>%
-                arrange(!!parse_expr(plotargs$order_by %||% "desc(abs(avg_log2FC))")) %>%
-                pull(gene) %>%
-                unique()
-            n_select <- plotargs$select <- plotargs$select %||% 20
-            genes <- genes[1:min(length(genes), n_select)]
-            plotargs$markers <- markers %>% filter(gene %in% genes)
-        } else {
-            plotargs$markers <- markers
-        }
+        plotargs <- extract_vars(plotcases[[plotname]], "descr", allow_nonexisting = TRUE)
+        plotargs$markers <- markers
         plotargs$object <- object
-        plotargs$each <- group_by
         plotargs$plot_type <- plotargs$plot_type %||% "heatmap_log2fc"
-        if (
-            each_by_group ||
-            plotargs$plot_type %in% c("jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct")
-        ) {
-            plotargs$each <- plotargs$each %||% groupname
-        }
         plotargs$outprefix <- file.path(info$prefix, slugify(plotname))
+        plotargs$each <- plotargs$each %||% paste0(eachname, ":", eachname)
+        if (!no_ident_1) {
+            plotargs$group_by <- plotargs$group_by %||% paste0(group_by, ":", group_by)
+        }
+        if (identical(plotargs$plot_type, "dot")) {
+            plotargs$devpars <- plotargs$devpars %||% list()
+            plotargs$devpars$width <- plotargs$devpars$width %||% "x2"
+            plotargs$devpars$height <- plotargs$devpars$height %||% "x1.5"
+        }
+        plotargs$cache <- plotargs$cache %||% cache
+        plotargs$log <- log
+        plotargs$log_prefix <- "  ! "
         do_call(VizDEGs, plotargs)
         contents <- list()
         if (!is.null(descr)) {
@@ -616,23 +644,18 @@ run_case <- function(name) {
 
             if (length(allmarker_plots) > 0) {
                 log$info("- Visualizing all markers together ...")
-                if (is.null(original_subset)) {
-                    attr(markers, "object") <- srtobj
-                } else {
-                    attr(markers, "object") <- filter(srtobj, !!parse_expr(original_subset))
-                }
-                attr(markers, "group_by") <- each
-                attr(markers, "ident_1") <- NULL
-                attr(markers, "ident_2") <- NULL
                 if (!is.null(markers) && nrow(markers) > 0) {
+                    # group A vs B
+                    # in each cluster, for example
                     process_allmarkers(
-                        markers,
+                        markers = markers,
                         object = if (is.null(original_subset)) srtobj else filter(srtobj, !!parse_expr(original_subset)),
                         group_by = case$group_by,
-                        allmarker_plots,
-                        name,
-                        each,
-                        sigmarkers = sigmarkers
+                        plotcases = allmarker_plots,
+                        casename = name,
+                        eachname = each,
+                        sigmarkers = sigmarkers,
+                        cache = case$cache
                     )
                 }
             }
@@ -732,7 +755,6 @@ run_case <- function(name) {
             casename <- paste0(name, "::", paste0(case$group_by, ": ", ident))
             info <- case_info(casename, outdir, create = TRUE)
 
-            attr(ident_markers, "ident_1") <- ident
             enrich <- process_markers(ident_markers, info = info, case = list(
                 object = subobj,
                 dbs = dbs,
@@ -742,7 +764,8 @@ run_case <- function(name) {
                 marker_plots = marker_plots,
                 enrich_plots = enrich_plots,
                 error = case$error,
-                ident = NULL
+                ident = NULL,
+                cache = case$cache
             ))
             enriches[[ident]] <- enrich
         }
@@ -750,14 +773,16 @@ run_case <- function(name) {
         if (length(allmarker_plots) > 0) {
             log$info("- Visualizing all markers together ...")
             process_allmarkers(
-                markers,
+                markers = markers,
                 object = subobj,
                 group_by = case$group_by,
                 plotcases = allmarker_plots,
                 casename = name,
-                groupname = case$group_by,
-                each_by_group = FALSE,
-                sigmarkers = sigmarkers)
+                eachname = case$group_by,
+                no_ident_1 = TRUE,
+                sigmarkers = sigmarkers,
+                cache = case$cache
+            )
         }
 
         if (length(overlaps) > 0) {
