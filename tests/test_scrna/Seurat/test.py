@@ -297,7 +297,7 @@ class ClusterMarkers(MarkersFinder):
                     },
                     "Heatmap (overall)": {
                         "plot_type": "heatmap",
-                        "select_overall": True,
+                        "each": ":seurat_clusters",
                         "order_by": "desc(avg_log2FC)",
                         "show_column_names": "inplace",
                         "flatten_markers": True,
