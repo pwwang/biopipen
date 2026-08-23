@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.0a14
+
+- chore(scrna): enhance cache log messages to include cache paths for better traceability
+
 ## 1.4.0a13
 
 - fix(scrna.MarkersFinder): improve marker processing and plotting logic for better clarity and performance
