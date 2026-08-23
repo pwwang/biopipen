@@ -446,7 +446,7 @@ do_case <- function(name, case) {
     )
 
     if (caching$is_cached()) {
-        log$info("  Using cached results.")
+        log$info("  Using cached results: {caching$get_path()}")
         caching$restore()
     } else {
         if (!is.null(subset_)) {

@@ -101,7 +101,7 @@ do_one_features <- function(name) {
     )
 
     if (caching$is_cached()) {
-        log$info("  plots are cached, restoring ...")
+        log$info("  restoring from cache: {caching$get_path()}")
         caching$restore()
     } else {
         case$features <- .get_features(features, case$object)

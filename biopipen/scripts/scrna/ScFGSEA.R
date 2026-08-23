@@ -256,7 +256,7 @@ do_case <- function(name) {
         cache_dir = cache
     )
     if (caching$is_cached()) {
-        log$info("  Using cached ranks ...")
+        log$info("  Using cached ranks: {caching$get_path()}")
         ranks <- caching$restore()
     } else {
         allclasses <- sobj@meta.data[, case$group_by, drop = TRUE]
@@ -299,7 +299,7 @@ do_case <- function(name) {
         cache_dir = cache
     )
     if (caching$is_cached()) {
-        log$info("  Using cached fgsea results ...")
+        log$info("  Using cached fgsea results: {caching$get_path()}")
         result <- caching$restore()
     } else {
         log$info("  Running fgsea...")
