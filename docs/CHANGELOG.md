@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.4.0a15
+
+- feat(scrna.AnnData2Seurat): add layer parameter to FeatureStatPlot for improved plotting
+- feat(scrna.MarkersFinder): add default assay handling and check for SCTAssay preparation
+- feat(scrna, tcr): add ncores parameter for parallel processing in various scripts
+
 ## 1.4.0a14
 
 - chore(scrna): enhance cache log messages to include cache paths for better traceability
