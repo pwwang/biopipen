@@ -37,6 +37,8 @@ overlaps_defaults <- {{ envs.overlaps_defaults | r }}
 overlaps <- {{ envs.overlaps | r }}
 cases <- {{envs.cases | r}}
 
+qs2::qopt("nthreads", value = ncores)
+
 aggregate_by <- unique(c(aggregate_by, group_by, paired_by, each))
 if (isTRUE(cache)) { cache <- joboutdir }
 

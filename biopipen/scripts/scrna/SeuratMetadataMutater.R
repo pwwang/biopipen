@@ -11,6 +11,9 @@ metafile <- {{in.metafile | r}}
 outfile <- {{out.outfile | r}}
 mutaters <- {{envs.mutaters | r}}
 subset <- {{envs.subset | r}}
+ncores <- {{envs.ncores | r}}
+
+qs2::qopt("nthreads", value = ncores)
 
 srt <- read_obj(srtobj)
 

@@ -9,12 +9,14 @@ screpdata <- {{in.screpdata | r}}
 outfile <- {{out.outfile | r}}
 joboutdir <- {{job.outdir | r}}
 python <- {{envs.python | r}}
+ncores <- {{envs.ncores | r}}
 within_sample <- {{envs.within_sample | r}}
 assay <- {{envs.assay | r}}
 predefined_b <- {{envs.predefined_b | r}}
 max_iter <- {{envs.max_iter | int}}
 save_tessa <- {{envs.save_tessa | r}}
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 

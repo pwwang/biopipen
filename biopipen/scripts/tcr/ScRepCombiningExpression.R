@@ -16,6 +16,7 @@ cloneSize <- {{ envs.cloneSize | r }}
 addLabel <- {{ envs.addLabel | r }}
 imm_cell_id_trans <- {{ envs.imm_cell_id_trans | r }}
 rna_cell_id_trans <- {{ envs.rna_cell_id_trans | r }}
+ncores <- {{ envs.ncores | r }}
 cloneSize <- unlist(cloneSize)
 
 if (!is.null(imm_cell_id_trans)) {
@@ -36,6 +37,7 @@ if (!is.null(rna_cell_id_trans)) {
     }
 }
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 
 log$info("Loading scRepertoire object ...")

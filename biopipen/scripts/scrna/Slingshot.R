@@ -16,8 +16,10 @@ align_start <- {{envs.align_start | r}}
 subset <- {{envs.subset | r}}
 split_by <- {{envs.split_by | r}}
 seed <- {{envs.seed | r}}
+ncores <- {{envs.ncores | r}}
 
 set.seed(seed)
+qs2::qopt("nthreads", value = ncores)
 
 log <- get_logger()
 

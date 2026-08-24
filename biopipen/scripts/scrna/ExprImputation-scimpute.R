@@ -1,13 +1,15 @@
 library(scImpute)
 library(Seurat)
 
-infile = {{in.infile | r}}
-outfile = {{out.outfile | r}}
-joboutdir = {{job.outdir | append: "/" | r}}
-drop_thre = {{envs.scimpute_args.drop_thre | r}}
-kcluster = {{(envs.scimpute_args.kcluster | default: None | r}}
-ncores = {{envs.scimpute_args.ncores | r}}
-refgene = {{envs.scimpute_args.refgene | r}}
+infile <- {{in.infile | r}}
+outfile <- {{out.outfile | r}}
+joboutdir <- {{job.outdir | append: "/" | r}}
+drop_thre <- {{envs.scimpute_args.drop_thre | r}}
+kcluster <- {{envs.scimpute_args.kcluster | default: None | r}}
+refgene <- {{envs.scimpute_args.refgene | r}}
+ncores <- {{envs.ncores | r}}
+
+qs2::qopt("nthreads", value = ncores)
 
 setwd(joboutdir)
 

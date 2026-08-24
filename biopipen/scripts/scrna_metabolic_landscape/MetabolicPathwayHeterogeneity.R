@@ -22,6 +22,7 @@ cases <- {{ envs.cases | r }}
 
 set.seed(8525)
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 

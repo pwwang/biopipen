@@ -149,6 +149,7 @@ class Plot(Proc):
 
     envs:
         fn: The plot function to use. Required.
+        ncores (type=int): The number of cores to use for reading the data file.
         devpars (ns): The device parameters for the plot.
             - width: The width of the plot in pixels.
             - height: The height of the plot in pixels.
@@ -165,6 +166,7 @@ class Plot(Proc):
     output = "plotfile:file:{{in.datafile | stem}}.png"
     envs = {
         "fn": None,
+        "ncores": config.misc.ncores,
         "devpars": {"res": 100},
         "more_formats": [],
         "save_code": False,

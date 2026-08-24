@@ -11,12 +11,15 @@ envs <- {{envs | r: todot="-"}}
 mutaters <- envs$mutaters
 cases <- envs$cases
 cache <- envs$cache
+ncores <- envs$ncores
 envs$mutaters <- NULL
 envs$cases <- NULL
 envs$cache <- NULL
+envs$ncores <- NULL
 
 if (isTRUE(cache)) { cache = joboutdir }
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 

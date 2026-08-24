@@ -521,6 +521,7 @@ class SeuratSubClustering(Proc):
             And the final cluster name will be `<name>`.
             Note that the `name` should be alphanumeric and anything other than alphanumeric will be removed.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
@@ -801,6 +802,7 @@ class SeuratClusterStats(Proc):
             For each case in `envs.clustrees`, both the png and pdf files will be saved.
 
     Envs:
+        ncores (type=int): Number of cores to use for reading and writing the data.
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
             You can also use the clone selectors to select the TCR clones/clusters.
@@ -917,6 +919,7 @@ class SeuratClusterStats(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
         "cache": config.path.tmpdir,
         "clustrees_defaults": {
@@ -1036,6 +1039,7 @@ class ModuleScoreCalculator(Proc):
             - <more>: Other arguments passed to `Seurat::AddModuleScore()` or `Seurat::CellCycleScoring()`.
                 See <https://satijalab.org/seurat/reference/addmodulescore> and
                 <https://satijalab.org/seurat/reference/cellcyclescoring>
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
         modules (type=json): The modules to calculate the scores.
             Keys are the names of the expression programs and values are the
             dicts inherited from `env.defaults`.
@@ -1084,6 +1088,7 @@ class ModuleScoreCalculator(Proc):
             "keep": False,
             "agg": "mean",
         },
+        "ncores": config.misc.ncores,
         "modules": {
             # "CellCycle": {"features": "cc.genes.updated.2019"},
             # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
@@ -1239,6 +1244,7 @@ class SeuratMetadataMutater(Proc):
         outfile: The seurat object with the additional metadata
 
     Envs:
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
@@ -1257,7 +1263,7 @@ class SeuratMetadataMutater(Proc):
     input = "srtobj:file, metafile:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"mutaters": {}, "subset": None}
+    envs = {"mutaters": {}, "subset": None, "ncores": config.misc.ncores}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
@@ -1546,6 +1552,7 @@ class TopExpressingGenes(Proc):
         outdir: The output directory for the tables and plots
 
     Envs:
+        ncores (type=int): Number of cores to use for reading and writing the seurat object.
         mutaters (type=json): The mutaters to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
@@ -1613,6 +1620,7 @@ class TopExpressingGenes(Proc):
     lang = config.lang.rscript
     script = "file://../scripts/scrna/TopExpressingGenes.R"
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
         "ident": None,
         "group_by": None,
@@ -1663,10 +1671,11 @@ class ExprImputation(Proc):
             - alra: Use RunALRA() from Seurat
             - scimpute: Use scImpute() from scimpute
             - rmagic: Use magic() from Rmagic
+        ncores (type=int): Number of cores to use for reading and writing,
+            the Seurat object, and for scimpute and rmagic if applicable.
         scimpute_args (ns): The arguments for scimpute
             - drop_thre (type=float): The dropout threshold
             - kcluster (type=int): Number of clusters to use
-            - ncores (type=int): Number of cores to use
             - refgene: The reference gene file
         rmagic_args (ns): The arguments for rmagic
             - python: The python path where magic-impute is installed.
@@ -1709,11 +1718,11 @@ class ExprImputation(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "alra",
+        "ncores": config.misc.ncores,
         "rmagic_args": {"python": config.exe.magic_python, "threshold": 0.5},
         "scimpute_args": {
             "drop_thre": 0.5,
             "kcluster": None,
-            "ncores": config.misc.ncores,
             "refgene": config.ref.refgene,
         },
         "alra_args": {},
@@ -3191,6 +3200,7 @@ class AnnData2Seurat(Proc):
 
     Envs:
         assay: The assay to use to convert to seurat object.
+        ncores (type=int): Number of cores to use for data loading and saving.
         ident: The column name in `adfile.obs` to use as the identity
             for the seurat object.
             If not specified, no identity will be set.
@@ -3206,7 +3216,12 @@ class AnnData2Seurat(Proc):
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"assay": "RNA", "ident": None, "dotplot_check": True}
+    envs = {
+        "assay": "RNA",
+        "ident": None,
+        "dotplot_check": True,
+        "ncores": config.misc.ncores,
+    }
     script = "file://../scripts/scrna/AnnData2Seurat.R"
 
 
@@ -3621,6 +3636,7 @@ class Slingshot(Proc):
         reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
         seed (type=int): The seed for the random number generator.
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
         subset: An expression in string to subset the cells.
         split_by: The column name in metadata to split the cells to run the method separately.
             After run, the results will be combined together with this column in the final output.
@@ -3639,6 +3655,7 @@ class Slingshot(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "group_by": None,
         "reduction": None,
         "dims": None,

@@ -38,6 +38,8 @@ overlaps_defaults <- {{ envs.overlaps_defaults | r }}
 overlaps <- {{ envs.overlaps | r }}
 cases <- {{ envs.cases | r: todot="-", skip=1 }}
 
+qs2::qopt("nthreads", value = ncores)
+
 if (isTRUE(cache)) { cache <- joboutdir }
 
 set.seed(8525)

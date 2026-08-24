@@ -27,6 +27,8 @@ rest <- {{envs.rest | r: todot="-"}}  # nolint
 cases <- {{envs.cases | r: todot="-"}}  # nolint
 cache <- {{envs.cache | r}}  # nolint
 
+qs2::qopt("nthreads", value = ncores)
+
 log <- get_logger()
 reporter <- get_reporter()
 

@@ -4,10 +4,12 @@ library(purrr)
 library(stringr)
 library(biopipen.utils)
 
-infile = {{in.infile | r}}
-outfile = {{out.outfile | r}}
-envs = {{envs.alra_args | r}}
+infile <- {{in.infile | r}}
+outfile <- {{out.outfile | r}}
+envs <- {{envs.alra_args | r}}
+ncores <- {{envs.ncores | r}}
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 
 log$info("Loading Seurat object")

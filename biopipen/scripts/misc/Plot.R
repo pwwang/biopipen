@@ -11,6 +11,8 @@ envs <- {{envs | r}}
 
 fn <- envs$fn
 envs$fn <- NULL
+ncores <- envs$ncores
+envs$ncores <- NULL
 devpars <- envs$devpars
 envs$devpars <- NULL
 more_formats <- envs$more_formats
@@ -18,6 +20,8 @@ envs$more_formats <- NULL
 save_code <- envs$save_code
 envs$save_code <- NULL
 envs$read_opts <- NULL
+
+qs2::qopt("nthreads", value = ncores)
 
 if (endsWith(datafile, ".qs") || endsWith(datafile, ".qs2") ||
     endsWith(datafile, ".rds") || endsWith(datafile, ".RDS") || endsWith(datafile, ".Rds")) {

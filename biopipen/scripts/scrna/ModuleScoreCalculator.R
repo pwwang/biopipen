@@ -6,9 +6,11 @@ library(biopipen.utils)
 sobjfile <- {{in.srtobj | r}}
 outfile <- {{out.rdsfile | r}}
 defaults <- {{envs.defaults | r}}
+ncores <- {{envs.ncores | r}}
 modules <- {{envs.modules | r}}
 post_mutaters <- {{envs.post_mutaters | r}}
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 
 # load seurat object

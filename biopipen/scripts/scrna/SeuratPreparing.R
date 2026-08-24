@@ -10,6 +10,8 @@ outfile <- {{out.outfile | r}}
 joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r: todot = "-", skip = 1}}
 
+qs2::qopt("nthreads", value = envs$ncores)
+
 if (isTRUE(envs$cache)) { envs$cache <- joboutdir }
 
 log <- get_logger()

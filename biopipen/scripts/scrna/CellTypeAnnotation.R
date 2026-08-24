@@ -45,6 +45,8 @@ cellid_args <- {{envs.cellid_args | r}}
 cell_types <- {{envs.cell_types | r}}
 more_cell_types <- {{envs.more_cell_types | r}}
 
+qs2::qopt("nthreads", value = ncores)
+
 log <- get_logger()
 
 # Source all tool function definitions

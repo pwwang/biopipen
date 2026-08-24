@@ -9,6 +9,9 @@ dotplot_check <- {{envs.dotplot_check | r}}
 outdir <- dirname(outfile)
 assay <- {{envs.assay | r}}
 ident <- {{envs.ident | r}}
+ncores <- {{envs.ncores | r}}
+
+qs2::qopt("nthreads", value = ncores)
 
 log <- get_logger()
 

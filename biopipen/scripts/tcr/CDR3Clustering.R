@@ -14,9 +14,11 @@ within_sample <- {{envs.within_sample | r}}
 args <- {{envs.args | r}}
 chain <- {{envs.chain | r}}
 type <- {{envs.type | r}}
+ncores <- {{envs.ncores | r}}
 
 setwd(outdir)
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 
 log$info("Reading input file ...")

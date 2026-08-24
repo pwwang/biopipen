@@ -36,6 +36,9 @@ log <- get_logger()
 infile <- {{ in.infile | r }}
 outfile <- {{ out.outfile | r }}
 threshold <- {{ envs.rmagic_args.threshold | r }}
+ncores <- {{ envs.ncores | r }}
+
+qs2::qopt("nthreads", value = ncores)
 
 log$info("Loading Seurat object ...")
 sobj <- read_obj(infile)
