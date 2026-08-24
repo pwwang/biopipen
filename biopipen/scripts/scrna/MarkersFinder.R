@@ -73,6 +73,8 @@ overlaps <- lapply(overlaps, function(x) {
     list_update(overlaps_defaults, x)
 })
 
+def_assay <- DefaultAssay(srtobj)
+
 defaults <- list(
     group_by = group_by,
     ident_1 = ident_1,
@@ -80,7 +82,7 @@ defaults <- list(
     dbs = dbs,
     sigmarkers = sigmarkers,
     enrich_style = enrich_style,
-    assay = assay %||% DefaultAssay(srtobj),
+    assay = assay %||% def_assay,
     each = each,
     error = error,
     subset = subset,
@@ -239,6 +241,20 @@ post_casing <- function(name, case) {
     outcases
 }
 cases <- expand_cases(cases, defaults, post_casing, default_case = "Marker Discovery")
+
+# check if any assays in cases are SCTAssay, if so, check if PrepSCTFindMarkers() has been run
+if (
+    any(
+        sapply(cases, function(case) {
+            isTRUE(case$assay %in% Assays(srtobj)) && inherits(srtobj[[case$assay]], "SCTAssay")
+        })
+    ) &&
+    !"PrepSCTFindMarkers" %in% names(srtobj@commands)
+) {
+    log$info("Running PrepSCTFindMarkers() for SCTAssay ...")
+    srtobj <- PrepSCTFindMarkers(srtobj)
+    srtobj <- AddSeuratCommand(srtobj, "PrepSCTFindMarkers")
+}
 
 process_markers <- function(markers, info, case) {
     ## Attributes lost
