@@ -1,0 +1,68 @@
+{
+  "skill_name": "pipen-process",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add a new process to biopipen/ns/scrna.py called CellCycleScoring that runs Seurat's CellCycleScoring function. It should take the Seurat object, have envs for the S-phase gene list, the G2M-phase gene list, and the assay, run the scoring, save the scored object, and produce a report section with a table of the per-cell scores and a histogram plot of the scores split by seurat cluster.",
+      "expected_output": "A declarative Proc subclass named CellCycleScoring in scrna.py style (input/output/lang/envs_depth/script/plugin_opts, docstring with Input/Output/Envs/Requires sections), plus an R script template at biopipen/scripts/scrna/CellCycleScoring.R using get_logger/get_reporter, do_call for CellCycleScoring, save_plot for the histogram, write_table for the scores, and reporter$add2 for the report section.",
+      "files": [],
+      "expectations": [
+        "class CellCycleScoring subclasses Proc",
+        "Declarative class: input/output/lang/script attributes, no run()",
+        "envs_depth set to 1 or 4",
+        "Dotted R args (s.features/g2m.features) become kebab-case env keys",
+        "Docstring has Input:/Output:/Envs:/Requires: sections",
+        "Envs documented with (type=...) tags",
+        "Requires uses {{proc.lang}} <(echo \"library(...)\") check",
+        "script points to file://../scripts/scrna/CellCycleScoring.R",
+        "R script uses biopipen.utils, get_logger(), get_reporter()",
+        "CellCycleScoring called via do_call",
+        "Dashed env keys referenced via envs[\"...\"] subscript, not dot notation",
+        "Histogram saved via save_plot",
+        "Scores table written (write_table or write.table)",
+        "Report section built with reporter$add2"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need a HarmonyIntegration process for scrna.py that wraps Seurat's RunHarmony. The envs should include group.by.vars (the R arg with a dot in it), reduction, dims, and ncores. It should also support optional per-group diagnostic plots (a UMAP colored by each group.by.vars value) with per-case devpars settings. Follow the biopipen env naming conventions exactly.",
+      "expected_output": "A declarative Proc subclass HarmonyIntegration with env keys following biopipen naming rules (group-by-vars kebab-cased for the dotted R arg), envs_depth=4 for nested per-case plot configs, an R script with do_call to RunHarmony, extract_vars stripping control vars before calls, per-case tryCatch sections, and auto_devpars-driven plot sizing.",
+      "files": [],
+      "expectations": [
+        "class HarmonyIntegration subclasses Proc",
+        "Declarative class: input/output/lang/script attributes, no run()",
+        "envs_depth = 4 for nested per-case plot configs",
+        "Dotted R arg group.by.vars becomes kebab-case env key group-by-vars",
+        "Docstring documents the R name group.by.vars",
+        "Requires uses {{proc.lang}} <(echo \"library(...)\") check",
+        "RunHarmony called via do_call",
+        "Control vars (devpars/more_formats) stripped before tool calls",
+        "Per-group diagnostic plots wrapped in tryCatch -> log$warn",
+        "Per-case devpars handled (auto_devpars or defaults merge)",
+        "Report sections built with reporter$add2"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a GSEAEnrichment process for biopipen that runs clusterProfiler enrichment with multiple optional databases (each configured as its own case with dbs, plots and tables), plus a test class in tests/test_scrna/GSEAEnrichment/test.py following the LOCAL_ONLY local-test conventions with testing() assertions on the output tables and plots.",
+      "expected_output": "A declarative Proc subclass with an enrich-style env structure (per-case dicts deep-merged via envs_depth), an R script with tryCatch-wrapped optional per-database sections that strip control vars (extract_vars) before clusterProfiler calls, reporter$add2 sections with descr+plot+table items, and a local-only test class file with run.env containing LOCAL_ONLY=\"true\".",
+      "files": [],
+      "expectations": [
+        "class GSEAEnrichment subclasses Proc",
+        "Declarative class: input/output/lang/script attributes, no run()",
+        "envs_depth = 4 so per-case dicts deep-merge across subclasses",
+        "Per-case envs carry dbs/plots/tables sub-keys",
+        "Docstring has Input:/Output:/Envs:/Requires: sections",
+        "Requires uses {{proc.lang}} <(echo \"library(...)\") check",
+        "Optional per-database sections wrapped in tryCatch -> log$warn",
+        "Control vars stripped with extract_vars before clusterProfiler calls",
+        "Enrichment functions called via do_call",
+        "Report items include kind=\"table\" entries",
+        "Test file defines test classes subclassing the process",
+        "Test asserts via testing(pipen) with pipen.run()",
+        "Assertions reference output tables/plots",
+        "run.env sets LOCAL_ONLY=\"true\" and ENVNAME"
+      ]
+    }
+  ]
+}
