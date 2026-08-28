@@ -393,11 +393,19 @@ class ModuleScoreCalculator(ModuleScoreCalculator_):
     requires = SeuratSubClustering
     envs = {
         "modules": {
-            # "CellCycle": {"features": "cc.genes.updated.2019"},
-            # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
-            # "Activation": {"features": "IFNG"},
-            # "Proliferation": {"features": "STMN1,TUBB"},
+            # TEMP VERIFICATION MODULES — revert after new-feature checks
             "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4, "nbin": 10},
+            "TcellState": {
+                "features": {
+                    "Exhaustion": ["CD3D", "GZMM", "CD8A", "GNLY"],
+                    "Activation": ["CD3D"],
+                },
+                "method": "ucell",
+                "maxRank": 500,
+            },
+            "CC": {"kind": "cc"},
+            "DC": {"kind": "dm"},
+            "Stale": {"features": "CD3D,GZMM", "agg": "mean", "keep": False},
         }
     }
 

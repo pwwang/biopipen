@@ -1368,14 +1368,43 @@ class ModuleScoreCalculator(Proc):
     """Calculate the module scores for each cell
 
     The module scores are calculated by
-    [`Seurat::AddModuleScore()`](https://satijalab.org/seurat/reference/addmodulescore)
-    or [`Seurat::CellCycleScoring()`](https://satijalab.org/seurat/reference/cellcyclescoring)
-    for cell cycle scores.
+    [`biopipen.utils::RunModuleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.html)
+    with the scoring method specified by `env.defaults.method` (or per module
+    by `method` in the module dict):
 
-    The module scores are calculated as the average expression levels of each
-    program on single cell level, subtracted by the aggregated expression of
-    control feature sets. All analyzed features are binned based on averaged
-    expression, and the control features are randomly selected from each bin.
+    - `seurat`: [`Seurat::AddModuleScore()`](https://satijalab.org/seurat/reference/addmodulescore),
+        the default. The module scores are calculated as the average expression
+        levels of each program on single cell level, subtracted by the
+        aggregated expression of control feature sets. All analyzed features
+        are binned based on averaged expression, and the control features are
+        randomly selected from each bin. (Tirosh I, et al. 2016. Dissecting the
+        multicellular ecosystem of metastatic melanoma by single-cell RNA-seq.
+        *Science* 352(6282):189-196.
+        <https://www.science.org/doi/10.1126/science.aad0501>)
+    - `ucell`: [`UCell::AddModuleScore_UCell()`](https://bioconductor.org/packages/release/bioc/html/UCell.html)
+        (Andreatta M, Carmona SJ. 2021. UCell: Robust and scalable single-cell
+        gene signature scoring. *Comput Struct Biotechnol J* 19:3796-3798.
+        <https://doi.org/10.1016/j.csbj.2021.06.043>). Missing genes are
+        imputed with expression 0 (with a warning).
+    - `aucell`: [`AUCell::AUCell_calcAUC()`](https://bioconductor.org/packages/release/bioc/html/AUCell.html)
+        (Aibar S, et al. 2017. SCENIC: single-cell regulatory network inference
+        and clustering. *Nat Methods* 14:1083-1086.
+        <https://doi.org/10.1038/nmeth.4463>)
+    - `ssgsea`: [`GSVA::gsva()`](https://bioconductor.org/packages/release/bioc/html/GSVA.html)
+        with `method = "ssgsea"` (Barbie DA, et al. 2009. Systematic RNA
+        interference reveals that oncogenic KRAS-driven cancers require TBK1.
+        *Nature* 462:108-112. <https://doi.org/10.1038/nature08460>)
+    - `jasmine`: (Noureen N, et al. 2022. Integrated analysis of telomerase
+        enzymatic activity unravels an association with cancer stemness and
+        proliferation. *eLife* 11:e71994. <https://doi.org/10.7554/eLife.71994>)
+    - `scse`: (Pont F, et al. 2019. Single-cell signature explorer for
+        personalized transcriptomics studies and drug discovery. *Nucleic Acids
+        Res* 47(19):e90. <https://doi.org/10.1093/nar/gkz601>)
+    - `scps`: (the scPS benchmarking study:
+        <https://academic.oup.com/nargab/article/6/3/lqae124/7770961>)
+
+    Scores from different methods are not comparable with each other — only
+    the column names are consistent.
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -1385,36 +1414,56 @@ class ModuleScoreCalculator(Proc):
 
     Envs:
         defaults (ns): The default parameters for `modules`.
-            - features: The features to calculate the scores. Multiple features
-                should be separated by comma.
-                You can also specify `cc.genes` or `cc.genes.updated.2019` to
-                use the cell cycle genes to calculate cell cycle scores.
-                If so, three columns will be added to the metadata, including
-                `S.Score`, `G2M.Score` and `Phase`.
-                Only one type of cell cycle scores can be calculated at a time.
+            - method (choice): The scoring method to use, one of `seurat`,
+                `ucell`, `aucell`, `ssgsea`, `jasmine`, `scse` or `scps`.
+                Can be overridden per module.
+            - features: The features (genes) to calculate the scores.
+                A comma-separated string of genes, e.g.
+                `"HAVCR2,ENTPD1,LAYN,LAG3"`, yields one score column named by
+                the module key. A list of gene vectors, e.g.
+                `["HAVCR2","ENTPD1"]`, yields one column per element, named
+                `{key}1`, `{key}2`, ... if unnamed, or `{key}_{name}` if
+                named. You can also specify `cc.genes`,
+                `cc.genes.updated.2019` or `cc.genes.mouse` (or use
+                `kind: "cc"`, with `features` defaulting to `cc.genes`) to
+                calculate cell cycle scores. Three columns will be added to
+                the metadata: `{key}_S.Score`, `{key}_G2M.Score` and
+                `{key}_Phase`. This works for all methods. Use one of the
+                reserved no-prefix keys (`"_"`, `"-"`, `"*"` or `"#"`) as the
+                module key to keep the plain `S.Score`, `G2M.Score` and
+                `Phase` names. For diffusion map modules (`kind: "dm"`), this
+                is the number of components to keep (default 2).
             - nbin (type=int): Number of bins of aggregate expression levels
-                for all analyzed features.
+                for all analyzed features. Only for the `seurat` method.
             - ctrl (type=int): Number of control features selected from
-                the same bin per analyzed feature.
+                the same bin per analyzed feature. Only for the `seurat`
+                method.
             - k (flag): Use feature clusters returned from `DoKMeans`.
-            - assay: The assay to use.
-            - seed (type=int): Set a random seed.
-            - search (flag): Search for symbol synonyms for features in
-                features that don't match features in object?
-            - keep (flag): Keep the scores for each feature?
-                Only works for non-cell cycle scores.
-            - agg (choice): The aggregation function to use.
-                Only works for non-cell cycle scores.
-                - mean: The mean of the expression levels
-                - median: The median of the expression levels
-                - sum: The sum of the expression levels
-                - max: The max of the expression levels
-                - min: The min of the expression levels
-                - var: The variance of the expression levels
-                - sd: The standard deviation of the expression levels
-            - <more>: Other arguments passed to `Seurat::AddModuleScore()` or `Seurat::CellCycleScoring()`.
-                See <https://satijalab.org/seurat/reference/addmodulescore> and
-                <https://satijalab.org/seurat/reference/cellcyclescoring>
+                Only for the `seurat` method.
+            - assay: The assay to use (for tools that accept it).
+            - seed (type=int): Set a random seed. Only for the `seurat` method.
+            - search (flag): Search for symbol synonyms for features that
+                don't match features in object? Only for the `seurat` method.
+            - <more>: Other parameters, passed to the underlying tool of the
+                `method`. For `seurat`, they go to `Seurat::AddModuleScore()`
+                or `Seurat::CellCycleScoring()` (see
+                <https://satijalab.org/seurat/reference/addmodulescore> and
+                <https://satijalab.org/seurat/reference/cellcyclescoring>).
+                For `ucell`: `maxRank`, `w_neg` and `slot` (default
+                `"counts"`, not `layer`). For `aucell`: `aucMaxRank`,
+                `plotStats`. For `ssgsea`: `kcdf`, `verbose`, `min.sz`,
+                `max.sz`, `tau`, etc. For `scse`/`scps`: `layer` (default
+                `"data"`). `scps` uses the bundled scPS implementation, which
+                runs PCA on the `scale.data` of the object, so the signature
+                genes must be scaled first (`ScaleData(features = ...)` or
+                `SCTransform`); it also requires the
+                [`GSEABase`](https://bioconductor.org/packages/release/bioc/html/GSEABase.html)
+                package. For diffmap modules (`kind: "dm"`): `n_pcs` (use PCA
+                embeddings instead of assay data) and other arguments passed
+                to
+                [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+                The `agg` and `keep` parameters from old versions are removed
+                and ignored.
         ncores (type=int): The number of cores to use for reading and writing the seurat object.
         modules (type=json): The modules to calculate the scores.
             Keys are the names of the expression programs and values are the
@@ -1422,25 +1471,37 @@ class ModuleScoreCalculator(Proc):
             Here are some examples -
             >>> {
             >>>     "CellCycleMouse": {"features": "cc.genes.mouse"},
-            >>>     "CellCycle": {"features": "cc.genes.updated.2019"},
-            >>>     "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
-            >>>     "Activation": {"features": "IFNG"},
-            >>>     "Proliferation": {"features": "STMN1,TUBB"}
+            >>>     "CellCycle": {"kind": "cc", "features": "cc.genes.updated.2019"},
+            >>>     "TcellState": {
+            >>>         "features": {
+            >>>             "Exhaustion": ["HAVCR2", "ENTPD1", "LAYN", "LAG3"],
+            >>>             "Activation": ["IFNG"]
+            >>>         },
+            >>>         "method": "ucell",
+            >>>         "maxRank": 500
+            >>>     },
+            >>>     "Proliferation": {"features": "STMN1,TUBB"},
+            >>>     "DC": {"kind": "dm"}
             >>> }
 
-            For `CellCycle`, the columns `S.Score`, `G2M.Score` and `Phase` will
-            be added to the metadata. `S.Score` and `G2M.Score` are the cell cycle
-            scores for each cell, and `Phase` is the cell cycle phase for each cell.
+            For `CellCycle`, the columns `CellCycle_S.Score`,
+            `CellCycle_G2M.Score` and `CellCycle_Phase` will be added to the
+            metadata.
 
-            You can also add Diffusion Components (DC) to the modules
-            >>> {"DC": {"features": 2, "kind": "diffmap"}}
-            will perform diffusion map as a reduction and add the first 2
-            components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
-            for `diffusion_map`. Other key-value pairs will pass to
-            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap class).
+            For `TcellState`, the columns `TcellState_Exhaustion` and
+            `TcellState_Activation` will be added to the metadata, one for each
+            program in the named `features` list (the list values are gene
+            vectors, not comma-separated strings).
+
+            For `DC`, a diffusion map will be calculated with
+            [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html)
+            (regardless of `method`), and the first 2 components will be added
+            as the `DC` reduction as well as the `DC_1` and `DC_2` columns to
+            the metadata. `dm` is a shortcut for `diffmap`/`diffusion_map`.
             You can later plot the diffusion map by using
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
-            This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
+            This requires
+            [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
         post_mutaters (type=json): The mutaters to mutate the metadata after
             calculating the module scores.
@@ -1454,6 +1515,7 @@ class ModuleScoreCalculator(Proc):
     lang = config.lang.rscript
     envs = {
         "defaults": {
+            "method": "seurat",
             "features": None,
             "nbin": 24,
             "ctrl": 100,
@@ -1461,8 +1523,6 @@ class ModuleScoreCalculator(Proc):
             "assay": None,
             "seed": 8525,
             "search": False,
-            "keep": False,
-            "agg": "mean",
         },
         "ncores": config.misc.ncores,
         "modules": {
