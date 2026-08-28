@@ -988,6 +988,382 @@ class SeuratClusterStats(Proc):
     }
 
 
+class HdWGCNA(Proc):
+    """Weighted gene co-expression network analysis (WGCNA) for single-cell RNA-seq data.
+
+    Wrapping [`hdWGCNA`](https://smorabit.github.io/hdWGCNA/index.html) (v0.4.12).
+    For a comprehensive introduction and usage guide, please refer to
+    the [hdWGCNA tutorials](https://smorabit.github.io/hdWGCNA/articles/index.html).
+
+    The analysis includes the following steps:
+
+    1. **Setup**: `SetupForWGCNA` to select the genes for WGCNA.
+    2. **Data aggregation** (choose one):
+       - **Metacells** (recommended): `MetacellsByGroups` + `NormalizeMetacells`, with optional
+         `ScaleMetacells`, `RunPCAMetacells`, `RunHarmonyMetacells` and `RunUMAPMetacells`.
+       - **Pseudobulk**: `AggregatePseudobulk` + `NormalizeCounts` (DESeq2 VST).
+    3. **Network construction**: `SetDatExpr` + `TestSoftPowers` + `ConstructNetwork`, or
+       `SetMultiExpr` + `TestSoftPowersConsensus` + `ConstructNetwork` for a **consensus network**
+       (`use_consensus`).
+    4. **Module analysis**: `ModuleEigengenes` + `ModuleConnectivity` (kME), optionally
+       `ResetModuleNames`/`ResetModuleColors`, and `GetHubGenes` for hub genes.
+    5. **Downstream analyses**: module visualization (`plots`), differential module expression
+       (`dmes`), module-trait correlation (`module_trait_corr`), functional enrichment (`enrich`),
+       module preservation/projection (`module_preservations`), TF regulatory networks
+       (`tf_network`) and motif overlap (`motifs`).
+
+    The envs that configure a single hdWGCNA function are named after the function itself
+    (e.g. `SetupForWGCNA`, `MetacellsByGroups`), and the keys within them are the argument
+    names of the corresponding R function, with `-` used in place of `.` in the argument
+    names (e.g. `group.by` -> `group-by`). The envs that bundle several functions
+    (`plots`, `dmes`, `module_trait_corr`, `enrich`, `module_preservations`, `tf_network`,
+    `motifs`) are case-based, where the keys are the titles of the cases and the values
+    inherit from the corresponding `*_defaults` env.
+
+    Packages:
+        **Core** (required for any analysis, checked by `Requires`):
+        [Seurat](https://satijalab.org/seurat/), [hdWGCNA](https://github.com/smorabit/hdWGCNA),
+        [WGCNA](https://cran.r-project.org/package=WGCNA), [igraph](https://igraph.org/),
+        [patchwork](https://patchwork.data-imaginist.com/),
+        [tidyseurat](https://tidyseurat.github.io/), [glue](https://glue.tidyverse.org/) and
+        [biopipen.utils](https://github.com/pwwang/biopipen.utils) (provides `RunEnrichment`/
+        `VizEnrichment`).
+
+        **Advanced** (only when the corresponding analyses are enabled):
+        - **Enrichment** (`enrich`): [enrichit](https://github.com/pwwang/enrichit)
+          (via `biopipen.utils::RunEnrichment`, requires internet access for the
+          Enrichr API).
+        - **GSEA** (`gsea`): [fgsea](https://bioconductor.org/packages/fgsea/);
+          [msigdbr](https://cran.r-project.org/package=msigdbr) only when
+          `genesets` is given as a dict of arguments for `msigdbr::msigdbr()`
+          (e.g. `{species: "human", collection: "C5", subcollection: "BP"}`) —
+          a GMT file needs no extra package.
+        - **Motif scan** (`tf_network.motif_scan` and `motifs`):
+          [TFBSTools](https://bioconductor.org/packages/TFBSTools/),
+          [motifmatchr](https://bioconductor.org/packages/motifmatchr/),
+          a JASPAR package (e.g. [JASPAR2020](https://bioconductor.org/packages/JASPAR2020/)),
+          a BSgenome package (e.g. `BSgenome.Hsapiens.UCSC.hg38`, set via
+          `species_genome`), and an EnsDb package (e.g. `EnsDb.Hsapiens.v86`,
+          set via `ensdb_package`).
+        - **TF network** (`tf_network.construct`): [xgboost](https://cran.r-project.org/package=xgboost).
+        - **Regulon scores** (`tf_network.regulon_scores`, and `ModuleExprScore`
+          with `method: "UCell"`): [UCell](https://github.com/carmonalab/UCell).
+        - **Regulon enrichment** (`tf_network.enrich_regulons`): [enrichit](https://github.com/pwwang/enrichit)
+          (via `biopipen.utils::RunEnrichment`, requires internet access for the
+          Enrichr API).
+        - **Regulatory heatmap** (`tf_network.regulatory_heatmap`): [forcats](https://forcats.tidyverse.org/)
+          (hdWGCNA uses `fct_rev()` in the heatmap's aes without importing forcats).
+        - **Module preservation** (`module_preservations.netrep`): [NetRep](https://cran.r-project.org/package=NetRep).
+        - **Metacells** (`RunHarmonyMetacells`): [harmony](https://cran.r-project.org/package=harmony).
+        - **Pseudobulk** (`NormalizeCounts` with `method: "VST"`): [DESeq2](https://bioconductor.org/packages/DESeq2).
+
+    Input:
+        srtobj: The Seurat object to analyze
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+        mutaters (type=json): The columns to add to the metadata of the object.
+            See `SeuratPreparing` for more details.
+        subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+        seed (type=int): The random seed.
+        cache: The directory to cache the TOM matrices (they are large). `true` to use the job
+            output directory. By default, the TOM matrices are cached in the output directory.
+        use_pseudobulk (flag): Whether to aggregate the cells into pseudobulk
+            (via `AggregatePseudobulk` + `NormalizeCounts`) instead of metacells.
+        use_consensus (flag): Whether to construct a consensus network
+            (requires `SetMultiExpr` to be set).
+        ref_srtobj: The reference Seurat object (RDS/qs file) for module preservation/projection.
+            Relative paths are resolved against the directory of the input object.
+            Use `"self"` to test the preservation of the modules against the query
+            object itself (self-preservation test).
+        SetupForWGCNA (type=json): The arguments for [`hdWGCNA::SetupForWGCNA`](https://smorabit.github.io/hdWGCNA/reference/SetupForWGCNA.html).
+            - wgcna_name: The name of the WGCNA network, will be used throughout the analysis.
+            - gene_select: The gene selection method.
+            - fraction: The fraction of cells that a gene needs to be expressed in to be
+                included when `gene_select = "fraction"`.
+        MetacellsByGroups (type=json): The arguments for [`hdWGCNA::MetacellsByGroups`](https://smorabit.github.io/hdWGCNA/reference/MetacellsByGroups.html).
+            - group-by: The metadata columns to group the cells by.
+            - ident-group: The column to use as the identity of the metacells.
+        NormalizeMetacells (type=json): The arguments for [`hdWGCNA::NormalizeMetacells`](https://smorabit.github.io/hdWGCNA/reference/NormalizeMetacells.html).
+        ScaleMetacells: The arguments for [`hdWGCNA::ScaleMetacells`](https://smorabit.github.io/hdWGCNA/reference/ScaleMetacells.html).
+            `None` to skip.
+        RunPCAMetacells: The arguments for [`hdWGCNA::RunPCAMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunPCAMetacells.html).
+            `None` to skip.
+        RunHarmonyMetacells: The arguments for [`hdWGCNA::RunHarmonyMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunHarmonyMetacells.html).
+            `None` to skip. Requires `group-by-vars` to be set.
+        RunUMAPMetacells: The arguments for [`hdWGCNA::RunUMAPMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunUMAPMetacells.html).
+            `None` to skip.
+        AggregatePseudobulk (type=json): The arguments for [`hdWGCNA::AggregatePseudobulk`](https://smorabit.github.io/hdWGCNA/reference/AggregatePseudobulk.html).
+            - replicate_col: The column in metadata for the replicate (sample) of each cell.
+            - group_col: The column in metadata for the group of each cell.
+        NormalizeCounts (type=json): The arguments for [`hdWGCNA::NormalizeCounts`](https://smorabit.github.io/hdWGCNA/reference/NormalizeCounts.html).
+        SetDatExpr (type=json): The arguments for [`hdWGCNA::SetDatExpr`](https://smorabit.github.io/hdWGCNA/reference/SetDatExpr.html).
+            Note that in the pseudobulk mode, `mat` and `layer` are set automatically.
+        TestSoftPowers (type=json): The arguments for [`hdWGCNA::TestSoftPowers`](https://smorabit.github.io/hdWGCNA/reference/TestSoftPowers.html).
+        SetMultiExpr: The arguments for [`hdWGCNA::SetMultiExpr`](https://smorabit.github.io/hdWGCNA/reference/SetMultiExpr.html).
+            Required when `use_consensus` is true. When `use_pseudobulk` is true,
+            `mat` and `layer` are set automatically, and `multi-group-by` should be
+            set to the column in the pseudobulk metadata that defines the groups
+            (e.g. `cell_type`).
+        TestSoftPowersConsensus (type=json): The arguments for [`hdWGCNA::TestSoftPowersConsensus`](https://smorabit.github.io/hdWGCNA/reference/TestSoftPowersConsensus.html).
+        ConstructNetwork (type=json): The arguments for [`hdWGCNA::ConstructNetwork`](https://smorabit.github.io/hdWGCNA/reference/ConstructNetwork.html).
+            - soft_power: The soft power to use. `None` to use the one determined by `TestSoftPowers`.
+            - tom_name: The name of the TOM matrix. Defaults to the `wgcna_name`.
+            - minModuleSize: The minimum number of genes in a module.
+            - mergeCutHeight: The cut height for merging similar modules.
+        ModuleEigengenes (type=json): The arguments for [`hdWGCNA::ModuleEigengenes`](https://smorabit.github.io/hdWGCNA/reference/ModuleEigengenes.html).
+        ModuleConnectivity (type=json): The arguments for [`hdWGCNA::ModuleConnectivity`](https://smorabit.github.io/hdWGCNA/reference/ModuleConnectivity.html).
+        ResetModuleNames: The arguments for [`hdWGCNA::ResetModuleNames`](https://smorabit.github.io/hdWGCNA/reference/ResetModuleNames.html).
+            `None` to skip. e.g. `{new_name: "M"}` to rename the modules to `M1`, `M2`, ...
+        ResetModuleColors: The arguments for [`hdWGCNA::ResetModuleColors`](https://smorabit.github.io/hdWGCNA/reference/ResetModuleColors.html).
+            `None` to skip.
+        GetHubGenes (type=json): The arguments for [`hdWGCNA::GetHubGenes`](https://smorabit.github.io/hdWGCNA/reference/GetHubGenes.html).
+        plots_defaults (ns): The default parameters for the cases in `plots`.
+            - kind: The kind of the plot. See `plots` for the available kinds.
+            - devpars (ns): The device parameters for the plots.
+            - more_formats (type=list): The formats to save the plots other than `png`.
+        plots (type=json): The plots to make. Keys are the titles of the plots and values
+            are the dicts inherited from `plots_defaults`.
+            - kind: The kind of the plot, one of `soft_powers` (the soft power selection plots,
+                SFT and fit, saved as `<title>.sft.png` and `<title>.fit.png`), `dendrogram`
+                (the gene dendrogram), `kmes` (the kME module membership plots, arguments for
+                `PlotKMEs`), `module_umap` (the module UMAP, arguments for `RunModuleUMAP` at the
+                case level except `umap_plot_args`, and the arguments for `ModuleUMAPPlot` in the
+                sub-dict `umap_plot_args`), `module_network` (the module network plots,
+                `ModuleNetworkPlot` writes the plots to `<outdir>/plots/ModuleNetworks.<title>`),
+                `hub_gene_network`, `module_feature` (arguments for `ModuleFeaturePlot`),
+                `module_radar` (arguments for `ModuleRadarPlot`), `module_correlogram`
+                (arguments for `ModuleCorrelogram`), `consensus_compare` (only when
+                `use_consensus` is true: re-runs the standard non-consensus workflow on the
+                same data under `standard_name`, then plots both the consensus and standard
+                module colors on the consensus dendrogram via `WGCNA::plotDendroAndColors`;
+                accepts `standard_name` (required), `soft_power` for the standard network
+                (given, the soft power test is skipped), and other `SetDatExpr`/`ConstructNetwork`
+                arguments, plus `main` for the plot title).
+            - descr: The description of the plot, showing in the report.
+        ModuleExprScore: The arguments for [`hdWGCNA::ModuleExprScore`](https://smorabit.github.io/hdWGCNA/reference/ModuleExprScore.html).
+            Runs before `dmes` so that the module scores can be used as the features for DMEs.
+            `None` to skip.
+        dmes_defaults (ns): The default parameters for the cases in `dmes`.
+            - mode (choice): `find_all` to use `FindAllDMEs`, `find` to use `FindDMEs`.
+            - group-by: The column in metadata to group the cells by (for `find_all`).
+            - barcodes1: The barcodes of the first group to compare (for `find`).
+            - barcodes2: The barcodes of the second group to compare (for `find`).
+            - lollipop (flag): Whether to make the lollipop plot.
+            - volcano (flag): Whether to make the volcano plot.
+            - devpars (ns): The device parameters for the plots.
+        dmes (type=json): The differential module expression analyses. Keys are the titles of the
+            cases and values are the dicts inherited from `dmes_defaults`. Other arguments of
+            `FindAllDMEs`/`FindDMEs` can also be set, plus `pvalue` for the p-value column
+            used by the lollipop plot (default: `p_val_adj`).
+        module_trait_corr_defaults (ns): The default parameters for the cases in `module_trait_corr`.
+            - traits: The columns in metadata to use as the traits (a character vector).
+            - group-by: The column in metadata to group the cells by.
+            - devpars (ns): The device parameters for the plots.
+        module_trait_corr (type=json): The module-trait correlation analyses. Keys are the titles
+            of the cases and values are the dicts inherited from `module_trait_corr_defaults`.
+        enrich_defaults (ns): The default parameters for the cases in `enrich`.
+            - dbs: The databases to use for the enrichment analysis (via [enrichit](https://github.com/pwwang/enrichit)).
+            - enrich_plots (type=json): The plots to make for each module. Keys are the titles of
+                the plots and values are the arguments for
+                [`plotthis::VizEnrichment`](https://pwwang.github.io/plotthis/reference/VizEnrichment.html),
+                including `db`, `plot_type`, `top_term`, `metric`, etc.
+            - devpars (ns): The device parameters for the plots.
+        enrich (type=json): The functional enrichment analyses for the module genes. Keys are the
+            titles of the cases and values are the dicts inherited from `enrich_defaults`.
+            The enrichment is done by `enrichit::RunEnrichment` and the plots by `plotthis::VizEnrichment`.
+            Requires internet access.
+        gsea_defaults (ns): The default parameters for the cases in `gsea`.
+            - genesets: The gene sets to test against. A dict of arguments for
+                [`msigdbr::msigdbr()`](https://igordot.github.io/msigdbr/reference/msigdbr.html)
+                (e.g. `{species: "human", collection: "C5", subcollection: "BP"}`), or a GMT file.
+            - metric: The significance metric used to rank the terms, `p.adjust` or `pvalue`.
+            - cutoff: The significance cutoff for the terms (on the `metric` column).
+            - top_term (type=int): The number of top terms to show in the summary plot, and
+                the default number of terms for the running-score plots.
+            - gsea_plots (type=json): The running-score plots. Keys are the titles and values are
+                the arguments for
+                [`plotthis::VizGSEA`](https://pwwang.github.io/plotthis/reference/GSEAPlot.html)
+                with `plot_type: "gsea"` (the summary plot is always made),
+                including `gs` (the gene set IDs to plot; default: the top significant terms),
+                `top_term`, etc.
+            - devpars (ns): The device parameters for the plots.
+        gsea (type=json): The gene set enrichment analyses of the module gene ranks (kME) for
+            each module. Keys are the titles of the cases and values are the dicts inherited
+            from `gsea_defaults`. Other arguments of
+            [`biopipen.utils::RunGSEA`](https://pwwang.github.io/biopipen.utils/reference/RunGSEA.html)
+            (e.g. `minSize`, `maxSize`) can also be set. The analysis is done by `fgsea` and
+            the plots by `plotthis::VizGSEA` (`GSEASummaryPlot`/`GSEAPlot`).
+        module_preservations_defaults (ns): The default parameters for the cases in `module_preservations`.
+            - project_modules (flag): Whether to project the modules to the reference object
+                (via `ProjectModules`).
+            - preserve (flag): Whether to test the module preservation
+                (via `ModulePreservation`).
+            - project_args (ns): The arguments for `ProjectModules`.
+            - preserve_args (ns): The arguments for `ModulePreservation`.
+            - plot (flag): Whether to make the preservation plot.
+            - lollipop (flag): Whether to make the lollipop plot.
+            - netrep (ns): The network reproduction test (via `ModulePreservationNetRep`). `{}` to skip.
+                - args: The arguments for `ModulePreservationNetRep`.
+                - topology_heatmap (type=json): The topology heatmaps. Keys are the titles and values
+                    are the arguments for `ModuleTopologyHeatmap`, with `mod` required.
+                - topology_barplot (type=json): The topology barplots. Keys are the titles and values
+                    are the arguments for `ModuleTopologyBarplot`, with `mod` required.
+            - devpars (ns): The device parameters for the plots.
+        module_preservations (type=json): The module preservation/projection analyses. Keys are the
+            titles of the cases and values are the dicts inherited from `module_preservations_defaults`.
+            Requires `ref_srtobj` to be set.
+        tf_network (ns): The TF regulatory network analysis. `{}` to skip.
+            - motif_scan (ns): The arguments for `MotifScan`. The `pfm` and `EnsDb` are constructed
+                from the JASPAR and Ensembl databases automatically.
+                - species_genome: The genome build name, e.g. `hg38` or `mm39`.
+                - ensdb_package: The name of the EnsDb package, e.g. `EnsDb.Hsapiens.v86`.
+                - jaspar_package: The name of the JASPAR package, default `JASPAR2020`.
+                - collection: The JASPAR collection, e.g. `CORE`.
+                - tax_group: The JASPAR taxonomic group, e.g. `vertebrates`.
+                - all_versions: Whether to include all versions of the JASPAR matrices.
+            - construct (ns): The arguments for `ConstructTFNetwork`, with `model_params` required.
+                `nthread` in `model_params` is set to `ncores` automatically if not set.
+            - assign (ns): The arguments for `AssignTFRegulons`.
+            - regulon_scores (ns): The arguments for `RegulonScores`. `{}` to skip.
+            - plots (type=json): The TF network plots. Keys are the titles and values are the
+                arguments for `TFNetworkPlot`, with `selected_tfs` required.
+            - regulon_bar_plots (type=json): The regulon bar plots. Keys are the titles and values
+                are the arguments for `RegulonBarPlot`, with `selected_tf` required.
+            - differential_regulons (type=json): The differential regulon analyses. Keys are the
+                titles and values are the arguments for `FindDifferentialRegulons`, with
+                `barcodes1` and `barcodes2` required.
+            - enrich_regulons (ns): The regulon enrichment of the positive/negative TF targets
+                against the Enrichr databases, using enrichit (via `biopipen.utils::RunEnrichment`,
+                requires internet access). `None` to skip.
+                - dbs: The Enrichr databases to test against.
+                - depth: The depth of the TF regulatory network to include.
+                - use_regulons: Whether to use only the regulon genes (instead of all targets).
+                - min_genes: The minimum number of target genes required to run the enrichment.
+            - regulatory_heatmap (ns): The arguments for `ModuleRegulatoryHeatmap`. `None` to skip.
+            - regulatory_network (ns): The arguments for `ModuleRegulatoryNetworkPlot`. `None` to skip.
+        motifs (ns): The motif overlap analysis. `{}` to skip. Requires `tf_network.motif_scan` to be run.
+            - overlap_bar_plot (ns): The arguments for `MotifOverlapBarPlot`. The plots are written
+                to `<outdir>/plots/MotifOverlap`.
+
+    Requires:
+        r-seurat:
+            - check: {{proc.lang}} <(echo "library(Seurat)")
+        r-hdwgcn:
+            - check: {{proc.lang}} <(echo "library(hdWGCNA)")
+        r-wgcna:
+            - check: {{proc.lang}} <(echo "library(WGCNA)")
+        r-igraph:
+            - check: {{proc.lang}} <(echo "library(igraph)")
+    """  # noqa: E501
+
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.hdwgcn"
+    lang = config.lang.rscript
+    envs_depth = 4
+    envs = {
+        "ncores": config.misc.ncores,
+        "mutaters": {},
+        "subset": None,
+        "seed": 8525,
+        "cache": None,
+        "use_pseudobulk": False,
+        "use_consensus": False,
+        "ref_srtobj": None,
+        "SetupForWGCNA": {
+            "wgcna_name": "biopipen",
+            "gene_select": "fraction",
+            "fraction": 0.05,
+        },
+        "MetacellsByGroups": {
+            "group-by": "seurat_clusters",
+            "ident-group": "seurat_clusters",
+        },
+        "NormalizeMetacells": {},
+        "ScaleMetacells": None,
+        "RunPCAMetacells": None,
+        "RunHarmonyMetacells": None,
+        "RunUMAPMetacells": None,
+        "AggregatePseudobulk": {
+            "replicate_col": "Sample",
+            "group_col": "seurat_clusters",
+        },
+        "NormalizeCounts": {"method": "VST", "assay_name": "counts"},
+        "SetDatExpr": {},
+        "TestSoftPowers": {},
+        "SetMultiExpr": None,
+        "TestSoftPowersConsensus": {},
+        "ConstructNetwork": {},
+        "ModuleEigengenes": {},
+        "ModuleConnectivity": {},
+        "ResetModuleNames": None,
+        "ResetModuleColors": None,
+        "GetHubGenes": {"n_hubs": 10},
+        "plots_defaults": {
+            "kind": None,
+            "devpars": {"res": 100},
+            "more_formats": [],
+        },
+        "plots": {
+            "Soft Powers": {"kind": "soft_powers"},
+            "Dendrogram": {"kind": "dendrogram"},
+        },
+        "ModuleExprScore": None,
+        "dmes_defaults": {
+            "mode": "find_all",
+            "group-by": "seurat_clusters",
+            "barcodes1": None,
+            "barcodes2": None,
+            "lollipop": True,
+            "volcano": False,
+            "devpars": {"res": 100},
+        },
+        "dmes": {},
+        "module_trait_corr_defaults": {
+            "traits": None,
+            "group-by": "seurat_clusters",
+            "devpars": {"res": 100},
+        },
+        "module_trait_corr": {},
+        "enrich_defaults": {
+            "dbs": None,
+            "enrich_plots": {},
+            "devpars": {"res": 100},
+        },
+        "enrich": {},
+        "gsea_defaults": {
+            "genesets": None,
+            "metric": "p.adjust",
+            "cutoff": 0.05,
+            "top_term": 10,
+            "gsea_plots": {},
+            "devpars": {"res": 100},
+        },
+        "gsea": {},
+        "module_preservations_defaults": {
+            "project_modules": True,
+            "preserve": True,
+            "project_args": {},
+            "preserve_args": {},
+            "plot": True,
+            "lollipop": False,
+            "netrep": {},
+            "devpars": {"res": 100},
+        },
+        "module_preservations": {},
+        "tf_network": {},
+        "motifs": {},
+    }
+    script = "file://../scripts/scrna/HdWGCNA.R"
+    plugin_opts = {
+        "report": "file://../reports/common.svelte",
+        "report_paging": 2,
+    }
+
+
 class ModuleScoreCalculator(Proc):
     """Calculate the module scores for each cell
 

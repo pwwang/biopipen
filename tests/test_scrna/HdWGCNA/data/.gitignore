@@ -1,0 +1,4 @@
+# Downloaded test data (~543MB, too large for git). Download it with the
+# test fixture (gdown) or place it here manually as described in test.py.
+*.rds
+*.pkl
