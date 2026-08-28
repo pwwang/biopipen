@@ -139,3 +139,5 @@ Rplots.pdf
 tests/running/
 debug.ipynb
 .claude/skills/*-workspace
+tests/test_scrna/HdWGCNA/data/*.rds
+tests/test_scrna/HdWGCNA/data/*.pkl

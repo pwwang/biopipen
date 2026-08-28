@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.4.0a16
+
+- test(scrna.ScFGSEAEach): use if_else instead of ifelse in mutaters function for ScFGSEAEach class to keep factor
+- refactor(scrna.ModuleScoreCalculator): refactor ModuleScoreCalculator to use biopipen.utils::RunModuleScoring (supporting multiple tools)
+- feat(scrna): add HdWGCNA class for weighted gene co-expression network analysis
+- feat(pipen-process): add SKILL.md and evals.json for process creation guidelines and evaluation prompts
+
 ## 1.4.0a15
 
 - feat(scrna.AnnData2Seurat): add layer parameter to FeatureStatPlot for improved plotting
