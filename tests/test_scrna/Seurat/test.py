@@ -619,7 +619,7 @@ class ScFGSEAEach(ScFGSEA_):
     requires = SeuratClustering
     envs = {
         # Test if seurat_clusters == 1 gets ignored
-        "mutaters": {"Group2": "ifelse(seurat_clusters == 'c1', NA, Group)"},
+        "mutaters": {"Group2": "if_else(seurat_clusters == 'c1', NA, Group)"},
         "ident_1": "Group1",
         "ident_2": "Group2",
         "group_by": "Group2",
