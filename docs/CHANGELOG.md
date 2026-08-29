@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.4.0a17
+
+- feat(SampleInfo): use biopipen.utils::read_table and write_table so factor levels can be saved and loaded
+- fix(dependencies): constrain mkdocs version to <2 for compatibility
+
 ## 1.4.0a16
 
 - test(scrna.ScFGSEAEach): use if_else instead of ifelse in mutaters function for ScFGSEAEach class to keep factor
