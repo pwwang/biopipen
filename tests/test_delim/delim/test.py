@@ -26,7 +26,11 @@ class RowsBinderWithFilenameFuns(RowsBinder_):
 class SampleInfo(SampleInfo_):
     requires = RowsBinderWithFilenameFuns
     envs = {
-        "mutaters": {"Part": "paste0('Part_', Filename)"},
+        "mutaters": {
+            "Part": "paste0('Part_', Filename)",
+            "Source": "factor(Source, levels=c('Tumor', 'Normal'))",
+        },
+        "save_mutated": True,
         "stats": {
             "Samples_Source": {
                 "plot_type": "pie",
