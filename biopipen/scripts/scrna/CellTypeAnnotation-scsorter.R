@@ -2,6 +2,17 @@
 # Source'd by CellTypeAnnotation.R
 
 annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
+    # Check if RunScSorter from the scSorter package is available
+    # If not, this is the cran/scSorter package, which doesn't support RunScSorter
+    # on Seurat objects
+    # We need pwwang/scSorter, which is a fork of scSorter that supports Seurat objects
+    if (!requireNamespace("scSorter", quietly = TRUE) ||
+        !"RunScSorter" %in% getNamespaceExports("scSorter")) {
+        stop(paste(
+            "The scSorter package is not installed or does not support RunScSorter.",
+            "Please install the pwwang/scSorter package from GitHub."
+        ))
+    }
     library(scSorter)
 
     log <- get_logger()
