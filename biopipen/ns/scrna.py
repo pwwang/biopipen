@@ -2800,6 +2800,7 @@ class CellTypeAnnotation(Proc):
         sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species: The specie of cells.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
+                Defaults to "Normal" if not `if_use_custom_marker`.
             - tissue: Tissue origin of cells must be defined.
             - marker: The marker genes for cell type identification.
             - if_use_custom_marker (flag): Whether to use custom marker genes. If `True`, no `species`, `cancer`, and `tissue` are needed.
@@ -2879,7 +2880,7 @@ class CellTypeAnnotation(Proc):
         "more_cell_types": None,
         "sccatch_args": {
             "species": None,
-            "cancer": "Normal",
+            "cancer": None,
             "tissue": None,
             "marker": None,
             "if_use_custom_marker": False,

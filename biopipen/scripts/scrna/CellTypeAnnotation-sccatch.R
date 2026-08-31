@@ -40,6 +40,8 @@ annotate_sccatch <- function(sobj, ident, sccatch_args) {
             }
             cellmatch <- cellmatch[cellmatch$tissue == sccatch_args$tissue, , drop = FALSE]
         }
+    } else {
+        sccatch_args$cancer <- sccatch_args$cancer %||% "Normal"
     }
     sccatch_args$marker <- cellmatch
 
