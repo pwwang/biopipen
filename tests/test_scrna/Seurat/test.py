@@ -563,7 +563,7 @@ class CellTypeAnnotationSCCatch2(CellTypeAnnotation_):
     """Pipeline integration: SCCatch (marker mode) for SeuratClusterStats test"""
     requires = SeuratClustering
     envs = {
-        "tool": "sccatch",
+        "tool": "scCATCH",
         "merge": True,
         "sccatch_args": {
             "marker": str(Path(__file__).parent.joinpath("data", "tcell.sccatch.RDS")),
