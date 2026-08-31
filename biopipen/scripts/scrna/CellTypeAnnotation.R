@@ -184,7 +184,7 @@ run_case <- function(case_name) {
     case$celltypist_args$assay <- case$celltypist_args$assay %||% assay
     case$scsorter_args$assay <- case$scsorter_args$assay %||% assay
 
-    result <- switch(case$tool,
+    result <- switch(tolower(case$tool),
         hitype = annotate_hitype(
             sobj, case$ident, case$hitype_tissue, case$hitype_db
         ),
