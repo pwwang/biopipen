@@ -2525,18 +2525,18 @@ class CellTypeAnnotation(Proc):
     """Annotate the cell clusters. Currently, the following ways are supported:
 
     1. Pass the cell type annotation directly (at cluster-level or cell-level)
-    2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type)
-    3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
-    4. Use [`hitype`](https://github.com/pwwang/hitype)
-    5. Use [`celltypist`](https://github.com/Teichlab/celltypist)
-    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/)
-    7. Use [`SCINA`](https://github.com/jcao89757/SCINA)
-    8. Use [`SingleR`](https://github.com/dviraran/SingleR)
-    9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight)
-    10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype)
-    11. Use [`cellassign`](https://github.com/Irrationone/cellassign)
-    12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT)
-    13. Use [`CelliD`](https://github.com/RausellLab/CelliD)
+    2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type) (cluster-level, marker-based)
+    3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH) (cluster-level, marker-based)
+    4. Use [`hitype`](https://github.com/pwwang/hitype) (cluster-level, marker-based)
+    5. Use [`celltypist`](https://github.com/Teichlab/celltypist) (cell-level, model-based)
+    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/) (cluster-level, marker-based)
+    7. Use [`SCINA`](https://github.com/jcao89757/SCINA) (cell-level, marker-based)
+    8. Use [`SingleR`](https://github.com/dviraran/SingleR) (cluster-level, model-based)
+    9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight) (cell-level, model-based)
+    10. Use [`GPTCelltype`](https://github.com/Winnie09/GPTCelltype) (cluster-level, model-based)
+    11. Use [`cellassign`](https://github.com/Irrationone/cellassign) (cell-level, marker-based)
+    12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT) (cell-level, model-based)
+    13. Use [`CelliD`](https://github.com/RausellLab/CelliD) (cell-level, marker-based)
 
     The tools can be divided into two categories:
 
