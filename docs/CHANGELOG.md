@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.4.0a18
+
+- feat(scrna.CellTypeAnnotation): redesign envs with per-tool namespaces (`envs.sctype`, `envs.hitype`, etc.) with flattened args; old-style flat envs (e.g. `sctype_db`, `scina_args`) are deprecated but still work with a warning
+- feat(scrna.CellTypeAnnotation): cell-level tools (scina, cellassign, cellid, scbert, schdeepinsight, cell) produce per-cell annotations; with `ident` (or `cases.X.ident`) they also produce cluster-level mappings by majority vote
+- feat(scrna.CellTypeAnnotation): replace `newcol`/`backup_col` with `anno_col` (default `CellType`); annotation always saved to a new column, original ident column never modified; `set_ident` (default `True`) controls the final Idents (all `False` keeps the original ident; multiple `True` warns and the last case wins)
+- feat(scrna.CellTypeAnnotation): add `outprefix.cell2celltype.tsv` output with per-cell annotations (cell barcodes in the `Cell` column), alongside `outprefix.cluster2celltype.tsv`
+
 ## 1.4.0a17
 
 - feat(SampleInfo): use biopipen.utils::read_table and write_table so factor levels can be saved and loaded

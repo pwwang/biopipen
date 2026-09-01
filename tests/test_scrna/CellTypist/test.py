@@ -50,7 +50,7 @@ class CellTypeAnnotationAnnData(CellTypeAnnotation):
     requires = ModifyCellType
     envs = {
         "tool": "celltypist",
-        "celltypist_args": {"model": MODEL},
+        "celltypist": {"model": MODEL},
     }
 
 
@@ -59,7 +59,7 @@ class CellTypeAnnotationAnnDataOverClustering(CellTypeAnnotation):
     envs = {
         "tool": "celltypist",
         "ident": "cell_type",
-        "celltypist_args": {"model": MODEL},
+        "celltypist": {"model": MODEL},
     }
 
 
@@ -68,7 +68,8 @@ class CellTypeAnnotationSeurat(CellTypeAnnotation):
     envs = {
         "tool": "celltypist",
         "merge": True,
-        "celltypist_args": {"model": MODEL},
+        "ident": "cell_type",
+        "celltypist": {"model": MODEL},
     }
 
 
@@ -97,7 +98,10 @@ def testing(pipen):
         [proc for proc in pipen.procs if proc.name == "CellTypeAnnotationAnnData"][0]
         .workdir.joinpath("0", "job.stdout")
     )
-    assert "-c" not in cta_anndata_stdout.read_text()
+    assert "-c" not in " ".join(
+        line for line in cta_anndata_stdout.read_text().splitlines()
+        if "Running celltypist:" in line
+    )
 
 
 if __name__ == "__main__":

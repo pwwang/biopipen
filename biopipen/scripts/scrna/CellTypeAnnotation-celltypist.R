@@ -10,9 +10,9 @@ annotate_celltypist <- function(
     log <- get_logger()
 
     if (is.null(celltypist_args$model)) {
-        stop("Please specify a model for celltypist (celltypist_args.model)")
+        stop("Please specify a model for celltypist (celltypist.model)")
     } else if (!file.exists(celltypist_args$model)) {
-        stop(paste0("Model file not found (celltypist_args.model)"))
+        stop(paste0("Model file not found (celltypist.model)"))
     }
 
     require_package(
@@ -100,27 +100,23 @@ annotate_celltypist <- function(
         "predicted_labels"
     )
 
-    # Extract mapping
+    # Per-cell predictions are always returned
+    annotations <- celltypist_out[, output_col, drop = FALSE]
+    colnames(annotations) <- output_col
+
     if (is.null(over_clustering) || isFALSE(over_clustering)) {
-        # Cell-level prediction: return data frame
-        annotations <- celltypist_out[, output_col, drop = FALSE]
-        colnames(annotations) <- output_col
+        # Cell-level prediction only
         list(cell_annotations = annotations, annotation_col = output_col)
     } else {
-        # Cluster-level: build mapping from over_clustering to output_col
-        combined <- data.frame(
-            cluster = sobj@meta.data[
-                rownames(celltypist_out), over_clustering
-            ],
-            celltype = celltypist_out[[output_col]],
-            stringsAsFactors = FALSE
+        # Cluster-level mapping by majority vote
+        clusters <- as.character(
+            sobj@meta.data[[over_clustering]][rownames(celltypist_out)]
         )
-        mapping <- combined %>%
-            distinct(cluster, celltype)
-        mapping <- stats::setNames(
-            as.list(mapping$celltype),
-            mapping$cluster
+        mapping <- majority_vote(celltypist_out[[output_col]], clusters)
+        list(
+            mapping = mapping,
+            cell_annotations = annotations,
+            annotation_col = output_col
         )
-        list(mapping = mapping)
     }
 }

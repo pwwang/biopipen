@@ -7,7 +7,7 @@ annotate_sctype <- function(sobj, ident, tissue, db) {
 
     log <- get_logger()
 
-    if (is.null(db)) { stop("`sctype_db` is not set") }
+    if (is.null(db)) { stop("`envs.sctype.db` is not set") }
 
     # prepare gene sets
     log$info("Preparing gene sets...")

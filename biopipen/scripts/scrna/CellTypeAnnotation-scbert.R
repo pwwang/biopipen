@@ -10,13 +10,13 @@ annotate_scbert <- function(
 
     # Validate inputs
     if (is.null(scbert_ref)) {
-        stop("`scbert_ref` is required for scBERT annotation")
+        stop("`envs.scbert.ref` is required for scBERT annotation")
     }
     if (is.null(scbert_model)) {
-        stop("`scbert_model` is required for scBERT annotation")
+        stop("`envs.scbert.model` is required for scBERT annotation")
     }
     if (is.null(scbert_label_dict)) {
-        stop("`scbert_label_dict` is required for scBERT annotation")
+        stop("`envs.scbert.label_dict` is required for scBERT annotation")
     }
 
     if (startsWith(scbert_model, "file://")) {
@@ -90,8 +90,22 @@ annotate_scbert <- function(
     results <- read.table(
         outfile, sep = "\t", header = TRUE, row.names = 1
     )
-    list(
-        cell_annotations = results,
-        annotation_col = "scbert_celltype"
-    )
+    if (is.null(ident)) {
+        list(
+            cell_annotations = results,
+            annotation_col = "scbert_celltype"
+        )
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating scBERT results by cluster...")
+        mapping <- majority_vote(
+            results[["scbert_celltype"]],
+            as.character(sobj@meta.data[[ident]][rownames(results)])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = results,
+            annotation_col = "scbert_celltype"
+        )
+    }
 }

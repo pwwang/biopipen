@@ -6,7 +6,7 @@ annotate_singler <- function(sobj, ident, singler_db, singler_args) {
 
     log <- get_logger()
 
-    if (is.null(singler_db)) { stop("`singler_db` is not set") }
+    if (is.null(singler_db)) { stop("`envs.singler.db` is not set") }
 
     if (startsWith(singler_db, "file://")) {
         singler_db <- sub("^file://", "", singler_db)
@@ -31,6 +31,7 @@ annotate_singler <- function(sobj, ident, singler_db, singler_args) {
     # Resolve label column
     label_col <- singler_args$label
     singler_args$label <- NULL
+    singler_args$db <- NULL  # db is passed separately as singler_db
 
     # Prepare reference data and labels based on API version
     if (is_bioc) {
@@ -66,7 +67,7 @@ annotate_singler <- function(sobj, ident, singler_db, singler_args) {
         if (is.null(labels)) {
             stop(paste(
                 "Cannot determine labels from reference.",
-                "Set `label` in `singler_args`."
+                "Set `label` in `envs.singler.label`."
             ))
         }
 
@@ -138,7 +139,7 @@ annotate_singler <- function(sobj, ident, singler_db, singler_args) {
         if (is.null(types)) {
             stop(paste(
                 "Cannot determine cell types from reference.",
-                "Set `label` in `singler_args`."
+                "Set `label` in `envs.singler.label`."
             ))
         }
 

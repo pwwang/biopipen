@@ -34,7 +34,7 @@ load_marker_info <- function(db_path, log) {
 annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     python <- cellassign_args$python %||% Sys.which("python")
     if (python == "") {
-        stop("Python executable not found. Please specify `cellassign_args$python`.")
+        stop("Python executable not found. Please specify `envs.cellassign.python`.")
     }
     # load the right Python environment with tensorflow installed
     Sys.setenv(RETICULATE_PYTHON = python)
@@ -44,7 +44,7 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     log <- get_logger()
 
     if (is.null(cellassign_db)) {
-        stop("`cellassign_db` is required for cellassign annotation")
+        stop("`envs.cellassign.db` is required for cellassign annotation")
     }
 
     # Load marker gene info
@@ -89,6 +89,8 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     # Extract extra args for cellassign()
     extra_args <- cellassign_args
     extra_args$assay <- NULL  # already handled
+    extra_args$db <- NULL  # db is passed separately as cellassign_db
+    extra_args$python <- NULL  # already handled above
 
     # Run cellassign
     log$info("Running cellassign...")
@@ -107,8 +109,18 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
         row.names = names(cell_types)
     )
 
-    list(
-        cell_annotations = result,
-        annotation_col = "cellassign_celltype"
-    )
+    if (is.null(ident)) {
+        list(cell_annotations = result, annotation_col = "cellassign_celltype")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating cellassign results by cluster...")
+        mapping <- majority_vote(
+            cell_types, as.character(sobj@meta.data[[ident]])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = result,
+            annotation_col = "cellassign_celltype"
+        )
+    }
 }

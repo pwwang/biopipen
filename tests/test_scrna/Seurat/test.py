@@ -218,8 +218,7 @@ class CellTypeAnnotation(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
         "tool": "hitype",
-        "hitype_tissue": None,
-        "hitype_db": "hitypedb_pbmc3k",
+        "hitype": {"db": "hitypedb_pbmc3k"},
     }
 
 
@@ -552,7 +551,7 @@ class CellTypeAnnotationSCCatch(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
         "tool": "sccatch",
-        "sccatch_args": {
+        "sccatch": {
             "species": "Human",
             "tissue": "Peripheral blood",
         },
@@ -565,7 +564,7 @@ class CellTypeAnnotationSCCatch2(CellTypeAnnotation_):
     envs = {
         "tool": "scCATCH",
         "merge": True,
-        "sccatch_args": {
+        "sccatch": {
             "marker": str(Path(__file__).parent.joinpath("data", "tcell.sccatch.RDS")),
         },
     }

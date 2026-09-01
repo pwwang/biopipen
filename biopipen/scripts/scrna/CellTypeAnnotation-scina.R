@@ -6,7 +6,7 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
 
     log <- get_logger()
 
-    if (is.null(scina_db)) { stop("`scina_db` is not set") }
+    if (is.null(scina_db)) { stop("`envs.scina.db` is not set") }
 
     if (startsWith(scina_db, "file://")) {
         scina_db <- sub("^file://", "", scina_db)
@@ -33,27 +33,29 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
 
     # Run SCINA
     log$info("Running SCINA...")
+    scina_args$db <- NULL  # db is passed separately as scina_db
     scina_args$exp <- exp
     scina_args$signatures <- signatures
     results <- do_call(SCINA, scina_args)
 
-    # Aggregate per-cell results to cluster-level mapping (majority vote)
-    log$info("Aggregating SCINA results by cluster...")
     cell_labels <- results$cell_labels
-    clusters <- as.character(sobj@meta.data[[ident]])
+    result <- data.frame(
+        scina_celltype = unname(cell_labels),
+        row.names = names(cell_labels)
+    )
 
-    mapping <- list()
-    for (cl in unique(clusters)) {
-        cl_labels <- cell_labels[clusters == cl]
-        cl_labels <- cl_labels[!is.na(cl_labels)]
-        # Filter out "unknown" for majority vote
-        known <- cl_labels[cl_labels != "unknown"]
-        if (length(known) > 0) {
-            mapping[[cl]] <- names(which.max(table(known)))
-        } else {
-            mapping[[cl]] <- "unknown"
-        }
+    if (is.null(ident)) {
+        list(cell_annotations = result, annotation_col = "scina_celltype")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating SCINA results by cluster...")
+        mapping <- majority_vote(
+            cell_labels, as.character(sobj@meta.data[[ident]])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = result,
+            annotation_col = "scina_celltype"
+        )
     }
-
-    list(mapping = mapping)
 }

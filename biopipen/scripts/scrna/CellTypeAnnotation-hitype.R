@@ -6,7 +6,7 @@ annotate_hitype <- function(sobj, ident, tissue, db) {
 
     log <- get_logger()
 
-    if (is.null(db)) { stop("`hitype_db` is not set") }
+    if (is.null(db)) { stop("`envs.hitype.db` is not set") }
 
     # prepare gene sets
     log$info("Preparing gene sets...")

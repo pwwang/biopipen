@@ -10,7 +10,7 @@ annotate_gptcelltype <- function(sobj, ident, gptcelltype_args) {
     api_key <- gptcelltype_args$api_key
     gptcelltype_args$api_key <- NULL
     if (is.null(api_key) || api_key == "") {
-        stop("`api_key` is required in `gptcelltype_args`")
+        stop("`envs.gptcelltype.api_key` is required")
     }
     Sys.setenv(OPENAI_API_KEY = api_key)
 
@@ -26,7 +26,7 @@ annotate_gptcelltype <- function(sobj, ident, gptcelltype_args) {
     model <- gptcelltype_args$model
     gptcelltype_args$model <- NULL
     if (is.null(model) || model == "") {
-        stop("`model` is required in `gptcelltype_args`")
+        stop("`envs.gptcelltype.model` is required")
     }
     tissuename <- gptcelltype_args$tissuename
     gptcelltype_args$tissuename <- NULL

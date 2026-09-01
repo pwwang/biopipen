@@ -1,4 +1,6 @@
+import subprocess
 from pathlib import Path
+
 from pipen import Proc  # type: ignore
 from biopipen.core.config import config
 from biopipen.ns.scrna import CellTypeAnnotation as CellTypeAnnotation_
@@ -44,8 +46,7 @@ class CellTypeAnnotation(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "hitype",
-        "hitype_tissue": None,
-        "hitype_db": "hitypedb_pbmc3k",
+        "hitype": {"db": "hitypedb_pbmc3k"},
     }
 
 
@@ -53,6 +54,7 @@ class CellTypeAnnotationCell(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "cell",
+        "set_ident": False,
         "cell_types": str(Path(__file__).parent / "data/celltype_annotation.tsv#1,2,3"),
     }
 
@@ -61,11 +63,13 @@ class CellTypeAnnotationScSorter(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "scsorter",
-        "scsorter_db": str(
-            Path(__file__).parent.parent
-            / "Seurat"
-            / "data/tcell.sccatch.RDS#celltype,gene"
-        ),
+        "scsorter": {
+            "db": str(
+                Path(__file__).parent.parent
+                / "Seurat"
+                / "data/tcell.sccatch.RDS#celltype,gene"
+            ),
+        },
     }
 
 
@@ -73,8 +77,10 @@ class CellTypeAnnotationScType(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "sctype",
-        "sctype_tissue": "Immune system",
-        "sctype_db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+        "sctype": {
+            "tissue": "Immune system",
+            "db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+        },
     }
 
 
@@ -111,7 +117,8 @@ class CellTypeAnnotationSCINA(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "scina",
-        "scina_db": str(Path(__file__).parent / "data/scina_signatures.csv"),
+        "ident": "seurat_clusters",
+        "scina": {"db": str(Path(__file__).parent / "data/scina_signatures.csv")},
     }
 
 
@@ -119,7 +126,7 @@ class CellTypeAnnotationSingleR(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "singler",
-        "singler_db": str(Path(__file__).parent / "data/singler_ref.rds"),
+        "singler": {"db": str(Path(__file__).parent / "data/singler_ref.rds")},
     }
 
 
@@ -127,7 +134,21 @@ class CellTypeAnnotationCelliD(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "tool": "cellid",
-        "cellid_db": str(Path(__file__).parent / "data/cellid_markers.csv"),
+        "ident": "seurat_clusters",
+        "cellid": {"db": str(Path(__file__).parent / "data/cellid_markers.csv")},
+    }
+
+
+class CellTypeAnnotationDeprecated(CellTypeAnnotation_):
+    """Old-style flat envs must still work, with a deprecation warning"""
+
+    requires = PrepData
+    envs = {
+        "tool": "hitype",
+        "hitype_tissue": None,
+        "hitype_db": "hitypedb_pbmc3k",
+        "newcol": "CellType_old",
+        "set_ident": False,
     }
 
 
@@ -139,8 +160,10 @@ class CellTypeAnnotationMultiCase(CellTypeAnnotation_):
         "cases": {
             "Sctype": {
                 "tool": "sctype",
-                "sctype_tissue": "Immune system",
-                "sctype_db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+                "sctype": {
+                    "tissue": "Immune system",
+                    "db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+                },
             },
             "Direct": {
                 "tool": "direct",
@@ -170,9 +193,11 @@ class CellTypeAnnotationMultiCase2(CellTypeAnnotation_):
         "cases": {
             "Sctype": {
                 "tool": "sctype",
-                "sctype_tissue": "Immune system",
-                "sctype_db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
-                "newcol": "CellType_sctype",
+                "sctype": {
+                    "tissue": "Immune system",
+                    "db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
+                },
+                "anno_col": "CellType_sctype",
             },
             "Direct": {
                 "tool": "direct",
@@ -181,7 +206,7 @@ class CellTypeAnnotationMultiCase2(CellTypeAnnotation_):
                     "c2": "NA",
                     "c5": "B",
                 },
-                "newcol": "CellType_direct",
+                "anno_col": "CellType_direct",
             },
         },
     }
@@ -196,7 +221,7 @@ class CellTypeAnnotationMultiCase3(CellTypeAnnotation_):
         "cases": {
             "Hitype": {
                 "tool": "hitype",
-                "hitype_db": "hitypedb_pbmc3k",
+                "hitype": {"db": "hitypedb_pbmc3k"},
             },
             "Direct": {
                 "tool": "direct",
@@ -221,9 +246,112 @@ def pipeline():
     return get_pipeline(__file__).set_starts(PrepData)
 
 
+def get_proc(pipen, name):
+    return [proc for proc in pipen.procs if proc.name == name][0]
+
+
+def get_rds_info(pipen, procname):
+    """Return (meta.data columns, unique Idents, n cells) of the annotated RDS"""
+    proc = get_proc(pipen, procname)
+    rds = proc.workdir.joinpath("0", "output", "pbmc3k.annotated.RDS")
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- readRDS({str(rds)!r})
+        cat("COLS:", paste(colnames(obj@meta.data), collapse = ","), "\\n", sep = "")
+        cat("IDENTS:", paste(unique(as.character(Idents(obj))), collapse = ","), "\\n", sep = "")
+        cat("NCELLS:", nrow(obj@meta.data), "\\n", sep = "")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script],
+        capture_output=True, text=True, check=True,
+    )
+    cols = None
+    idents = None
+    ncells = None
+    for line in result.stdout.splitlines():
+        if line.startswith("COLS:"):
+            cols = set(line[5:].split(","))
+        elif line.startswith("IDENTS:"):
+            idents = set(line[7:].split(","))
+        elif line.startswith("NCELLS:"):
+            ncells = int(line[7:])
+    return cols, idents, ncells
+
+
+def assert_idents_equal(pipen, procname, colname):
+    """Assert the final Idents equal the values of meta.data[[colname]]"""
+    proc = get_proc(pipen, procname)
+    rds = proc.workdir.joinpath("0", "output", "pbmc3k.annotated.RDS")
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- readRDS({str(rds)!r})
+        stopifnot(identical(
+            as.character(Idents(obj)),
+            as.character(obj@meta.data[[{colname!r}]])
+        ))
+    """
+    subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+
+
 def testing(pipen):
     # assert pipen._succeeded
-    ...
+
+    # hitype (cluster-level): CellType column, no cell2celltype.tsv
+    proc = get_proc(pipen, "CellTypeAnnotation")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotation")
+    assert "CellType" in cols
+    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    assert not outfile.with_name(outfile.name + ".cell2celltype.tsv").exists()
+    assert "SETTING IDENTS to 'CellType'" in proc.workdir.joinpath("0", "job.stdout").read_text()
+    assert_idents_equal(pipen, "CellTypeAnnotation", "CellType")
+
+    # cell tool with set_ident=False: original ident kept
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationCell")
+    assert "CellType" in cols
+    assert_idents_equal(pipen, "CellTypeAnnotationCell", "seurat_clusters")
+
+    # SCINA (cell-level with ident): both cell and cluster outputs
+    proc = get_proc(pipen, "CellTypeAnnotationSCINA")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationSCINA")
+    assert "CellType" in cols
+    assert "scina_celltype" in cols
+    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    assert cell_tsv.is_file()
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+
+    # CelliD (cell-level with ident): both cell and cluster outputs
+    proc = get_proc(pipen, "CellTypeAnnotationCelliD")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationCelliD")
+    assert "CellType" in cols
+    assert "cellid_celltype" in cols
+    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    assert outfile.with_name(outfile.name + ".cell2celltype.tsv").is_file()
+
+    # Old-style flat envs: deprecation warnings, newcol -> anno_col
+    proc = get_proc(pipen, "CellTypeAnnotationDeprecated")
+    stdout = proc.workdir.joinpath("0", "job.stdout").read_text()
+    assert "`envs.hitype_db` is deprecated" in stdout
+    assert "`envs.newcol` is deprecated" in stdout
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationDeprecated")
+    assert "CellType_old" in cols
+    assert_idents_equal(pipen, "CellTypeAnnotationDeprecated", "seurat_clusters")
+
+    # Multi-case with add_prefix=False: per-case anno_col, last set_ident wins
+    proc = get_proc(pipen, "CellTypeAnnotationMultiCase2")
+    stdout = proc.workdir.joinpath("0", "job.stdout").read_text()
+    assert "Multiple cases have set_ident enabled" in stdout
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationMultiCase2")
+    assert "CellType_sctype" in cols
+    assert "CellType_direct" in cols
+    assert_idents_equal(pipen, "CellTypeAnnotationMultiCase2", "CellType_direct")
 
 
 if __name__ == "__main__":

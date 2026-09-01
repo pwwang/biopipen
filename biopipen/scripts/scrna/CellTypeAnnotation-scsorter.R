@@ -17,7 +17,7 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
 
     log <- get_logger()
 
-    if (is.null(scsorter_db)) { stop("`scsorter_db` is not set") }
+    if (is.null(scsorter_db)) { stop("`envs.scsorter.db` is not set") }
 
     if (startsWith(scsorter_db, "file://")) {
         scsorter_db <- sub("^file://", "", scsorter_db)
@@ -81,17 +81,18 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
     log$info("Running RunScSorter...")
     # Set the active identity to the ident column
     Idents(sobj) <- ident
+    scsorter_args$db <- NULL  # db is passed separately as scsorter_db
     scsorter_args$object <- sobj
     scsorter_args$anno <- anno
     sobj <- do_call(RunScSorter, scsorter_args)
 
-    # scSorter stores results in scSorter_celltype column
-    celltypes <- sobj@meta.data %>%
-        distinct(!!sym(ident), scSorter_celltype)
-    celltypes <- stats::setNames(
-        as.list(celltypes$scSorter_celltype),
-        celltypes[[ident]]
+    # RunScSorter stores per-cell predictions in the scSorter_celltype column;
+    # aggregate to one type per cluster by majority vote
+    log$info("Aggregating scSorter results by cluster...")
+    mapping <- majority_vote(
+        sobj@meta.data$scSorter_celltype,
+        as.character(sobj@meta.data[[ident]])
     )
 
-    list(mapping = celltypes)
+    list(mapping = mapping)
 }

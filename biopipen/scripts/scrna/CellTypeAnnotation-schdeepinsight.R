@@ -8,7 +8,7 @@ annotate_schdeepinsight <- function(
     log <- get_logger()
 
     if (is.null(schdeepinsight_ref)) {
-        stop("`schdeepinsight_ref` is not set")
+        stop("`envs.schdeepinsight.ref` is not set")
     }
     if (startsWith(schdeepinsight_ref, "file://")) {
         schdeepinsight_ref <- sub("^file://", "", schdeepinsight_ref)
@@ -68,8 +68,22 @@ annotate_schdeepinsight <- function(
     results <- read.table(
         outfile, sep = "\t", header = TRUE, row.names = 1
     )
-    list(
-        cell_annotations = results,
-        annotation_col = "predicted_detailed_type"
-    )
+    if (is.null(ident)) {
+        list(
+            cell_annotations = results,
+            annotation_col = "predicted_detailed_type"
+        )
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating scHDeepInsight results by cluster...")
+        mapping <- majority_vote(
+            results[["predicted_detailed_type"]],
+            as.character(sobj@meta.data[[ident]][rownames(results)])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = results,
+            annotation_col = "predicted_detailed_type"
+        )
+    }
 }

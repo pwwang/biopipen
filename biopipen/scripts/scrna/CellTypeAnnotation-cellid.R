@@ -7,7 +7,7 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
     log <- get_logger()
 
     if (is.null(cellid_db)) {
-        stop("`cellid_db` is required for CelliD annotation")
+        stop("`envs.cellid.db` is required for CelliD annotation")
     }
 
     # Load marker gene list from file
@@ -77,8 +77,18 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
         row.names = names(predicted)
     )
 
-    list(
-        cell_annotations = result,
-        annotation_col = "cellid_celltype"
-    )
+    if (is.null(ident)) {
+        list(cell_annotations = result, annotation_col = "cellid_celltype")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating CelliD results by cluster...")
+        mapping <- majority_vote(
+            predicted, as.character(sobj@meta.data[[ident]])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = result,
+            annotation_col = "cellid_celltype"
+        )
+    }
 }

@@ -1,7 +1,7 @@
 # CellTypeAnnotation-cell.R — pure R function, no Jinja2 template variables
 # Source'd by CellTypeAnnotation.R
 
-annotate_cell <- function(sobj, cell_types_file) {
+annotate_cell <- function(sobj, cell_types_file, ident) {
     log <- get_logger()
 
     if (!is.character(cell_types_file)) {
@@ -113,8 +113,22 @@ annotate_cell <- function(sobj, cell_types_file) {
     ]
 
     # Return as list with annotation column name info
-    list(
-        cell_annotations = celltypes,
-        annotation_col = as.character(cell_type_cols[1])
-    )
+    if (is.null(ident)) {
+        list(
+            cell_annotations = celltypes,
+            annotation_col = as.character(cell_type_cols[1])
+        )
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating cell type annotations by cluster...")
+        mapping <- majority_vote(
+            celltypes[[1]],
+            as.character(sobj@meta.data[[ident]])
+        )
+        list(
+            mapping = mapping,
+            cell_annotations = celltypes,
+            annotation_col = as.character(cell_type_cols[1])
+        )
+    }
 }
