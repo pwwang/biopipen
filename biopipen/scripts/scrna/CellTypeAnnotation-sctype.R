@@ -11,7 +11,32 @@ annotate_sctype <- function(sobj, ident, tissue, db) {
 
     # prepare gene sets
     log$info("Preparing gene sets...")
-    gs_list <- gene_sets_prepare(db, tissue)
+    db_markers <- load_marker_table(db)
+    if (is.character(db_markers)) {
+        # native ScType xlsx passthrough
+        gs_list <- gene_sets_prepare(db_markers, tissue)
+    } else {
+        if (!is.data.frame(db_markers)) {
+            stop("Cannot recognize the sctype database format. ",
+                 "Use a ScType xlsx/TSV or a universal marker table.")
+        }
+        if (is_marker_canonical(db_markers)) {
+            if (!is.null(tissue) && !"tissue" %in% colnames(db_markers)) {
+                stop(paste0(
+                    "`envs.sctype.tissue` is set to `", tissue,
+                    "` but the marker table has no `tissue` column."
+                ))
+            }
+            db_markers <- markers_to_sctype_df(db_markers)
+        }
+        # gene_sets_prepare only takes a path
+        tmp_db <- tempfile(fileext = ".tsv")
+        write.table(
+            db_markers, tmp_db,
+            sep = "\t", quote = FALSE, row.names = FALSE
+        )
+        gs_list <- gene_sets_prepare(tmp_db, tissue)
+    }
 
     scRNAseqData <- GetAssayData(sobj, layer = "scale.data")
     idents <- as.character(unique(sobj@meta.data[[ident]]))

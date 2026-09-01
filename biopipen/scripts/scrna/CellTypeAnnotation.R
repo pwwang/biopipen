@@ -97,6 +97,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassig
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scbert.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellid.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellid.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-markers.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-markers.R"))
 
 # Majority-vote helper for cell-level tools with ident
 majority_vote <- function(labels, clusters, unknown = "unknown") {

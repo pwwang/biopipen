@@ -13,7 +13,27 @@ annotate_hitype <- function(sobj, ident, tissue, db) {
     if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
         gs_list <- gs_prepare(eval(as.symbol(db)), tissue)
     } else {
-        gs_list <- gs_prepare(db, tissue)
+        db_markers <- load_marker_table(db)
+        if (is.character(db_markers)) {
+            # native ScType xlsx passthrough
+            gs_list <- gs_prepare(db_markers, tissue)
+        } else {
+            if (!is.data.frame(db_markers)) {
+                stop("Cannot recognize the hitype database format. ",
+                     "Use a ScType xlsx/TSV, RDS data.frame, or a universal marker table.")
+            }
+            if (is_marker_canonical(db_markers)) {
+                if (!is.null(tissue) && !"tissue" %in% colnames(db_markers)) {
+                    stop(paste0(
+                        "`envs.hitype.tissue` is set to `", tissue,
+                        "` but the marker table has no `tissue` column."
+                    ))
+                }
+                db_markers <- markers_to_sctype_df(db_markers)
+            }
+            # gs_prepare accepts a data.frame directly
+            gs_list <- gs_prepare(db_markers, tissue)
+        }
     }
 
     # run RunHitype

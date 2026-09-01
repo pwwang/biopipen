@@ -8,19 +8,17 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
 
     if (is.null(scina_db)) { stop("`envs.scina.db` is not set") }
 
-    if (startsWith(scina_db, "file://")) {
-        scina_db <- sub("^file://", "", scina_db)
-    }
-
-    if (!file.exists(scina_db)) {
-        stop(paste0("SCINA database file does not exist: ", scina_db))
-    }
-
     log$info("Loading SCINA signature file ...")
-    if (endsWith(tolower(scina_db), ".rds")) {
-        signatures <- readRDS(scina_db)
+    mt <- load_marker_table(scina_db)
+    if (is_marker_canonical(mt)) {
+        signatures <- markers_to_named_list(mt)
+    } else if (is.data.frame(mt)) {
+        # Native per-cell-type-column CSV/TSV (one column per cell type)
+        signatures <- lapply(mt, function(x) x[!is.na(x) & x != ""])
+    } else if (is.list(mt)) {
+        signatures <- mt  # RDS named list
     } else {
-        signatures <- preprocess.signatures(scina_db)
+        stop("Cannot recognize the SCINA signature file format.")
     }
 
     if (!is.list(signatures) || is.null(names(signatures))) {

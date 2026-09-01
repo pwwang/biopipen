@@ -2551,6 +2551,16 @@ class CellTypeAnnotation(Proc):
       annotations via its over-clustering mechanism (`envs.celltypist.over_clustering`
       or `envs.ident`).
 
+    The tools can also be divided by their input types:
+
+    - Marker-based tools: take marker genes for the cell types, including
+      `sctype`, `hitype`, `sccatch`, `scsorter`, `scina`, `cellassign`, and `cellid`.
+      They all accept the universal marker format (see the note below).
+    - Model/reference-based tools: take a trained model or a reference object,
+      including `celltypist`, `scbert`, `singler`, and `schdeepinsight`.
+    - Direct-annotation tools: take the cell types directly via `envs.cell_types`,
+      including `direct` and `cell`.
+
     The annotated cell types will be saved to a new column (`envs.anno_col`, default: `CellType`)
     in the metadata, so that the downstream processes will use the annotated cell types
     (the identity will be set to the annotation column unless `envs.set_ident` is `False`).
@@ -2583,6 +2593,43 @@ class CellTypeAnnotation(Proc):
     over the new-style envs when both are provided.
     `envs.newcol` is replaced by `envs.anno_col`, and `envs.backup_col` is no longer
     needed (the original identity column is never modified).
+
+    ///
+
+    /// Note
+
+    ### Universal marker format
+
+    The marker-based tools (`sctype`, `hitype`, `sccatch`, `scsorter`, `scina`,
+    `cellassign`, and `cellid`) accept a universal marker table in addition to
+    their native formats. The table can be a TSV, CSV, or an RDS/qs/qs2 file
+    containing a data.frame, in long format with one row per gene per cell type:
+
+    - `cell_type` (required): the cell type.
+    - `gene` (required): the marker gene.
+    - `direction`: `positive`/`negative` (aliases: `pos`/`neg`/`+`/`-`).
+      For `sctype`/`hitype`, negative markers are used as down-regulated markers
+      (`geneSymbolmore2`). For `scsorter`, negative markers become negative
+      `Weight`s. For the other tools (`scina`, `cellassign`, `cellid`,
+      `sccatch`), negative markers cannot be represented and are ignored
+      (only positive markers are used).
+    - `weight`: a numeric weight, only used by `scsorter` (as the `Weight` column).
+    - `species`, `cancer`, `tissue`: optional, used by `sccatch` for filtering;
+      `tissue` is also used as `tissueType` by `sctype`/`hitype`.
+    - `level`: an integer, only used by `sctype`/`hitype`.
+
+    Column aliases are auto-detected: `celltype`/`cellType`/`Type` → `cell_type`,
+    `marker`/`Marker`/`gene_symbol` → `gene`, `sign` → `direction`, and
+    `tissueType` → `tissue`.
+
+    You can specify the columns after `#` in the file path, for example,
+    `file:///path/to/markers.tsv#cell_type,gene,direction`, using column names
+    (aliases allowed) or 1-based indices. The `file://` prefix is optional.
+
+    A file without `cell_type`/`gene` columns is treated as the tool's native
+    format (e.g. a ScType xlsx for `sctype`/`hitype`, a per-cell-type-column CSV
+    for `scina`, a named-list RDS for `scina`/`cellassign`/`cellid`, an RDS
+    data.frame for `sccatch`, etc.).
 
     ///
 
@@ -2681,6 +2728,7 @@ class CellTypeAnnotation(Proc):
                 If not specified, all rows in `db` will be used.
             - db: The database to use for sctype.
                 Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+                Can also be a universal marker table (see the note above).
         hitype (ns): The arguments for `hitype` if `tool` is `hitype`.
             - tissue: The tissue to use for `hitype`.
                 Available tissues should be the first column (`tissueType`) of `db`.
@@ -2689,13 +2737,17 @@ class CellTypeAnnotation(Proc):
                 Compatible with `sctype.db`.
                 See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
                 You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
+                Can also be a universal marker table (see the note above).
         scsorter (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
             - db: The database to use for scSorter. It will be loaded and passed to the `anno`
                 argument of `RunScSorter()`. It could be either:
                 * A TSV file with cell type annotations, with columns `Type`, `Marker`, and `Weight`.
                 * A RDS/qs2 file of the annotation data frame with the same columns as above.
-                You can also use `#` followed by the column names to specify the columns as `Type`, `Marker` and `weight` (optional),
-                for example, `file:///path/to/scsorter_db.tsv#celltype,marker,weight`.
+                Can also be a universal marker table (see the note above).
+                You can also use `#` followed by the column names (aliases allowed)
+                or 1-based indices to specify the columns, for example,
+                `file:///path/to/scsorter_db.tsv#celltype,marker,weight`.
+                A third column is used as `Weight` only if it is named `weight` (or an alias of it).
             - assay: The assay to use for `RunScSorter()`.
                 If not specified, `envs.assay` will be used.
             - <more>: Other arguments for [`scSorter::RunScSorter()`](https://github.com/pwwang/scSorter/blob/9baae9f0e0904ddbf3f9bb5dacb9227503a8ce3e/R/scSorter.R#L73).
@@ -2705,6 +2757,7 @@ class CellTypeAnnotation(Proc):
                 signature genes (the names are the cell types and the
                 values are the marker gene symbols), or a CSV file
                 with the markers for each cell type in a column.
+                Can also be a universal marker table (see the note above).
             - max_iter (type=int): Maximum number of EM iterations (default: 100).
             - convergence_n (type=int): Stop if assignment stays stable for N consecutive rounds (default: 10).
             - convergence_rate (type=float): Fraction of cells with stable assignment for convergence (default: 0.99).
@@ -2766,6 +2819,7 @@ class CellTypeAnnotation(Proc):
                 * RDS/qs2 file: a binary gene×celltype matrix or a
                   named list (cell type → vector of marker genes)
                 * CSV/TSV file: with columns `gene` and `cell_type`
+                Can also be a universal marker table (see the note above).
             - python (type=str): Path to Python with `tensorflow` installed.
             - assay (type=str): Assay to extract raw counts from.
             - min_delta (type=int): Min log-fold change for marker
@@ -2813,6 +2867,7 @@ class CellTypeAnnotation(Proc):
                 * RDS/qs2 file: a named list (cell type → vector
                   of marker genes)
                 * CSV/TSV file: with columns `gene` and `cell_type`
+                Can also be a universal marker table (see the note above).
             - nmcs (type=int): Number of MCA components
                 (default: 50).
             - n_features (type=int): Top n features per
@@ -2856,6 +2911,7 @@ class CellTypeAnnotation(Proc):
                 Defaults to "Normal" if not `if_use_custom_marker`.
             - tissue: Tissue origin of cells must be defined.
             - marker: The marker genes for cell type identification.
+                Can also be a universal marker table (see the note above).
             - if_use_custom_marker (flag): Whether to use custom marker genes. If `True`, no `species`, `cancer`, and `tissue` are needed.
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch.marker` to work as custom marker. If so,

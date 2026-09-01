@@ -1,36 +1,6 @@
 # CellTypeAnnotation-cellassign.R — pure R function, no Jinja2 template variables
 # Source'd by CellTypeAnnotation.R
 
-# Helper: load marker gene info from a file
-load_marker_info <- function(db_path, log) {
-    if (startsWith(db_path, "file://")) {
-        db_path <- sub("^file://", "", db_path)
-    }
-    if (!file.exists(db_path)) {
-        stop(paste0("Marker gene info file does not exist: ", db_path))
-    }
-    ext <- tolower(tools::file_ext(db_path))
-    if (ext %in% c("csv", "tsv", "txt")) {
-        log$info("Loading marker gene info from CSV/TSV...")
-        sep <- if (ext == "csv") "," else "\t"
-        df <- read.table(
-            db_path, header = TRUE, sep = sep, stringsAsFactors = FALSE
-        )
-        if (!"gene" %in% colnames(df) || !"cell_type" %in% colnames(df)) {
-            stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
-        }
-        marker_list <- split(df$gene, df$cell_type)
-        return(marker_list)
-    }
-    # Otherwise load as RDS/qs/qs2
-    log$info("Loading marker gene info from R object file...")
-    obj <- read_obj(db_path)
-    if (!is.list(obj) && !is.matrix(obj)) {
-        stop("Marker gene info must be a named list or binary matrix.")
-    }
-    return(obj)
-}
-
 annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     python <- cellassign_args$python %||% Sys.which("python")
     if (python == "") {
@@ -48,7 +18,14 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     }
 
     # Load marker gene info
-    marker_gene_info <- load_marker_info(cellassign_db, log)
+    marker_gene_info <- load_marker_table(cellassign_db)
+    if (is_marker_canonical(marker_gene_info)) {
+        marker_gene_info <- markers_to_named_list(marker_gene_info)
+    } else if (is.data.frame(marker_gene_info)) {
+        stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
+    } else if (!(is.list(marker_gene_info) || is.matrix(marker_gene_info))) {
+        stop("Marker gene info must be a named list or binary matrix.")
+    }
 
     # Get raw counts
     assay <- cellassign_args$assay %||% DefaultAssay(sobj)

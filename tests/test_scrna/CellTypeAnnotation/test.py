@@ -84,6 +84,39 @@ class CellTypeAnnotationScType(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationSCINAUniversal(CellTypeAnnotation_):
+    """SCINA with a universal marker table"""
+
+    requires = PrepData
+    envs = {
+        "tool": "scina",
+        "ident": "seurat_clusters",
+        "scina": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
+class CellTypeAnnotationScSorterUniversal(CellTypeAnnotation_):
+    """scSorter with a universal marker table + # column override"""
+
+    requires = PrepData
+    envs = {
+        "tool": "scsorter",
+        "scsorter": {
+            "db": str(Path(__file__).parent / "data/markers.tsv#cell_type,gene"),
+        },
+    }
+
+
+class CellTypeAnnotationScTypeUniversal(CellTypeAnnotation_):
+    """sctype with a universal marker table (converted to ScType format)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "sctype",
+        "sctype": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
 class CellTypeAnnotationDirect(CellTypeAnnotation_):
     requires = PrepData
     envs = {
@@ -334,6 +367,30 @@ def testing(pipen):
     assert "cellid_celltype" in cols
     assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
     assert outfile.with_name(outfile.name + ".cell2celltype.tsv").is_file()
+
+    # Universal marker table: SCINA (cell-level with ident)
+    proc = get_proc(pipen, "CellTypeAnnotationSCINAUniversal")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationSCINAUniversal")
+    assert "CellType" in cols
+    assert "scina_celltype" in cols
+    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    assert cell_tsv.is_file()
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+
+    # Universal marker table: scSorter with # column override
+    proc = get_proc(pipen, "CellTypeAnnotationScSorterUniversal")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScSorterUniversal")
+    assert "CellType" in cols
+    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+
+    # Universal marker table: sctype (converted to ScType format)
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScTypeUniversal")
+    assert "CellType" in cols
 
     # Old-style flat envs: deprecation warnings, newcol -> anno_col
     proc = get_proc(pipen, "CellTypeAnnotationDeprecated")

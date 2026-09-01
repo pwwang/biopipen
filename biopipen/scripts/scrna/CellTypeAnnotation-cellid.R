@@ -11,30 +11,15 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
     }
 
     # Load marker gene list from file
-    if (startsWith(cellid_db, "file://")) {
-        cellid_db <- sub("^file://", "", cellid_db)
-    }
-    if (!file.exists(cellid_db)) {
-        stop(paste0("CelliD marker gene file does not exist: ", cellid_db))
-    }
-
-    ext <- tolower(tools::file_ext(cellid_db))
-    if (ext %in% c("csv", "tsv", "txt")) {
-        log$info("Loading marker gene sets from CSV/TSV...")
-        sep <- if (ext == "csv") "," else "\t"
-        df <- read.table(
-            cellid_db, header = TRUE, sep = sep, stringsAsFactors = FALSE
-        )
-        if (!"gene" %in% colnames(df) || !"cell_type" %in% colnames(df)) {
-            stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
-        }
-        pathways <- split(df$gene, df$cell_type)
+    marker_info <- load_marker_table(cellid_db)
+    if (is_marker_canonical(marker_info)) {
+        pathways <- markers_to_named_list(marker_info)
+    } else if (is.data.frame(marker_info)) {
+        stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
+    } else if (is.list(marker_info)) {
+        pathways <- marker_info
     } else {
-        log$info("Loading marker gene sets from R object file...")
-        pathways <- read_obj(cellid_db)
-        if (!is.list(pathways)) {
-            stop("CelliD marker gene info must be a named list.")
-        }
+        stop("CelliD marker gene info must be a named list.")
     }
 
     nmcs <- cellid_args$nmcs %||% 50

@@ -7,7 +7,12 @@ annotate_sccatch <- function(sobj, ident, sccatch_args) {
     log <- get_logger()
 
     if (!is.null(sccatch_args$marker)) {
-        cellmatch <- read_obj(sccatch_args$marker)
+        cellmatch <- load_marker_table(sccatch_args$marker)
+        if (is_marker_canonical(cellmatch)) {
+            cellmatch <- markers_to_sccatch_df(cellmatch)
+        } else if (!is.data.frame(cellmatch)) {
+            stop("The custom marker file for scCATCH must be a table or data.frame.")
+        }
         sccatch_args$if_use_custom_marker <- TRUE
 
         # when if_use_custom_marker is TRUE, sccatch won't filter the markers

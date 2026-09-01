@@ -19,39 +19,17 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
 
     if (is.null(scsorter_db)) { stop("`envs.scsorter.db` is not set") }
 
-    if (startsWith(scsorter_db, "file://")) {
-        scsorter_db <- sub("^file://", "", scsorter_db)
-    }
-    if (grepl("#", scsorter_db)) {
-        file_path_parts <- strsplit(scsorter_db, "#")[[1]]
-        scsorter_db <- file_path_parts[1]
-        if (length(file_path_parts) > 1) {
-            scsorter_cols <- trimws(strsplit(file_path_parts[2], ",")[[1]])
-        } else {
-            scsorter_cols <- NULL
-        }
-    } else {
-        scsorter_cols <- NULL
-    }
-
-    if (!file.exists(scsorter_db)) {
-        stop(paste0("scSorter database file does not exist: ", scsorter_db))
-    }
-
     log$info("Loading scSorter database ...")
-    if (endsWith(scsorter_db, ".rds") ||
-        endsWith(scsorter_db, ".Rds") ||
-        endsWith(scsorter_db, ".RDS") ||
-        endsWith(scsorter_db, ".qs") ||
-        endsWith(scsorter_db, ".qs2")) {
-        anno <- read_obj(scsorter_db)
-    } else {
-        anno <- read.table(
-            scsorter_db, header = TRUE, sep = "\t", stringsAsFactors = FALSE
-        )
+    anno <- load_marker_table(scsorter_db)
+    if (!is.data.frame(anno)) {
+        stop(paste0(
+            "scSorter database must be a data.frame, got: ",
+            paste(class(anno), collapse = ", ")
+        ))
     }
-
-    if (is.null(scsorter_cols)) {
+    if (is_marker_canonical(anno)) {
+        anno <- markers_to_scsorter_df(anno)
+    } else {
         if (ncol(anno) < 2) {
             stop(paste0(
                 "scSorter database file must have at least 2 columns: ",
@@ -61,19 +39,6 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
         if (ncol(anno) == 2) {
             colnames(anno) <- c("Type", "Marker")
         } else if (ncol(anno) >= 3) {
-            colnames(anno)[1:3] <- c("Type", "Marker", "Weight")
-        }
-    } else {
-        if (length(scsorter_cols) < 2) {
-            stop(paste0(
-                "scSorter database file must have at least 2 columns: ",
-                scsorter_db
-            ))
-        }
-        anno <- anno[, scsorter_cols, drop = FALSE]
-        if (length(scsorter_cols) == 2) {
-            colnames(anno) <- c("Type", "Marker")
-        } else {
             colnames(anno)[1:3] <- c("Type", "Marker", "Weight")
         }
     }
