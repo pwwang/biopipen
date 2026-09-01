@@ -49,6 +49,7 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
     scsorter_args$db <- NULL  # db is passed separately as scsorter_db
     scsorter_args$object <- sobj
     scsorter_args$anno <- anno
+    scsorter_args$mc.cores <- scsorter_args$mc.cores %||% 1L
     sobj <- do_call(RunScSorter, scsorter_args)
 
     # RunScSorter stores per-cell predictions in the scSorter_celltype column;
