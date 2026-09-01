@@ -215,5 +215,17 @@ markers_to_named_list <- function(df) {
 markers_to_sccatch_df <- function(df) {
     df <- filter_positive_markers(df)
     colnames(df)[colnames(df) == "cell_type"] <- "celltype"
+    if (!"pmid" %in% colnames(df)) {
+        df$pmid <- NA_character_
+    }
+    if (!"subtype3" %in% colnames(df)) {
+        df$subtype3 <- NA_character_
+    }
+    if (!"subtype2" %in% colnames(df)) {
+        df$subtype2 <- NA_character_
+    }
+    if (!"subtype1" %in% colnames(df)) {
+        df$subtype1 <- NA_character_
+    }
     df
 }
