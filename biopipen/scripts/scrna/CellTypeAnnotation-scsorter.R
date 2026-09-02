@@ -28,7 +28,15 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
         ))
     }
     if (is_marker_canonical(anno)) {
-        anno <- markers_to_scsorter_df(anno)
+        anno <- markers_to_scsorter_df(
+            anno,
+            tissue = scsorter_args$tissue,
+            cancer = scsorter_args$cancer,
+            species = scsorter_args$species
+        )
+        scsorter_args$tissue <- NULL
+        scsorter_args$cancer <- NULL
+        scsorter_args$species <- NULL
     } else {
         if (ncol(anno) < 2) {
             stop(paste0(

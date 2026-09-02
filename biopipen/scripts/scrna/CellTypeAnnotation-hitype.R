@@ -1,7 +1,7 @@
 # CellTypeAnnotation-hitype.R — pure R function, no Jinja2 template variables
 # Source'd by CellTypeAnnotation.R
 
-annotate_hitype <- function(sobj, ident, tissue, db) {
+annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
     library(hitype)
 
     log <- get_logger()
@@ -29,7 +29,7 @@ annotate_hitype <- function(sobj, ident, tissue, db) {
                         "` but the marker table has no `tissue` column."
                     ))
                 }
-                db_markers <- markers_to_sctype_df(db_markers)
+                db_markers <- markers_to_sctype_df(db_markers, tissue, cancer, species)
             }
             # gs_prepare accepts a data.frame directly
             gs_list <- gs_prepare(db_markers, tissue)

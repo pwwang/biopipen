@@ -136,7 +136,16 @@ load_marker_table <- function(path, cols = NULL) {
 }
 
 # Convert a canonical marker table to the ScType format (one row per cell type)
-markers_to_sctype_df <- function(df) {
+markers_to_sctype_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
+        df <- df[df$tissue == tissue, , drop = FALSE]
+    }
+    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
+        df <- df[df$cancer == cancer, , drop = FALSE]
+    }
+    if (!is.null(species) && "species" %in% colnames(df)) {
+        df <- df[df$species == species, , drop = FALSE]
+    }
     direction <- if ("direction" %in% colnames(df)) {
         normalize_marker_direction(df$direction)
     } else {
@@ -172,7 +181,16 @@ markers_to_sctype_df <- function(df) {
 
 # Convert a canonical marker table to the scSorter format
 # Negative-direction markers become negative weights
-markers_to_scsorter_df <- function(df) {
+markers_to_scsorter_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
+        df <- df[df$tissue == tissue, , drop = FALSE]
+    }
+    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
+        df <- df[df$cancer == cancer, , drop = FALSE]
+    }
+    if (!is.null(species) && "species" %in% colnames(df)) {
+        df <- df[df$species == species, , drop = FALSE]
+    }
     anno <- data.frame(
         Type = df$cell_type,
         Marker = df$gene,
@@ -221,8 +239,17 @@ markers_to_named_list <- function(df, tissue = NULL, cancer = NULL, species = NU
 
 # Convert a canonical marker table to the scCATCH format
 # Only positive markers are kept (negative ones cannot be represented)
-markers_to_sccatch_df <- function(df) {
+markers_to_sccatch_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
     df <- filter_positive_markers(df)
+    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
+        df <- df[df$tissue == tissue, , drop = FALSE]
+    }
+    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
+        df <- df[df$cancer == cancer, , drop = FALSE]
+    }
+    if (!is.null(species) && "species" %in% colnames(df)) {
+        df <- df[df$species == species, , drop = FALSE]
+    }
     colnames(df)[colnames(df) == "cell_type"] <- "celltype"
     if (!"pmid" %in% colnames(df)) {
         df$pmid <- NA_character_

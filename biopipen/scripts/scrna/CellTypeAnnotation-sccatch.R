@@ -9,7 +9,15 @@ annotate_sccatch <- function(sobj, ident, sccatch_args) {
     if (!is.null(sccatch_args$marker)) {
         cellmatch <- load_marker_table(sccatch_args$marker)
         if (is_marker_canonical(cellmatch)) {
-            cellmatch <- markers_to_sccatch_df(cellmatch)
+            cellmatch <- markers_to_sccatch_df(
+                cellmatch,
+                tissue = sccatch_args$tissue,
+                cancer = sccatch_args$cancer,
+                species = sccatch_args$species
+            )
+            sccatch_args$tissue <- NULL
+            sccatch_args$cancer <- NULL
+            sccatch_args$species <- NULL
         } else if (!is.data.frame(cellmatch)) {
             stop("The custom marker file for scCATCH must be a table or data.frame.")
         }

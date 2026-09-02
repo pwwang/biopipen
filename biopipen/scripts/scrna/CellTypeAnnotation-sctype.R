@@ -2,7 +2,7 @@
 # Source'd by CellTypeAnnotation.R
 # Depends on sctype.R being source'd first (for gene_sets_prepare / sctype_score)
 
-annotate_sctype <- function(sobj, ident, tissue, db) {
+annotate_sctype <- function(sobj, ident, tissue, cancer, species, db) {
     library(HGNChelper)
 
     log <- get_logger()
@@ -27,7 +27,7 @@ annotate_sctype <- function(sobj, ident, tissue, db) {
                     "` but the marker table has no `tissue` column."
                 ))
             }
-            db_markers <- markers_to_sctype_df(db_markers)
+            db_markers <- markers_to_sctype_df(db_markers, tissue, cancer, species)
         }
         # gene_sets_prepare only takes a path
         tmp_db <- tempfile(fileext = ".tsv")
