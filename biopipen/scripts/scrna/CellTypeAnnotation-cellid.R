@@ -57,12 +57,12 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
     )
 
     # Convert enrichment matrix to cell type predictions (argmax per cell)
-    # enrichment is: cells x pathways (cell types)
+    # enrichment is: pathways (cell types) x cells
     enrichment <- as.matrix(enrichment)
-    cell_type_names <- colnames(enrichment)
-    pred_idx <- apply(enrichment, 1, which.max)
+    cell_type_names <- rownames(enrichment)
+    pred_idx <- apply(enrichment, 2, which.max)
     predicted <- cell_type_names[pred_idx]
-    names(predicted) <- rownames(enrichment)
+    names(predicted) <- colnames(enrichment)
 
     # Build cell annotations data frame
     result <- data.frame(

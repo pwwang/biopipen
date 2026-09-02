@@ -370,7 +370,22 @@ def testing(pipen):
     assert "CellType" in cols
     assert "cellid_celltype" in cols
     assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
-    assert outfile.with_name(outfile.name + ".cell2celltype.tsv").is_file()
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    assert cell_tsv.is_file()
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+    # Values must be real cell types from the marker db, not barcodes.
+    # Regression: RunCellHGT returns cell-types x cells, but annotate_cellid
+    # used to assume cells x cell-types, yielding per-pathway garbage that
+    # cbind recycled silently when ncells % ncelltypes == 0.
+    cell_types = {"B cells", "DC", "Monocytes", "NK cells", "T cells"}
+    assert set(line.split("\t")[1] for line in lines[1:]) <= cell_types
+    clust_lines = outfile.with_name(
+        outfile.name + ".cluster2celltype.tsv"
+    ).read_text().splitlines()
+    assert clust_lines[0].startswith("Cluster\t")
+    assert set(line.split("\t")[-1] for line in clust_lines[1:]) <= cell_types
 
     # Universal marker table: SCINA (cell-level with ident)
     proc = get_proc(pipen, "CellTypeAnnotationSCINAUniversal")
