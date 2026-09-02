@@ -37,6 +37,43 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
     log$info("Preparing expression matrix...")
     exp <- as.matrix(GetAssayData(sobj, layer = "data"))
 
+    # Drop signature genes not in the expression matrix, and simulate SCINA's
+    # rm_overlap removal, so signatures emptied by either are dropped here
+    # with a clear warning (SCINA chokes on an empty signature with a cryptic
+    # chol() error).
+    log$info("Filtering signatures against the expression matrix...")
+    signatures <- lapply(
+        signatures,
+        function(x) unique(x[x %in% row.names(exp)])
+    )
+    rm_overlap <- scina_args$rm_overlap %||% formals(SCINA)$rm_overlap %||% 1
+    if (isTRUE(rm_overlap) || rm_overlap == 1) {
+        counts <- table(unlist(signatures))
+        signatures <- lapply(
+            signatures,
+            function(x) x[x %in% names(counts[counts == 1])]
+        )
+    }
+    signatures <- lapply(
+        signatures,
+        function(x) x[apply(exp[x, , drop = F], 1, sd) > 0]
+    )
+    n_genes <- lengths(signatures)
+    if (any(n_genes == 0)) {
+        log$warn(sprintf(
+            paste(
+                "Dropping %d signature(s) with no genes in the expression matrix:",
+                "%s"
+            ),
+            sum(n_genes == 0),
+            paste(names(n_genes)[n_genes == 0], collapse = ", ")
+        ))
+        signatures <- signatures[n_genes > 0]
+    }
+    if (length(signatures) == 0) {
+        stop("No SCINA signatures have genes in the expression matrix.")
+    }
+
     # Run SCINA
     log$info("Running SCINA...")
     scina_args$db <- NULL  # db is passed separately as scina_db
