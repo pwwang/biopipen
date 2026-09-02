@@ -205,8 +205,17 @@ filter_positive_markers <- function(df) {
 
 # Convert a canonical marker table to a named list (cell type → genes)
 # Only positive markers are kept (negative ones cannot be represented)
-markers_to_named_list <- function(df) {
+markers_to_named_list <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
     df <- filter_positive_markers(df)
+    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
+        df <- df[df$tissue == tissue, , drop = FALSE]
+    }
+    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
+        df <- df[df$cancer == cancer, , drop = FALSE]
+    }
+    if (!is.null(species) && "species" %in% colnames(df)) {
+        df <- df[df$species == species, , drop = FALSE]
+    }
     split(as.character(df$gene), df$cell_type)
 }
 

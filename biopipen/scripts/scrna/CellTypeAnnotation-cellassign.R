@@ -20,7 +20,15 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     # Load marker gene info
     marker_gene_info <- load_marker_table(cellassign_db)
     if (is_marker_canonical(marker_gene_info)) {
-        marker_gene_info <- markers_to_named_list(marker_gene_info)
+        marker_gene_info <- markers_to_named_list(
+            marker_gene_info,
+            tissue = cellassign_args$tissue,
+            cancer = cellassign_args$cancer,
+            species = cellassign_args$species
+        )
+        cellassign_args$tissue <- NULL
+        cellassign_args$cancer <- NULL
+        cellassign_args$species <- NULL
     } else if (is.data.frame(marker_gene_info)) {
         stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
     } else if (!(is.list(marker_gene_info) || is.matrix(marker_gene_info))) {

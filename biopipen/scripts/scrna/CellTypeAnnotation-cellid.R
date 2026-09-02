@@ -13,7 +13,15 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
     # Load marker gene list from file
     marker_info <- load_marker_table(cellid_db)
     if (is_marker_canonical(marker_info)) {
-        pathways <- markers_to_named_list(marker_info)
+        pathways <- markers_to_named_list(
+            marker_info,
+            tissue = cellid_args$tissue,
+            cancer = cellid_args$cancer,
+            species = cellid_args$species
+        )
+        cellid_args$tissue <- NULL
+        cellid_args$cancer <- NULL
+        cellid_args$species <- NULL
     } else if (is.data.frame(marker_info)) {
         stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
     } else if (is.list(marker_info)) {

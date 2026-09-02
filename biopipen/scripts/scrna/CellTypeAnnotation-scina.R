@@ -11,7 +11,15 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
     log$info("Loading SCINA signature file ...")
     mt <- load_marker_table(scina_db)
     if (is_marker_canonical(mt)) {
-        signatures <- markers_to_named_list(mt)
+        signatures <- markers_to_named_list(
+            mt,
+            tissue = scina_args$tissue,
+            cancer = scina_args$cancer,
+            species = scina_args$species
+        )
+        scina_args$tissue <- NULL
+        scina_args$cancer <- NULL
+        scina_args$species <- NULL
     } else if (is.data.frame(mt)) {
         # Native per-cell-type-column CSV/TSV (one column per cell type)
         signatures <- lapply(mt, function(x) x[!is.na(x) & x != ""])
