@@ -23,7 +23,11 @@ theme:
     # features:
     #     - navigation.footer
 markdown_extensions:
-    - markdown.extensions.admonition
+    - attr_list
+    - pymdownx.blocks.admonition
+    - pymdownx.blocks.details
+    - pymdownx.blocks.tab:
+        alternate_style: true
     - pymdownx.superfences:
         preserve_tabs: true
     - toc:
