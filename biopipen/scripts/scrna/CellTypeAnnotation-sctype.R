@@ -12,6 +12,11 @@ annotate_sctype <- function(sobj, ident, tissue, cancer, species, db) {
     # prepare gene sets
     log$info("Preparing gene sets...")
     db_markers <- load_marker_table(db)
+    if (!is.data.frame(db_markers) || !is_marker_canonical(db_markers)) {
+        # Native ScType xlsx/TSV/RDS formats have no cancer/species columns
+        # (tissue is still handled via gene_sets_prepare below)
+        stop_on_filtering_native_db(NULL, cancer, species)
+    }
     if (is.character(db_markers)) {
         # native ScType xlsx passthrough
         gs_list <- gene_sets_prepare(db_markers, tissue)

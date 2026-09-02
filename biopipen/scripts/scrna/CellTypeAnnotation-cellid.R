@@ -12,6 +12,12 @@ annotate_cellid <- function(sobj, ident, cellid_db, cellid_args) {
 
     # Load marker gene list from file
     marker_info <- load_marker_table(cellid_db)
+    if (!is_marker_canonical(marker_info)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            cellid_args$tissue, cellid_args$cancer, cellid_args$species
+        )
+    }
     if (is_marker_canonical(marker_info)) {
         pathways <- markers_to_named_list(
             marker_info,

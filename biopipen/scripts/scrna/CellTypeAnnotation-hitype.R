@@ -11,9 +11,16 @@ annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
     # prepare gene sets
     log$info("Preparing gene sets...")
     if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
+        # Built-in databases have no cancer/species columns
+        stop_on_filtering_native_db(NULL, cancer, species)
         gs_list <- gs_prepare(eval(as.symbol(db)), tissue)
     } else {
         db_markers <- load_marker_table(db)
+        if (!is.data.frame(db_markers) || !is_marker_canonical(db_markers)) {
+            # Native ScType xlsx/TSV/RDS formats have no cancer/species columns
+            # (tissue is still handled via gs_prepare below)
+            stop_on_filtering_native_db(NULL, cancer, species)
+        }
         if (is.character(db_markers)) {
             # native ScType xlsx passthrough
             gs_list <- gs_prepare(db_markers, tissue)

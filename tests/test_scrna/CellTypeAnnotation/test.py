@@ -85,13 +85,16 @@ class CellTypeAnnotationScType(CellTypeAnnotation_):
 
 
 class CellTypeAnnotationSCINAUniversal(CellTypeAnnotation_):
-    """SCINA with a universal marker table"""
+    """SCINA with a universal marker table, filtered by species"""
 
     requires = PrepData
     envs = {
         "tool": "scina",
         "ident": "seurat_clusters",
-        "scina": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+        "scina": {
+            "db": str(Path(__file__).parent / "data/markers.tsv"),
+            "species": "Human",
+        },
     }
 
 
@@ -108,12 +111,17 @@ class CellTypeAnnotationScSorterUniversal(CellTypeAnnotation_):
 
 
 class CellTypeAnnotationScTypeUniversal(CellTypeAnnotation_):
-    """sctype with a universal marker table (converted to ScType format)"""
+    """sctype with a universal marker table (converted to ScType format),
+    filtered by tissue (drops the CD20 row tagged with tissue = Blood)
+    """
 
     requires = PrepData
     envs = {
         "tool": "sctype",
-        "sctype": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+        "sctype": {
+            "db": str(Path(__file__).parent / "data/markers.tsv"),
+            "tissue": "Immune system",
+        },
     }
 
 
@@ -328,8 +336,61 @@ def assert_idents_equal(pipen, procname, colname):
     )
 
 
+def check_marker_filters_r():
+    """Negative checks for the tissue/cancer/species marker filters in
+    CellTypeAnnotation-markers.R (an explicit filter that cannot be honored
+    must error, never silently no-op)."""
+    markers_r = (
+        Path(__file__).parents[3]
+        / "biopipen" / "scripts" / "scrna" / "CellTypeAnnotation-markers.R"
+    )
+    script = f"""
+        source({str(markers_r)!r})
+        # 5 rows: T(1,2) Human/Immune system, B(3,4) Mouse/Blood,
+        # NK(5) Human/Blood. Each row count below changes if the
+        # corresponding filter is a no-op, so all failures are caught.
+        mk <- function() data.frame(
+            cell_type = c("T", "T", "B", "B", "NK"),
+            gene = c("CD3D", "CD2", "MS4A1", "CD79A", "NKG7"),
+            direction = rep("positive", 5),
+            species = c("Human", "Human", "Mouse", "Mouse", "Human"),
+            tissue = c("Immune system", "Immune system", "Blood", "Blood", "Blood"),
+            stringsAsFactors = FALSE
+        )
+        # Row reduction: species keeps T + NK; tissue keeps only T
+        stopifnot(nrow(markers_to_scsorter_df(mk(), species = "Human")) == 3)
+        stopifnot(nrow(markers_to_sctype_df(mk(), tissue = "Immune system")) == 1)
+        stopifnot(identical(
+            markers_to_named_list(mk(), species = "Human")[["T"]], c("CD3D", "CD2")
+        ))
+        # Both filters compose: T rows only (breaks if either is a no-op)
+        stopifnot(nrow(markers_to_sccatch_df(
+            mk(), species = "Human", tissue = "Immune system"
+        )) == 2)
+        # No filter set: everything kept (wide: one row per cell type)
+        stopifnot(nrow(markers_to_sctype_df(mk())) == 3)
+        # Missing column for a set filter: error naming the column
+        err <- function(expr) tryCatch(expr, error = function(e) conditionMessage(e))
+        msg <- err(markers_to_scsorter_df(mk(), cancer = "Normal"))
+        stopifnot(grepl("no `cancer` column", msg, fixed = TRUE))
+        # Value matches nothing: error naming the value
+        msg <- err(markers_to_named_list(mk(), tissue = "immune system"))
+        stopifnot(grepl("No markers in the marker table match", msg, fixed = TRUE))
+        # Native database with a filter env: error (guards call this)
+        invisible(stop_on_filtering_native_db(NULL, NULL, NULL))
+        msg <- err(stop_on_filtering_native_db("Blood", NULL, NULL))
+        stopifnot(grepl("only apply to a universal marker table", msg, fixed = TRUE))
+        cat("MARKER_FILTERS_OK\\n")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+    assert "MARKER_FILTERS_OK" in result.stdout
+
+
+# pyright: reportOperatorIssue=false
 def testing(pipen):
-    # assert pipen._succeeded
+    check_marker_filters_r()
 
     # hitype (cluster-level): CellType column, no cell2celltype.tsv
     proc = get_proc(pipen, "CellTypeAnnotation")

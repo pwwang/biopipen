@@ -34,10 +34,11 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
             cancer = scsorter_args$cancer,
             species = scsorter_args$species
         )
-        scsorter_args$tissue <- NULL
-        scsorter_args$cancer <- NULL
-        scsorter_args$species <- NULL
     } else {
+        # Native positional tables have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            scsorter_args$tissue, scsorter_args$cancer, scsorter_args$species
+        )
         if (ncol(anno) < 2) {
             stop(paste0(
                 "scSorter database file must have at least 2 columns: ",
@@ -50,6 +51,11 @@ annotate_scsorter <- function(sobj, ident, scsorter_db, scsorter_args) {
             colnames(anno)[1:3] <- c("Type", "Marker", "Weight")
         }
     }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to RunScSorter()
+    scsorter_args$tissue <- NULL
+    scsorter_args$cancer <- NULL
+    scsorter_args$species <- NULL
 
     log$info("Running RunScSorter...")
     # Set the active identity to the ident column

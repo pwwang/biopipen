@@ -2614,8 +2614,12 @@ class CellTypeAnnotation(Proc):
       `sccatch`), negative markers cannot be represented and are ignored
       (only positive markers are used).
     - `weight`: a numeric weight, only used by `scsorter` (as the `Weight` column).
-    - `species`, `cancer`, `tissue`: optional, used by `sccatch` for filtering;
-      `tissue` is also used as `tissueType` by `sctype`/`hitype`.
+    - `species`, `cancer`, `tissue`: optional. When the matching env
+      (`envs.<tool>.species`/`cancer`/`tissue`) is set, only the rows with the
+      given value are kept (an error is raised if the table has no such column
+      or no rows match). For `sctype`/`hitype`, `tissue` also becomes the
+      `tissueType` column, and it can be used to filter a native ScType xlsx/TSV
+      database as well (the other two columns only exist in universal tables).
     - `level`: an integer, only used by `sctype`/`hitype`.
 
     Column aliases are auto-detected: `celltype`/`cellType`/`Type` → `cell_type`,
@@ -2726,6 +2730,12 @@ class CellTypeAnnotation(Proc):
             - tissue: The tissue to use for `sctype`.
                 Available tissues should be the first column (`tissueType`) of `db`.
                 If not specified, all rows in `db` will be used.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - db: The database to use for sctype.
                 Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
                 Can also be a universal marker table (see the note above).
@@ -2733,6 +2743,12 @@ class CellTypeAnnotation(Proc):
             - tissue: The tissue to use for `hitype`.
                 Available tissues should be the first column (`tissueType`) of `db`.
                 If not specified, all rows in `db` will be used.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - db: The database to use for hitype.
                 Compatible with `sctype.db`.
                 See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
@@ -2750,6 +2766,15 @@ class CellTypeAnnotation(Proc):
                 A third column is used as `Weight` only if it is named `weight` (or an alias of it).
             - assay: The assay to use for `RunScSorter()`.
                 If not specified, `envs.assay` will be used.
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - <more>: Other arguments for [`scSorter::RunScSorter()`](https://github.com/pwwang/scSorter/blob/9baae9f0e0904ddbf3f9bb5dacb9227503a8ce3e/R/scSorter.R#L73).
         scina (ns): The arguments for `SCINA::SCINA()` if `tool` is `scina`.
             - db (type=str): The path to the SCINA signature file.
@@ -2758,6 +2783,15 @@ class CellTypeAnnotation(Proc):
                 values are the marker gene symbols), or a CSV file
                 with the markers for each cell type in a column.
                 Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - max_iter (type=int): Maximum number of EM iterations (default: 100).
             - convergence_n (type=int): Stop if assignment stays stable for N consecutive rounds (default: 10).
             - convergence_rate (type=float): Fraction of cells with stable assignment for convergence (default: 0.99).
@@ -2820,6 +2854,15 @@ class CellTypeAnnotation(Proc):
                   named list (cell type → vector of marker genes)
                 * CSV/TSV file: with columns `gene` and `cell_type`
                 Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - python (type=str): Path to Python with `tensorflow` installed.
             - assay (type=str): Assay to extract raw counts from.
             - min_delta (type=int): Min log-fold change for marker
@@ -2868,6 +2911,15 @@ class CellTypeAnnotation(Proc):
                   of marker genes)
                 * CSV/TSV file: with columns `gene` and `cell_type`
                 Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
             - nmcs (type=int): Number of MCA components
                 (default: 50).
             - n_features (type=int): Top n features per
@@ -2907,12 +2959,25 @@ class CellTypeAnnotation(Proc):
 
         sccatch (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species: The specie of cells.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
                 Defaults to "Normal" if not `if_use_custom_marker`.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - tissue: Tissue origin of cells must be defined.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - marker: The marker genes for cell type identification.
                 Can also be a universal marker table (see the note above).
-            - if_use_custom_marker (flag): Whether to use custom marker genes. If `True`, no `species`, `cancer`, and `tissue` are needed.
+                An error is raised if `species`, `cancer`, or `tissue` is set but
+                the table has no such column or no rows match.
+            - if_use_custom_marker (flag): Whether to use custom marker genes.
+                When `marker` is provided, this is set to `True` automatically, and
+                `species`, `cancer`, and `tissue` filter the custom markers if set.
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
                 You can pass an RDS file to `sccatch.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
@@ -2982,18 +3047,28 @@ class CellTypeAnnotation(Proc):
         "more_cell_types": None,
         "sctype": {
             "tissue": None,
+            "cancer": None,
+            "species": None,
             "db": config.ref.sctype_db,
         },
         "hitype": {
             "tissue": None,
+            "cancer": None,
+            "species": None,
             "db": None,
         },
         "scsorter": {
             "db": None,
             "assay": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
         },
         "scina": {
             "db": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
         },
         "singler": {
             "db": None,
@@ -3005,6 +3080,9 @@ class CellTypeAnnotation(Proc):
         "cellassign": {
             "db": None,
             "python": config.lang.python,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
         },
         "scbert": {
             "ref": None,
@@ -3013,6 +3091,9 @@ class CellTypeAnnotation(Proc):
         },
         "cellid": {
             "db": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
         },
         "sccatch": {
             "species": None,

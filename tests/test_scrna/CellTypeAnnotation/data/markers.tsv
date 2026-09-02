@@ -1,36 +1,36 @@
-cell_type	gene	direction
-T_cell	CD3D	positive
-T_cell	CD3E	positive
-T_cell	CD3G	positive
-T_cell	CD8A	positive
-T_cell	CD8B	positive
-T_cell	CD4	positive
-T_cell	IL7R	positive
-B_cell	MS4A1	positive
-B_cell	CD79A	positive
-B_cell	CD79B	positive
-B_cell	CD19	positive
-B_cell	CD22	positive
-B_cell	CD20	positive
-B_cell	CD38	positive
-NK_cell	NKG7	positive
-NK_cell	GNLY	positive
-NK_cell	PRF1	positive
-NK_cell	KLRD1	positive
-NK_cell	KLRK1	positive
-NK_cell	GZMB	positive
-NK_cell	GZMA	positive
-Monocyte	CD14	positive
-Monocyte	LYZ	positive
-Monocyte	FCGR3A	positive
-Monocyte	CST3	positive
-Monocyte	S100A8	positive
-Monocyte	S100A9	positive
-Monocyte	CSF1R	positive
-DC	FCER1A	positive
-DC	CLEC10A	positive
-DC	CLEC4C	positive
-DC	NRP1	positive
-DC	LILRA4	positive
-DC	PLD4	positive
-DC	IRF7	positive
+cell_type	gene	direction	species	tissue	cancer
+T_cell	CD3D	positive	Human	Immune system	Normal
+T_cell	CD3E	positive	Human	Immune system	Normal
+T_cell	CD3G	positive	Human	Immune system	Normal
+T_cell	CD8A	positive	Human	Immune system	Normal
+T_cell	CD8B	positive	Human	Immune system	Normal
+T_cell	CD4	positive	Human	Immune system	Normal
+T_cell	IL7R	positive	Human	Immune system	Normal
+B_cell	MS4A1	positive	Human	Immune system	Normal
+B_cell	CD79A	positive	Human	Immune system	Normal
+B_cell	CD79B	positive	Human	Immune system	Normal
+B_cell	CD19	positive	Human	Immune system	Normal
+B_cell	CD22	positive	Human	Immune system	Normal
+B_cell	CD20	positive	Human	Blood	Normal
+B_cell	CD38	positive	Human	Immune system	Normal
+NK_cell	NKG7	positive	Human	Immune system	Normal
+NK_cell	GNLY	positive	Human	Immune system	Normal
+NK_cell	PRF1	positive	Human	Immune system	Normal
+NK_cell	KLRD1	positive	Human	Immune system	Normal
+NK_cell	KLRK1	positive	Human	Immune system	Normal
+NK_cell	GZMB	positive	Human	Immune system	Normal
+NK_cell	GZMA	positive	Human	Immune system	Normal
+Monocyte	CD14	positive	Human	Immune system	Normal
+Monocyte	LYZ	positive	Human	Immune system	Normal
+Monocyte	FCGR3A	positive	Human	Immune system	Normal
+Monocyte	CST3	positive	Human	Immune system	Normal
+Monocyte	S100A8	positive	Human	Immune system	Normal
+Monocyte	S100A9	positive	Human	Immune system	Normal
+Monocyte	CSF1R	positive	Human	Immune system	Normal
+DC	FCER1A	positive	Human	Immune system	Normal
+DC	CLEC10A	positive	Human	Immune system	Normal
+DC	CLEC4C	positive	Human	Immune system	Normal
+DC	NRP1	positive	Human	Immune system	Normal
+DC	LILRA4	positive	Human	Immune system	Normal
+DC	PLD4	positive	Human	Immune system	Normal
+DC	IRF7	positive	Human	Immune system	Normal

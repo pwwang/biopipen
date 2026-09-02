@@ -20,39 +20,18 @@ annotate_sccatch <- function(sobj, ident, sccatch_args) {
             sccatch_args$species <- NULL
         } else if (!is.data.frame(cellmatch)) {
             stop("The custom marker file for scCATCH must be a table or data.frame.")
+        } else {
+            # A non-universal marker data.frame: filter by the columns if the
+            # filter envs are set. scCATCH itself won't filter the markers
+            # when `if_use_custom_marker` is TRUE (see below).
+            cellmatch <- apply_marker_filters(
+                cellmatch,
+                tissue = sccatch_args$tissue,
+                cancer = sccatch_args$cancer,
+                species = sccatch_args$species
+            )
         }
         sccatch_args$if_use_custom_marker <- TRUE
-
-        # when if_use_custom_marker is TRUE, sccatch won't filter the markers
-        if (!is.null(sccatch_args$species) && "species" %in% colnames(cellmatch)) {
-            if (!sccatch_args$species %in% unique(cellmatch$species)) {
-                stop(paste(
-                    "The species specified in the config does not match the species in the marker file.",
-                    "Please check the config file and marker file."
-                ))
-            }
-            cellmatch <- cellmatch[cellmatch$species == sccatch_args$species, , drop = FALSE]
-        }
-
-        if (!is.null(sccatch_args$cancer) && "cancer" %in% colnames(cellmatch)) {
-            if (!sccatch_args$cancer %in% unique(cellmatch$cancer)) {
-                stop(paste(
-                    "The cancer type specified in the config does not match the cancer type in the marker file.",
-                    "Please check the config file and marker file."
-                ))
-            }
-            cellmatch <- cellmatch[cellmatch$cancer == sccatch_args$cancer, , drop = FALSE]
-        }
-
-        if (!is.null(sccatch_args$tissue) && "tissue" %in% colnames(cellmatch)) {
-            if (!sccatch_args$tissue %in% unique(cellmatch$tissue)) {
-                stop(paste(
-                    "The tissue type specified in the config does not match the tissue type in the marker file.",
-                    "Please check the config file and marker file."
-                ))
-            }
-            cellmatch <- cellmatch[cellmatch$tissue == sccatch_args$tissue, , drop = FALSE]
-        }
     } else {
         sccatch_args$cancer <- sccatch_args$cancer %||% "Normal"
     }

@@ -10,6 +10,12 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
 
     log$info("Loading SCINA signature file ...")
     mt <- load_marker_table(scina_db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            scina_args$tissue, scina_args$cancer, scina_args$species
+        )
+    }
     if (is_marker_canonical(mt)) {
         signatures <- markers_to_named_list(
             mt,
@@ -17,9 +23,6 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
             cancer = scina_args$cancer,
             species = scina_args$species
         )
-        scina_args$tissue <- NULL
-        scina_args$cancer <- NULL
-        scina_args$species <- NULL
     } else if (is.data.frame(mt)) {
         # Native per-cell-type-column CSV/TSV (one column per cell type)
         signatures <- lapply(mt, function(x) x[!is.na(x) & x != ""])
@@ -28,6 +31,11 @@ annotate_scina <- function(sobj, ident, scina_db, scina_args) {
     } else {
         stop("Cannot recognize the SCINA signature file format.")
     }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to SCINA() which has no such arguments
+    scina_args$tissue <- NULL
+    scina_args$cancer <- NULL
+    scina_args$species <- NULL
 
     if (!is.list(signatures) || is.null(names(signatures))) {
         stop("SCINA signatures must be a named list")

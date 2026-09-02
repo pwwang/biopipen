@@ -135,17 +135,56 @@ load_marker_table <- function(path, cols = NULL) {
     apply_marker_cols(df, cols, path)
 }
 
+# Filter a canonical marker table by the optional `tissue`/`cancer`/`species`
+# envs. A filter that cannot be honored (the column is missing, or no rows
+# match the value) is an error: silently running the tool on unfiltered or
+# empty markers would produce wrong annotations.
+apply_marker_filters <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    for (col in c("tissue", "cancer", "species")) {
+        val <- switch(col,
+            tissue = tissue,
+            cancer = cancer,
+            species = species
+        )
+        if (is.null(val)) next
+        if (!col %in% colnames(df)) {
+            stop(paste0(
+                "The marker table has no `", col, "` column, ",
+                "but it is asked to be filtered by `", col, "`."
+            ))
+        }
+        if (!val %in% df[[col]]) {
+            stop(paste0(
+                "No markers in the marker table match `", col, " = ", val, "`."
+            ))
+        }
+        df <- df[df[[col]] == val, , drop = FALSE]
+    }
+    df
+}
+
+# Native (non-universal) marker formats have no `tissue`/`cancer`/`species`
+# columns to filter by. Stop when the tool envs ask for filtering anyway;
+# no-op when no filter envs are given.
+stop_on_filtering_native_db <- function(tissue = NULL, cancer = NULL, species = NULL) {
+    given <- c(
+        if (!is.null(tissue)) "tissue",
+        if (!is.null(cancer)) "cancer",
+        if (!is.null(species)) "species"
+    )
+    if (length(given) > 0) {
+        stop(paste0(
+            "`", paste(given, collapse = "`, `"),
+            "` filter(s) only apply to a universal marker table ",
+            "(a table with `cell_type` and `gene` columns)."
+        ))
+    }
+    invisible(NULL)
+}
+
 # Convert a canonical marker table to the ScType format (one row per cell type)
 markers_to_sctype_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
-    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
-        df <- df[df$tissue == tissue, , drop = FALSE]
-    }
-    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
-        df <- df[df$cancer == cancer, , drop = FALSE]
-    }
-    if (!is.null(species) && "species" %in% colnames(df)) {
-        df <- df[df$species == species, , drop = FALSE]
-    }
+    df <- apply_marker_filters(df, tissue, cancer, species)
     direction <- if ("direction" %in% colnames(df)) {
         normalize_marker_direction(df$direction)
     } else {
@@ -182,15 +221,7 @@ markers_to_sctype_df <- function(df, tissue = NULL, cancer = NULL, species = NUL
 # Convert a canonical marker table to the scSorter format
 # Negative-direction markers become negative weights
 markers_to_scsorter_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
-    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
-        df <- df[df$tissue == tissue, , drop = FALSE]
-    }
-    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
-        df <- df[df$cancer == cancer, , drop = FALSE]
-    }
-    if (!is.null(species) && "species" %in% colnames(df)) {
-        df <- df[df$species == species, , drop = FALSE]
-    }
+    df <- apply_marker_filters(df, tissue, cancer, species)
     anno <- data.frame(
         Type = df$cell_type,
         Marker = df$gene,
@@ -224,32 +255,16 @@ filter_positive_markers <- function(df) {
 # Convert a canonical marker table to a named list (cell type → genes)
 # Only positive markers are kept (negative ones cannot be represented)
 markers_to_named_list <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    df <- apply_marker_filters(df, tissue, cancer, species)
     df <- filter_positive_markers(df)
-    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
-        df <- df[df$tissue == tissue, , drop = FALSE]
-    }
-    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
-        df <- df[df$cancer == cancer, , drop = FALSE]
-    }
-    if (!is.null(species) && "species" %in% colnames(df)) {
-        df <- df[df$species == species, , drop = FALSE]
-    }
     split(as.character(df$gene), df$cell_type)
 }
 
 # Convert a canonical marker table to the scCATCH format
 # Only positive markers are kept (negative ones cannot be represented)
 markers_to_sccatch_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    df <- apply_marker_filters(df, tissue, cancer, species)
     df <- filter_positive_markers(df)
-    if (!is.null(tissue) && "tissue" %in% colnames(df)) {
-        df <- df[df$tissue == tissue, , drop = FALSE]
-    }
-    if (!is.null(cancer) && "cancer" %in% colnames(df)) {
-        df <- df[df$cancer == cancer, , drop = FALSE]
-    }
-    if (!is.null(species) && "species" %in% colnames(df)) {
-        df <- df[df$species == species, , drop = FALSE]
-    }
     colnames(df)[colnames(df) == "cell_type"] <- "celltype"
     if (!"pmid" %in% colnames(df)) {
         df$pmid <- NA_character_

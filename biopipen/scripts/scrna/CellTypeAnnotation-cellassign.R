@@ -19,6 +19,14 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
 
     # Load marker gene info
     marker_gene_info <- load_marker_table(cellassign_db)
+    if (!is_marker_canonical(marker_gene_info)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            cellassign_args$tissue,
+            cellassign_args$cancer,
+            cellassign_args$species
+        )
+    }
     if (is_marker_canonical(marker_gene_info)) {
         marker_gene_info <- markers_to_named_list(
             marker_gene_info,
@@ -26,14 +34,16 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
             cancer = cellassign_args$cancer,
             species = cellassign_args$species
         )
-        cellassign_args$tissue <- NULL
-        cellassign_args$cancer <- NULL
-        cellassign_args$species <- NULL
     } else if (is.data.frame(marker_gene_info)) {
         stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
     } else if (!(is.list(marker_gene_info) || is.matrix(marker_gene_info))) {
         stop("Marker gene info must be a named list or binary matrix.")
     }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to cellassign() which has no such arguments
+    cellassign_args$tissue <- NULL
+    cellassign_args$cancer <- NULL
+    cellassign_args$species <- NULL
 
     # Get raw counts
     assay <- cellassign_args$assay %||% DefaultAssay(sobj)
