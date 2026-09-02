@@ -336,7 +336,11 @@ def testing(pipen):
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotation")
     assert "CellType" in cols
-    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    cluster_tsv = outfile.with_name(outfile.name + ".cluster2celltype.tsv")
+    assert cluster_tsv.is_file()
+    lines = cluster_tsv.read_text().splitlines()
+    assert lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
+    assert sum(int(line.split("\t")[1]) for line in lines[1:]) == ncells
     assert not outfile.with_name(outfile.name + ".cell2celltype.tsv").exists()
     assert "SETTING IDENTS to 'CellType'" in proc.workdir.joinpath("0", "job.stdout").read_text()
     assert_idents_equal(pipen, "CellTypeAnnotation", "CellType")

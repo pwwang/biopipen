@@ -525,13 +525,28 @@ if (length(case_mappings) > 0) {
         Cluster = all_clusters,
         stringsAsFactors = FALSE
     )
+    # Add the size (number of cells) of each cluster
+    cluster_sizes <- list()
+    for (res in results) {
+        if (is.null(res) || !res$is_cluster_based || is.null(res$mapping)) next
+        if (!res$ident %in% colnames(sobj@meta.data)) next
+        cluster_sizes[[res$name]] <- table(as.character(sobj@meta.data[[res$ident]]))
+    }
+    if (length(cluster_sizes) > 0) {
+        cluster_df$Size <- sapply(all_clusters, function(cl) {
+            for (sz in cluster_sizes) {
+                if (cl %in% names(sz)) return(as.integer(sz[[cl]]))
+            }
+            NA_integer_
+        })
+    }
     for (case_name in names(case_mappings)) {
         cluster_df[[case_name]] <- sapply(all_clusters, function(cl) {
             case_mappings[[case_name]][[cl]] %||% NA_character_
         })
     }
     tsv_file <- paste0(outprefix, ".cluster2celltype.tsv")
-    write.table(
+    write_table(
         cluster_df, tsv_file,
         sep = "\t", quote = FALSE, row.names = FALSE
     )
@@ -573,7 +588,7 @@ if (length(cell_case_cols) > 0) {
         }
     }
     tsv_file <- paste0(outprefix, ".cell2celltype.tsv")
-    write.table(
+    write_table(
         cell_df, tsv_file,
         sep = "\t", quote = FALSE, row.names = FALSE
     )
