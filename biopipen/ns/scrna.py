@@ -268,6 +268,10 @@ class SeuratPreparing(Proc):
 
         keep_contam_assay (flag): Whether to keep the "Contaminated" (original) assay after QC is finished.
             If kept, we can use it to visualize some marker expressions for comparisons.
+            Note that when `False` (default), the `Contaminated` assay is dropped per-sample right after
+            contamination correction (before samples are merged) to reduce the memory usage.
+            Contamination-expression QC plots (with `metric` of `expr`/`expression`) in `qc_plots`
+            require this to be `True`.
 
         doublet_detector (choice): The doublet detector to use.
             - none: Do not use any doublet detector.
@@ -300,6 +304,9 @@ class SeuratPreparing(Proc):
             <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
             `<signature>.RDS` in the cache directory.
+            Note that caching saves full snapshots of the seurat object at step boundaries, which transiently
+            increases the peak memory (on both save and load). Set `cache` to `False` on memory-constrained
+            runs with big data to avoid the extra peaks.
 
     Requires:
         r-seurat:

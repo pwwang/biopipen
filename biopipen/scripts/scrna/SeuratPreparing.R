@@ -84,6 +84,21 @@ if (
     envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% FALSE
 }
 
+# The `Contaminated` assay (original counts) is only needed later when
+# contamination-expression QC plots are requested, or when envs$keep_contam_assay is TRUE.
+# Otherwise, let LoadSeuratAndPerformQC drop it per-sample right after correction
+# to reduce the memory used by merging and cell/gene filtering.
+need_contam_assay <- envs$keep_contam_assay || any(vapply(
+    envs$qc_plots,
+    function(x) {
+        !is.null(x) &&
+            isTRUE(x$kind %in% c("contam", "contamination")) &&
+            !is.null(x$metric) &&
+            tolower(x$metric) %in% c("expr", "expression")
+    },
+    logical(1)
+))
+
 sobj <- LoadSeuratAndPerformQC(
     metadata,
     min_cells = envs$min_cells,
@@ -95,9 +110,12 @@ sobj <- LoadSeuratAndPerformQC(
     contam_correction = envs$contam_correction,
     decontXArgs = envs$decontX,
     scCDCArgs = envs$scCDC,
+    keep_contam_assay = need_contam_assay,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
+rm(metadata)
+invisible(gc())
 
 log$info("Saving and visualizing QC results ...")
 cell_qc_df <- VizSeuratCellQC(sobj, plot_type = "table")
@@ -200,6 +218,10 @@ for (pname in names(envs$qc_plots)) {
     )
 }
 
+# Release the QC plot objects (each may hold all-cell data frames) before filtering
+if (exists("p")) { rm(p) }
+invisible(gc())
+
 log$info("Filtering with QC criteria ...")
 sobj <- FinishSeuratQC(sobj, keep_contam_assay = envs$keep_contam_assay)
 
@@ -286,4 +308,7 @@ if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
 
 log$info("Saving QC'ed seurat object ...")
 reporter$save(joboutdir)
+# gc before the final serialization: qs2 allocations don't trigger R's gc,
+# so collect first to lower the peak memory when saving the object
+invisible(gc())
 save_obj(sobj, outfile)
