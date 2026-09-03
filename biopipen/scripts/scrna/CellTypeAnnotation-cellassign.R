@@ -48,7 +48,10 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
     # Get raw counts
     assay <- cellassign_args$assay %||% DefaultAssay(sobj)
     log$info("Extracting raw counts from assay: {assay}")
+    # genes x cells matrix
     counts <- as.matrix(GetAssayData(sobj, assay = assay, layer = "counts"))
+    library_size <- colSums(counts)
+    size_factors <- library_size / median(library_size)
 
     # Filter to marker genes present in data
     if (is.list(marker_gene_info)) {
@@ -66,9 +69,7 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
         "Found {length(common_genes)} / {length(all_markers)} marker genes in data"
     )
 
-    sce_obj <- SingleCellExperiment::SingleCellExperiment(assays = list(counts = counts))
-    s <- SingleCellExperiment::sizeFactors(sce_obj)
-    cellassign_args$s <- s
+    cellassign_args$s <- size_factors
     # Filter counts and marker_gene_info to common genes
     counts <- counts[common_genes, , drop = FALSE]
     if (is.list(marker_gene_info)) {
@@ -89,9 +90,9 @@ annotate_cellassign <- function(sobj, ident, cellassign_db, cellassign_args) {
 
     # Run cellassign
     log$info("Running cellassign...")
-    fit <- do_call(cellassign, c(
+    fit <- do_call(cellassign::cellassign, c(
         list(
-            exprs_obj = counts,
+            exprs_obj = t(counts),
             marker_gene_info = marker_gene_info
         ),
         extra_args
