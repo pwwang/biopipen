@@ -25,7 +25,7 @@ scsorter <- {{envs.scsorter | r}}
 scina <- {{envs.scina | r}}
 singler <- {{envs.singler | r}}
 schdeepinsight <- {{envs.schdeepinsight | r}}
-gptcelltype <- {{envs.gptcelltype | r}}
+llmcelltype <- {{envs.llmcelltype | r}}
 cellassign <- {{envs.cellassign | r}}
 scbert <- {{envs.scbert | r}}
 cellid <- {{envs.cellid | r}}
@@ -45,7 +45,7 @@ singler_db <- {{ envs["singler_db"] | default: None | r }}
 singler_args <- {{ envs["singler_args"] | default: None | r }}
 schdeepinsight_ref <- {{ envs["schdeepinsight_ref"] | default: None | r }}
 schdeepinsight_args <- {{ envs["schdeepinsight_args"] | default: None | r }}
-gptcelltype_args <- {{ envs["gptcelltype_args"] | default: None | r }}
+llmcelltype_args <- {{ envs["llmcelltype_args"] | default: None | r }}
 cellassign_db <- {{ envs["cellassign_db"] | default: None | r }}
 cellassign_args <- {{ envs["cellassign_args"] | default: None | r }}
 scbert_ref <- {{ envs["scbert_ref"] | default: None | r }}
@@ -89,8 +89,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R")
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-gptcelltype.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-llmcelltype.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-llmcelltype.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellassign.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scbert.R" | getmtime | int }}
@@ -127,7 +127,7 @@ DEPRECATED_ENVS <- list(
         ref = "schdeepinsight_ref",
         args = "schdeepinsight_args"
     ),
-    gptcelltype = list(args = "gptcelltype_args"),
+    llmcelltype = list(args = "llmcelltype_args"),
     cellassign = list(db = "cellassign_db", args = "cellassign_args"),
     scbert = list(
         ref = "scbert_ref",
@@ -215,7 +215,7 @@ defaults <- list(
     scina = scina,
     singler = singler,
     schdeepinsight = schdeepinsight,
-    gptcelltype = gptcelltype,
+    llmcelltype = llmcelltype,
     cellassign = cellassign,
     scbert = scbert,
     cellid = cellid,
@@ -236,7 +236,7 @@ defaults <- list(
     singler_args = singler_args,
     schdeepinsight_ref = schdeepinsight_ref,
     schdeepinsight_args = schdeepinsight_args,
-    gptcelltype_args = gptcelltype_args,
+    llmcelltype_args = llmcelltype_args,
     cellassign_db = cellassign_db,
     cellassign_args = cellassign_args,
     scbert_ref = scbert_ref,
@@ -255,7 +255,7 @@ cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 cases <- lapply(cases, normalize_deprecated)
 
 # Cluster-based tools
-CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "gptcelltype", "direct")
+CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "llmcelltype", "direct")
 CELL_LEVEL_TOOLS <- c("scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist")
 PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert")
 
@@ -364,7 +364,7 @@ run_case <- function(case_name) {
             sobj, case$ident, tool_cfg$ref, tool_cfg, outdir,
             h5ad_path = h5ad_path, case_id = case_name
         ),
-        gptcelltype = annotate_gptcelltype(
+        llmcelltype = annotate_llmcelltype(
             sobj, case$ident, tool_cfg
         ),
         cellassign = annotate_cellassign(
