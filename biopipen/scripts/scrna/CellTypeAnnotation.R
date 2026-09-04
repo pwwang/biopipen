@@ -31,6 +31,7 @@ scbert <- {{envs.scbert | r}}
 cellid <- {{envs.cellid | r}}
 sccatch <- {{envs.sccatch | r}}
 celltypist <- {{envs.celltypist | r}}
+scagenttype <- {{envs.scagenttype | r}}
 
 # Deprecated envs (still supported with a warning)
 sctype_tissue <- {{ envs["sctype_tissue"] | default: None | r }}
@@ -95,6 +96,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-llmcellty
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scbert.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scbert.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scagenttype.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scagenttype.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellid.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellid.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-markers.R" | getmtime | int }}
@@ -221,6 +224,7 @@ defaults <- list(
     cellid = cellid,
     sccatch = sccatch,
     celltypist = celltypist,
+    scagenttype = scagenttype,
     cell_types = cell_types,
     more_cell_types = more_cell_types,
     # Deprecated envs (ignored when NULL)
@@ -255,9 +259,9 @@ cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 cases <- lapply(cases, normalize_deprecated)
 
 # Cluster-based tools
-CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "llmcelltype", "direct")
+CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "llmcelltype", "scagenttype", "direct")
 CELL_LEVEL_TOOLS <- c("scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist")
-PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert")
+PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert", "scagenttype")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
@@ -373,6 +377,10 @@ run_case <- function(case_name) {
         scbert = annotate_scbert(
             sobj, case$ident, tool_cfg$ref, tool_cfg$model,
             tool_cfg$label_dict, tool_cfg, outdir,
+            h5ad_path = h5ad_path, case_id = case_name
+        ),
+        scagenttype = annotate_scagenttype(
+            sobj, case$ident, tool_cfg, outdir,
             h5ad_path = h5ad_path, case_id = case_name
         ),
         cellid = annotate_cellid(
