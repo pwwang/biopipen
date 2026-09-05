@@ -2965,6 +2965,17 @@ class CellTypeAnnotation(Proc):
             If no columns are specified, the first two columns will be used as the cell id and cell type columns.
             Prefix `file://` is optional.
 
+            For `cell`, it must be a TSV file with cell-level annotations.
+            You can specify the column names after the `#`. For example,
+            `file:///path/to/cell_types.tsv#cell_id,cell_type` will use `cell_id` as the cell id column
+            to match the cell ids in the Seurat object, and `cell_type` as the cell type column to assign the cell types.
+            Multiple cell type columns can be specified, and the first one will be used as the new identity column.
+            You can also use 1-based column index to specify the columns, for example, `file:///path/to/cell_types.tsv#1,3`
+            will use the first column as the cell id column and the third column as the cell type column.
+            If cells in the Seurat object are not found in the cell type file, `NA`s will be assigned to those cells.
+            If not columns are specified, the first two columns will be used as the cell id and cell type columns.
+            Prefix `file://` is optional.
+
         more_cell_types (type=json): The additional cell type annotations to add to the metadata.
             The keys are the new column names and the values are the cell types lists.
             The cell type lists work the same as `cell_types` above.
