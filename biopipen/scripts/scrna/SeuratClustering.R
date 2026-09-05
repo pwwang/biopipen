@@ -17,6 +17,8 @@ cache <- {{envs.cache | r}}
 ncores <- {{envs.ncores | r}}
 python <- {{envs.python | r}}
 
+qs2::qopt("nthreads", value = ncores)
+
 Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
 
 FindClustersArgs$cluster.name <- FindClustersArgs$cluster.name %||% ident %||% "seurat_clusters"

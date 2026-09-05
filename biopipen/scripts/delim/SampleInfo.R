@@ -24,7 +24,7 @@ if (is.null(exclude_cols)) {
 }
 
 outdir <- dirname(outfile)
-indata <- read.delim(infile, sep = sep, header = TRUE, row.names = NULL)
+indata <- read_table(infile, sep = sep, header = TRUE, row.names = NULL)
 
 if (colnames(indata)[1] == "row.names") {
     stop("Wrong number of column names. Do you have the right `sep`?")
@@ -90,7 +90,7 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
     mutdata <- indata
 }
 
-write.table(
+write_table(
     if (save_mutated) mutdata else indata,
     file = outfile,
     sep = sep,

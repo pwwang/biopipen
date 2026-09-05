@@ -1223,6 +1223,7 @@ class CDR3Clustering(Proc):
             For GIANA, using TRBV mutations is not supported
             - GIANA: by Li lab at UT Southwestern Medical Center
             - ClusTCR: by Sebastiaan Valkiers, etc
+        ncores (type=int): The number of cores to use for data reading and writing.
         python: The path of python with `GIANA`'s dependencies installed
             or with `clusTCR` installed. Depending on the `tool` you choose.
         within_sample (flag): Whether to cluster the TCR/BCR clones within each sample.
@@ -1261,6 +1262,7 @@ class CDR3Clustering(Proc):
     envs = {
         "type": "auto",  # or TCR, BCR
         "tool": "GIANA",  # or ClusTCR
+        "ncores": config.misc.cores,
         "python": config.lang.python,
         "within_sample": True,  # whether to cluster the TCR clones within each sample
         "args": {},
@@ -1493,6 +1495,7 @@ class CDR3AAPhyschem(Proc):
         outdir: The output directory
 
     Envs:
+        ncores: The number of cores to use for reading and writing the data.
         group: The key of group in metadata to define the groups to
             compare. For example, `CellType`, which has cell types annotated
             for each cell in the combined object (immdata + Seurat metadata)
@@ -1518,6 +1521,7 @@ class CDR3AAPhyschem(Proc):
     output = "outdir:dir:{{in.immdata | stem}}.cdr3aaphyschem"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.cores,
         "group": None,
         "comparison": None,
         "target": None,
@@ -1572,6 +1576,7 @@ class TESSA(Proc):
 
     Envs:
         python: The path of python with `TESSA`'s dependencies installed
+        ncores (type=int): The number of cores to use for reading and writing the data.
         within_sample (flag): Whether the TCR networks are constructed only
             within TCRs from the same sample/patient (True) or with all the
             TCRs in the meta data matrix (False).
@@ -1590,6 +1595,7 @@ class TESSA(Proc):
     lang = config.lang.rscript
     envs = {
         "python": config.lang.python,
+        "ncores": config.misc.cores,
         "assay": None,
         "within_sample": False,
         "predefined_b": False,
@@ -1781,6 +1787,7 @@ class ScRepCombiningExpression(Proc):
             and `FALSE` otherwise.
 
     Envs:
+        ncores (type=int): The number of cores to use for reading and writing the data.
         cloneCall: How to call the clone - VDJC gene (gene), CDR3 nucleotide (nt),
             CDR3 amino acid (aa), VDJC gene + CDR3 nucleotide (strict) or
             a custom variable in the data.
@@ -1816,6 +1823,7 @@ class ScRepCombiningExpression(Proc):
     output = "outfile:file:{{in.screpfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.cores,
         "cloneCall": "aa",
         "chain": "both",
         "group_by": "Sample",
@@ -2067,6 +2075,7 @@ class ClonalStats(Proc):
         outdir: The output directory containing the plots
 
     Envs:
+        ncores (type=int): The number of cores to use for data reading and writing.
         mutaters (type=json;order=-9): The mutaters passed to `dplyr::mutate()` to add new variables.
             When the object loaded form `in.screpfile` is a list, the mutaters will be applied to each element.
             The keys are the names of the new variables, and the values are the expressions.
@@ -2123,6 +2132,7 @@ class ClonalStats(Proc):
     output = "outdir:dir:{{in.screpfile | stem}}.clonalstats"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.cores,
         "mutaters": {},
         "cache": config.path.tmpdir,
         "subset": None,

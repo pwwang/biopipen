@@ -18,6 +18,9 @@ outdir <- {{out.outdir | r}}
 joboutdir <- {{job.outdir | r}}
 mutaters <- {{envs.mutaters | r}}
 cache <- {{envs.cache | r}}
+ncores <- {{envs.ncores | r}}
+
+qs2::qopt("nthreads", value = ncores)
 
 if (isTRUE(cache)) { cache = joboutdir }
 

@@ -1,6 +1,6 @@
 from diot import Diot  # noqa
 from pathlib import Path
-from biopipen.utils.misc import logger
+from biopipen.utils.misc import logger, write_table
 from biopipen.scripts.scrna.seurat_anndata_conversion import convert_seurat_to_anndata
 import os
 import numpy as np
@@ -127,12 +127,13 @@ else:
         cases[case_name] = tmp_envs
 
 DEFAULT_ONLY = "DEFAULT" in cases and len(cases) == 1
-ALL_SPLIT_BY_COLS = [
-    case_envs["split_by"]
-    for case_envs in cases.values()
-    if isinstance(case_envs, dict)
-    and case_envs.get("split_by")
-]
+ALL_SPLIT_BY_COLS = []
+for case_envs in cases.values():
+    if isinstance(case_envs, dict) and case_envs.get("split_by"):
+        split_by = case_envs["split_by"]
+        if isinstance(split_by, str):
+            split_by = [split_by]
+        ALL_SPLIT_BY_COLS.extend(split_by)
 ALL_SPLIT_BY_COLS = list(dict.fromkeys(ALL_SPLIT_BY_COLS))
 
 seurat_ident_col = None
@@ -211,18 +212,41 @@ def do_case(name):
 
     split_by = case.pop("split_by", None)
     if split_by:
-        split_vals = case_adata.obs[split_by].dropna().unique()
+        if isinstance(split_by, str):
+            split_by = [split_by]
+
+        # Keep only cells with all split columns non-NA (matches previous behavior)
+        split_obs = case_adata.obs[split_by].dropna()
+
+        # Pick a separator that no value contains, so the composite keys can
+        # be separated back into the original column values unambiguously.
+        sep = "_"
+        all_vals = set()
+        for col in split_by:
+            all_vals.update(split_obs[col].astype(str).unique())
+        while any(sep in v for v in all_vals):
+            sep += "_"
+
+        split_key = split_obs[split_by[0]].astype(str)
+        for col in split_by[1:]:
+            split_key = split_key + sep + split_obs[col].astype(str)
+
         result: pd.DataFrame = None  # type: ignore
-        for split_val in split_vals:
-            logger.info(f"  Running {method} for {split_by} = {split_val} ...")
-            adata_split = case_adata[case_adata.obs[split_by] == split_val]
-            # case_adata = adata_split
+        for split_val in split_key.unique():
+            vals = split_val.split(sep)
+            logger.info(f"  Running {method} for {split_by} = {vals} ...")
+            # split_key only covers the dropna'd rows; align the mask with the obs index
+            mask = (split_key == split_val).reindex(case_adata.obs.index, fill_value=False)
+            adata_split = case_adata[mask]
 
             case["adata"] = adata_split
             method_fun(**case)
             res = adata_split.uns['liana_ccc']
-            # res[split_by] = split_val
-            res.insert(0, split_by, split_val)  # insert at the first column
+
+            # Separate the key back into the original values of each column
+            orig_vals = split_obs.loc[split_key == split_val].iloc[0]
+            for col in reversed(split_by):
+                res.insert(0, col, orig_vals[col])  # insert at the first column
 
             if result is None:
                 result = res
@@ -277,5 +301,32 @@ def do_case(name):
 
 final_result = pd.concat([do_case(name) for name in cases], ignore_index=True)
 
+# Inherit factor levels from the categorical obs columns for the split_by and
+# source/target columns, so the levels are preserved in the output table
+# (see `write_table`/`read_table` in `biopipen.utils.misc`)
+cat_cols = {}
+for col in ALL_SPLIT_BY_COLS:
+    obs_col = adata.obs.get(col)
+    if obs_col is not None and isinstance(obs_col.dtype, pd.CategoricalDtype):
+        cat_cols[col] = obs_col.cat.categories.tolist()
+
+groupbys = list(dict.fromkeys(
+    case_envs.get("groupby")
+    for case_envs in cases.values()
+    if case_envs.get("groupby") in adata.obs.columns
+))
+if groupbys and all(
+    isinstance(adata.obs[gb].dtype, pd.CategoricalDtype) for gb in groupbys
+):
+    cats = []
+    for gb in groupbys:
+        cats.extend(c for c in adata.obs[gb].cat.categories if c not in cats)
+    cat_cols.update({"source": cats, "target": cats})
+
+for col, cats in cat_cols.items():
+    if col not in final_result.columns:
+        continue
+    final_result[col] = pd.Categorical(final_result[col], categories=cats)
+
 logger.info("Saving the final result ...")
-final_result.to_csv(outfile, sep="\t", index=False)
+write_table(final_result, outfile, sep="\t", index=False)

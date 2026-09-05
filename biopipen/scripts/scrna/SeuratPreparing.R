@@ -10,6 +10,8 @@ outfile <- {{out.outfile | r}}
 joboutdir <- {{job.outdir | r}}
 envs <- {{envs | r: todot = "-", skip = 1}}
 
+qs2::qopt("nthreads", value = envs$ncores)
+
 if (isTRUE(envs$cache)) { envs$cache <- joboutdir }
 
 log <- get_logger()
@@ -38,26 +40,28 @@ reporter$add(
     h1 = "Filters and QC"
 )
 
-metadata <- tryCatch({
-    log$debug("Trying to read Seurat object from metafile ...")
-    read_obj(metafile)
-}, error = function(e) {
-    log$debug("Failed to read Seurat object from metafile: {e$message}")
-    log$debug("Reading metafile as a table (sample info) ...")
-    read.table(
-        metafile,
-        header = TRUE,
-        row.names = NULL,
-        sep = "\t",
-        check.names = FALSE
-    )
-})
+metadata <- read_obj(metafile)
 is_seurat <- inherits(metadata, "Seurat")
 
 meta_cols <- if (is_seurat) colnames(metadata@meta.data) else colnames(metadata)
 if (!"Sample" %in% meta_cols) {
-    stop("Error: Column `Sample` is not found in ", ifelse(is_seurat, "Seurat object's meta.data.", "metafile."))
+    if (is_seurat) {
+        log$warn(paste0(
+            "Column `Sample` is not found in Seurat object's meta.data. ",
+            "Will use orig.ident of meta.data as `Sample`."
+        ))
+        metadata@meta.data$Sample <- metadata@meta.data$orig.ident
+    } else {
+        log$warn(paste0(
+            "Column `Sample` is not found in metafile. ",
+            "Will use uniformed 'Sample' value as `Sample`."
+        ))
+        metadata$Sample <- "Sample"
+    }
 }
+nsamples <- length(unique(metadata$Sample))
+envs$no_integration <- envs$no_integration %||% (nsamples <= 1)
+
 if (!"RNAData" %in% meta_cols && !is_seurat) {
     stop("Error: Column `RNAData` is not found in metafile.")
 }
@@ -80,6 +84,21 @@ if (
     envs$ccs_args$trans_args$use_sct <- envs$ccs_args$trans_args$use_sct %||% FALSE
 }
 
+# The `Contaminated` assay (original counts) is only needed later when
+# contamination-expression QC plots are requested, or when envs$keep_contam_assay is TRUE.
+# Otherwise, let LoadSeuratAndPerformQC drop it per-sample right after correction
+# to reduce the memory used by merging and cell/gene filtering.
+need_contam_assay <- envs$keep_contam_assay || any(vapply(
+    envs$qc_plots,
+    function(x) {
+        !is.null(x) &&
+            isTRUE(x$kind %in% c("contam", "contamination")) &&
+            !is.null(x$metric) &&
+            tolower(x$metric) %in% c("expr", "expression")
+    },
+    logical(1)
+))
+
 sobj <- LoadSeuratAndPerformQC(
     metadata,
     min_cells = envs$min_cells,
@@ -91,9 +110,12 @@ sobj <- LoadSeuratAndPerformQC(
     contam_correction = envs$contam_correction,
     decontXArgs = envs$decontX,
     scCDCArgs = envs$scCDC,
+    keep_contam_assay = need_contam_assay,
     tmpdir = joboutdir,
     log = log,
     cache = envs$cache)
+rm(metadata)
+invisible(gc())
 
 log$info("Saving and visualizing QC results ...")
 cell_qc_df <- VizSeuratCellQC(sobj, plot_type = "table")
@@ -196,6 +218,10 @@ for (pname in names(envs$qc_plots)) {
     )
 }
 
+# Release the QC plot objects (each may hold all-cell data frames) before filtering
+if (exists("p")) { rm(p) }
+invisible(gc())
+
 log$info("Filtering with QC criteria ...")
 sobj <- FinishSeuratQC(sobj, keep_contam_assay = envs$keep_contam_assay)
 
@@ -282,4 +308,7 @@ if (!is.null(envs$mutaters) && length(envs$mutaters) > 0) {
 
 log$info("Saving QC'ed seurat object ...")
 reporter$save(joboutdir)
+# gc before the final serialization: qs2 allocations don't trigger R's gc,
+# so collect first to lower the peak memory when saving the object
+invisible(gc())
 save_obj(sobj, outfile)

@@ -1,5 +1,68 @@
 # Change Log
 
+## 1.4.0
+
+- feat(scrna.CellTypeAnnotation): add support for multiple cell type annotation tools (scSorter, SCINA, SingleR, scHDeepInsight, GPTCelltype, cellassign, scBERT, CelliD)
+- feat(scrna.CellTypeAnnotation): support multiple annotation cases and add an assay parameter for analysis and case-specific usage
+- feat(scrna.CellTypeAnnotation): add support for saving cluster-to-cell-type mappings
+- feat(scrna.CellTypeAnnotation): allow specifying a Python executable in cellassign_args
+- feat(scrna.CellTypeAnnotation): redesign envs with per-tool namespaces and per-cell annotation outputs
+    - `envs.<tool>` namespaces (envs.sctype, envs.hitype, ...) with flattened args; legacy flat envs (e.g. `sctype_db`, `scina_args`) are deprecated but still work with a warning
+    - cell-level tools (scina, cellassign, cellid, scbert, schdeepinsight) produce per-cell annotations; with `ident` (or `cases.X.ident`) they also produce cluster-level mappings by majority vote
+    - replace `newcol`/`backup_col` with `anno_col` (default `CellType`); annotations are always saved to a new column and the original ident column is never modified; `set_ident` (default True) controls the final Idents
+    - add `outprefix.cell2celltype.tsv` with per-cell annotations (cell barcodes in the `Cell` column) alongside `outprefix.cluster2celltype.tsv`, including cluster size information
+- feat(scrna.CellTypeAnnotation): support a universal marker format for marker-based tools, with tissue/cancer/species filtering
+- feat(scrna.CellTypeAnnotation): replace GPTCelltype with LLMCelltype and add tests
+- feat(scrna.CellTypeAnnotation): add scagenttype tool (cluster-level, agentic LLM via the scagenttype python package) with the `envs.scagenttype` namespace (api, api_key, model, base_url, tissue, species, etc.); the Seurat object is converted to h5ad and each cluster is annotated by an `AnnotationAgent` run in a python wrapper
+- feat(scrna.MarkersFinder): add default assay handling with SCTAssay preparation check and a select_overall option for overall top markers in heatmap plots
+- feat(scrna.MarkersFinder): enhance logging for marker processing and enrichment analysis
+- feat(scrna.SeuratPreparing): enhance sample handling by using orig.ident or a uniformed value when the 'Sample' column is missing, and document memory trade-offs for cache and keep_contam_assay settings
+- feat(scrna.SeuratClusterStats): add handling for missing features in scale.data during feature processing (checked via GetAssayData, logged at debug level)
+- feat(scrna.AnnData2Seurat): add layer parameter to FeatureStatPlot for improved plotting
+- feat(scrna.CellCellCommunication): support multiple split_by columns in analysis
+- feat(scrna.CellCellCommunication): enhance output tables by inheriting factor levels from categorical columns
+- feat(scrna.Slingshot): add support for cell subsetting and splitting in Slingshot analysis
+- feat(scrna): add HdWGCNA class for weighted gene co-expression network analysis
+- feat(scrna, tcr): add ncores parameter for parallel processing in various scripts
+- feat(tcr.ScRepCombiningExpression): add group-based clonal proportion calculation, enhance clone size handling and add logging for both
+- feat(utils.misc, SampleInfo): add read_table and write_table helpers for DataFrame handling and use them in SampleInfo so factor levels can be saved and loaded
+- feat(misc.Glob2Dir): enhance file handling with a copy option and improved error messages
+- feat(bam): add Samplot integration for visualizing BAM files with the necessary environment setup
+- feat(bam): add Bedtools coverage and summary processing for BAM files (BedtoolsCoverageBam and BedtoolsCoverageBamSummary)
+- feat(pipen-process): add SKILL.md and evals.json for process creation guidelines and evaluation prompts
+- fix(scrna.CellTypeAnnotation): update identity column handling and enhance handling of missing clusters and special values in direct annotation
+- fix(scrna.CellTypeAnnotation): do not treat celltypist as cluster-based when over_clustering is not given
+- fix(scrna.CellTypeAnnotation): normalize tool names to lowercase in the switch statement
+- fix(scrna.CellTypeAnnotation): validate species, cancer and tissue in custom marker files (default cancer type 'Normal') and enforce tissue/cancer/species marker filters
+- fix(scrna.CellTypeAnnotation): improve the error message for a wrong scSorter package and ensure a default value for mc.cores in scsorter_args
+- fix(scrna.CellTypeAnnotation): add default NA columns for pmid and subtypes in scCATCH format
+- fix(scrna.CellTypeAnnotation): improve SCINA signature filtering against the expression matrix to prevent empty signatures and correct enrichment matrix orientation
+- fix(scrna.CellTypeAnnotation): optimize size factor calculation and update cellassign arguments for improved marker gene filtering
+- fix(scrna.MarkersFinder): adopt scplotter 0.8.0-2, update marker selection parameter to 'each' for consistency, use case$group_by in comparison_by, and improve marker processing and plotting logic
+- fix(scrna.Slingshot): handle varying lineage outputs for case splits
+- fix(misc.File2Proc): remove the unnecessary touch command before creating symbolic links
+- fix(misc.Plot): correct data reading logic for .rds files and ensure proper handling of read options
+- fix: correct variable name from 'chrome' to 'chrom' in Samplot.py
+- fix(bam.BedtoolsCoverageBamSummary): update envs extraction to handle keys with dashes as dots
+- refactor(scrna.SeuratPreparing): simplify metadata reading by removing the tryCatch block, and optimize memory usage by managing the Contaminated assay and releasing resources earlier
+- refactor(scrna.ModuleScoreCalculator): use biopipen.utils::RunModuleScoring to support multiple tools
+- docs(scrna.CellTypeAnnotation): update documentation for output file naming and clarify annotation methods with tool categories
+- docs(scrna.SeuratPreparing): clarify ScaleData documentation for feature scaling options
+- docs: update logo (including size for better visibility), favicon and README (badges, usage examples) for improved branding
+- docs: update markdown extensions for improved documentation formatting
+- chore(scrna.MarkersFinder): set default plot type to heatmap_log2fc for marker plots
+- chore(scrna.SeuratPreparing): remove unnecessary SCTransform parameters (missing features in scale.data are handled downstream)
+- chore(scrna): enhance cache log messages to include cache paths for better traceability
+- chore(deps): bump pipen to 1.2.0, xqute to 2.2.0, pipen-report to 1.2.4, liquidpy to 0.10.0, python-simpleconf to 0.9.5, markdown to 3.10.3 and platformdirs to 4.11.1; constrain mkdocs to <2
+- chore(deps): add samplot (BAM visualization) and filelock (file handling) dependencies
+- test(scrna.CellTypeAnnotation): move tool-specific tests to the dedicated test_scrna/CellTypeAnnotation directory (including CelliD)
+- test(scrna.MarkersFinder): enhance ClusterMarkers heatmap configuration with additional parameters
+- test(scrna.Seurat): enhance SCTransform configuration and add new heatmap options for ClusterMarkers
+- test(scrna.SeuratClusterStats): remove the scale.data feature check for test stability
+- test(scrna.ScFGSEAEach): use if_else instead of ifelse in mutaters to keep factor levels
+- test: remove LOCAL_ONLY variable from run.env for the samplot test
+- ci: update docker-test-deps to include output for changed files and update setup-miniconda action to version 4
+
 ## 1.3.14
 
 - feat(scrna.CellTypeAnnotation): add support for cell-level annotations

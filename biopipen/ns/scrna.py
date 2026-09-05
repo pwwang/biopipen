@@ -196,6 +196,8 @@ class SeuratPreparing(Proc):
             See <https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis>
 
         no_integration (flag): Whether to skip integration or not.
+            By default, if there are multiple samples, integration will be performed. If `no_integration` is `True`, the samples will be merged without integration.
+            If there is only one sample, integration will be skipped regardless of the value of `no_integration`.
         NormalizeData (ns): Arguments for [`NormalizeData()`](https://satijalab.org/seurat/reference/normalizedata).
             `object` is specified internally, and `-` in the key will be replaced with `.`.
             - <more>: See <https://satijalab.org/seurat/reference/normalizedata>
@@ -206,6 +208,7 @@ class SeuratPreparing(Proc):
 
         ScaleData (ns): Arguments for [`ScaleData()`](https://satijalab.org/seurat/reference/scaledata).
             `object` and `features` is specified internally, and `-` in the key will be replaced with `.`.
+            You can specify `features` to scale specific features, or set it to `"__all__"` to scale all features.
             - <more>: See <https://satijalab.org/seurat/reference/scaledata>
 
         RunPCA (ns): Arguments for [`RunPCA()`](https://satijalab.org/seurat/reference/runpca).
@@ -265,6 +268,10 @@ class SeuratPreparing(Proc):
 
         keep_contam_assay (flag): Whether to keep the "Contaminated" (original) assay after QC is finished.
             If kept, we can use it to visualize some marker expressions for comparisons.
+            Note that when `False` (default), the `Contaminated` assay is dropped per-sample right after
+            contamination correction (before samples are merged) to reduce the memory usage.
+            Contamination-expression QC plots (with `metric` of `expr`/`expression`) in `qc_plots`
+            require this to be `True`.
 
         doublet_detector (choice): The doublet detector to use.
             - none: Do not use any doublet detector.
@@ -297,6 +304,9 @@ class SeuratPreparing(Proc):
             <https://github.com/satijalab/seurat/issues/6748> for more details also about reproducibility issues.
             To not use the cached seurat object, you can either set `cache` to `False` or delete the cached file at
             `<signature>.RDS` in the cache directory.
+            Note that caching saves full snapshots of the seurat object at step boundaries, which transiently
+            increases the peak memory (on both save and load). Set `cache` to `False` on memory-constrained
+            runs with big data to avoid the extra peaks.
 
     Requires:
         r-seurat:
@@ -343,14 +353,12 @@ class SeuratPreparing(Proc):
             },
         },
         "use_sct": False,
-        "no_integration": False,
+        "no_integration": None,
         "NormalizeData": {},
         "FindVariableFeatures": {},
         "ScaleData": {},
         "RunPCA": {},
         "SCTransform": {
-            "return-only-var-genes": False,
-            "min_cells": 3,
             "verbose": True,
         },
         "IntegrateLayers": {"method": "harmony"},
@@ -520,6 +528,7 @@ class SeuratSubClustering(Proc):
             And the final cluster name will be `<name>`.
             Note that the `name` should be alphanumeric and anything other than alphanumeric will be removed.
     """  # noqa: E501
+
     input = "srtobj:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
@@ -800,6 +809,7 @@ class SeuratClusterStats(Proc):
             For each case in `envs.clustrees`, both the png and pdf files will be saved.
 
     Envs:
+        ncores (type=int): Number of cores to use for reading and writing the data.
         mutaters (type=json): The mutaters to mutate the metadata to subset the cells.
             The mutaters will be applied in the order specified.
             You can also use the clone selectors to select the TCR clones/clusters.
@@ -916,6 +926,7 @@ class SeuratClusterStats(Proc):
     output = "outdir:dir:{{in.srtobj | stem}}.cluster_stats"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
         "cache": config.path.tmpdir,
         "clustrees_defaults": {
@@ -984,18 +995,423 @@ class SeuratClusterStats(Proc):
     }
 
 
+class HdWGCNA(Proc):
+    """Weighted gene co-expression network analysis (WGCNA) for single-cell RNA-seq data.
+
+    Wrapping [`hdWGCNA`](https://smorabit.github.io/hdWGCNA/index.html) (v0.4.12).
+    For a comprehensive introduction and usage guide, please refer to
+    the [hdWGCNA tutorials](https://smorabit.github.io/hdWGCNA/articles/index.html).
+
+    The analysis includes the following steps:
+
+    1. **Setup**: `SetupForWGCNA` to select the genes for WGCNA.
+    2. **Data aggregation** (choose one):
+       - **Metacells** (recommended): `MetacellsByGroups` + `NormalizeMetacells`, with optional
+         `ScaleMetacells`, `RunPCAMetacells`, `RunHarmonyMetacells` and `RunUMAPMetacells`.
+       - **Pseudobulk**: `AggregatePseudobulk` + `NormalizeCounts` (DESeq2 VST).
+    3. **Network construction**: `SetDatExpr` + `TestSoftPowers` + `ConstructNetwork`, or
+       `SetMultiExpr` + `TestSoftPowersConsensus` + `ConstructNetwork` for a **consensus network**
+       (`use_consensus`).
+    4. **Module analysis**: `ModuleEigengenes` + `ModuleConnectivity` (kME), optionally
+       `ResetModuleNames`/`ResetModuleColors`, and `GetHubGenes` for hub genes.
+    5. **Downstream analyses**: module visualization (`plots`), differential module expression
+       (`dmes`), module-trait correlation (`module_trait_corr`), functional enrichment (`enrich`),
+       module preservation/projection (`module_preservations`), TF regulatory networks
+       (`tf_network`) and motif overlap (`motifs`).
+
+    The envs that configure a single hdWGCNA function are named after the function itself
+    (e.g. `SetupForWGCNA`, `MetacellsByGroups`), and the keys within them are the argument
+    names of the corresponding R function, with `-` used in place of `.` in the argument
+    names (e.g. `group.by` -> `group-by`). The envs that bundle several functions
+    (`plots`, `dmes`, `module_trait_corr`, `enrich`, `module_preservations`, `tf_network`,
+    `motifs`) are case-based, where the keys are the titles of the cases and the values
+    inherit from the corresponding `*_defaults` env.
+
+    Packages:
+        **Core** (required for any analysis, checked by `Requires`):
+        [Seurat](https://satijalab.org/seurat/), [hdWGCNA](https://github.com/smorabit/hdWGCNA),
+        [WGCNA](https://cran.r-project.org/package=WGCNA), [igraph](https://igraph.org/),
+        [patchwork](https://patchwork.data-imaginist.com/),
+        [tidyseurat](https://tidyseurat.github.io/), [glue](https://glue.tidyverse.org/) and
+        [biopipen.utils](https://github.com/pwwang/biopipen.utils) (provides `RunEnrichment`/
+        `VizEnrichment`).
+
+        **Advanced** (only when the corresponding analyses are enabled):
+        - **Enrichment** (`enrich`): [enrichit](https://github.com/pwwang/enrichit)
+          (via `biopipen.utils::RunEnrichment`, requires internet access for the
+          Enrichr API).
+        - **GSEA** (`gsea`): [fgsea](https://bioconductor.org/packages/fgsea/);
+          [msigdbr](https://cran.r-project.org/package=msigdbr) only when
+          `genesets` is given as a dict of arguments for `msigdbr::msigdbr()`
+          (e.g. `{species: "human", collection: "C5", subcollection: "BP"}`) —
+          a GMT file needs no extra package.
+        - **Motif scan** (`tf_network.motif_scan` and `motifs`):
+          [TFBSTools](https://bioconductor.org/packages/TFBSTools/),
+          [motifmatchr](https://bioconductor.org/packages/motifmatchr/),
+          a JASPAR package (e.g. [JASPAR2020](https://bioconductor.org/packages/JASPAR2020/)),
+          a BSgenome package (e.g. `BSgenome.Hsapiens.UCSC.hg38`, set via
+          `species_genome`), and an EnsDb package (e.g. `EnsDb.Hsapiens.v86`,
+          set via `ensdb_package`).
+        - **TF network** (`tf_network.construct`): [xgboost](https://cran.r-project.org/package=xgboost).
+        - **Regulon scores** (`tf_network.regulon_scores`, and `ModuleExprScore`
+          with `method: "UCell"`): [UCell](https://github.com/carmonalab/UCell).
+        - **Regulon enrichment** (`tf_network.enrich_regulons`): [enrichit](https://github.com/pwwang/enrichit)
+          (via `biopipen.utils::RunEnrichment`, requires internet access for the
+          Enrichr API).
+        - **Regulatory heatmap** (`tf_network.regulatory_heatmap`): [forcats](https://forcats.tidyverse.org/)
+          (hdWGCNA uses `fct_rev()` in the heatmap's aes without importing forcats).
+        - **Module preservation** (`module_preservations.netrep`): [NetRep](https://cran.r-project.org/package=NetRep).
+        - **Metacells** (`RunHarmonyMetacells`): [harmony](https://cran.r-project.org/package=harmony).
+        - **Pseudobulk** (`NormalizeCounts` with `method: "VST"`): [DESeq2](https://bioconductor.org/packages/DESeq2).
+
+    Input:
+        srtobj: The Seurat object to analyze
+
+    Output:
+        outdir: The output directory
+
+    Envs:
+        ncores (type=int): The number of cores to use.
+        mutaters (type=json): The columns to add to the metadata of the object.
+            See `SeuratPreparing` for more details.
+        subset: An expression to subset the cells, will be passed to `tidyrseurat::filter()`.
+        seed (type=int): The random seed.
+        cache: The directory to cache the TOM matrices (they are large). `true` to use the job
+            output directory. By default, the TOM matrices are cached in the output directory.
+        use_pseudobulk (flag): Whether to aggregate the cells into pseudobulk
+            (via `AggregatePseudobulk` + `NormalizeCounts`) instead of metacells.
+        use_consensus (flag): Whether to construct a consensus network
+            (requires `SetMultiExpr` to be set).
+        ref_srtobj: The reference Seurat object (RDS/qs file) for module preservation/projection.
+            Relative paths are resolved against the directory of the input object.
+            Use `"self"` to test the preservation of the modules against the query
+            object itself (self-preservation test).
+        SetupForWGCNA (type=json): The arguments for [`hdWGCNA::SetupForWGCNA`](https://smorabit.github.io/hdWGCNA/reference/SetupForWGCNA.html).
+            - wgcna_name: The name of the WGCNA network, will be used throughout the analysis.
+            - gene_select: The gene selection method.
+            - fraction: The fraction of cells that a gene needs to be expressed in to be
+                included when `gene_select = "fraction"`.
+        MetacellsByGroups (type=json): The arguments for [`hdWGCNA::MetacellsByGroups`](https://smorabit.github.io/hdWGCNA/reference/MetacellsByGroups.html).
+            - group-by: The metadata columns to group the cells by.
+            - ident-group: The column to use as the identity of the metacells.
+        NormalizeMetacells (type=json): The arguments for [`hdWGCNA::NormalizeMetacells`](https://smorabit.github.io/hdWGCNA/reference/NormalizeMetacells.html).
+        ScaleMetacells: The arguments for [`hdWGCNA::ScaleMetacells`](https://smorabit.github.io/hdWGCNA/reference/ScaleMetacells.html).
+            `None` to skip.
+        RunPCAMetacells: The arguments for [`hdWGCNA::RunPCAMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunPCAMetacells.html).
+            `None` to skip.
+        RunHarmonyMetacells: The arguments for [`hdWGCNA::RunHarmonyMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunHarmonyMetacells.html).
+            `None` to skip. Requires `group-by-vars` to be set.
+        RunUMAPMetacells: The arguments for [`hdWGCNA::RunUMAPMetacells`](https://smorabit.github.io/hdWGCNA/reference/RunUMAPMetacells.html).
+            `None` to skip.
+        AggregatePseudobulk (type=json): The arguments for [`hdWGCNA::AggregatePseudobulk`](https://smorabit.github.io/hdWGCNA/reference/AggregatePseudobulk.html).
+            - replicate_col: The column in metadata for the replicate (sample) of each cell.
+            - group_col: The column in metadata for the group of each cell.
+        NormalizeCounts (type=json): The arguments for [`hdWGCNA::NormalizeCounts`](https://smorabit.github.io/hdWGCNA/reference/NormalizeCounts.html).
+        SetDatExpr (type=json): The arguments for [`hdWGCNA::SetDatExpr`](https://smorabit.github.io/hdWGCNA/reference/SetDatExpr.html).
+            Note that in the pseudobulk mode, `mat` and `layer` are set automatically.
+        TestSoftPowers (type=json): The arguments for [`hdWGCNA::TestSoftPowers`](https://smorabit.github.io/hdWGCNA/reference/TestSoftPowers.html).
+        SetMultiExpr: The arguments for [`hdWGCNA::SetMultiExpr`](https://smorabit.github.io/hdWGCNA/reference/SetMultiExpr.html).
+            Required when `use_consensus` is true. When `use_pseudobulk` is true,
+            `mat` and `layer` are set automatically, and `multi-group-by` should be
+            set to the column in the pseudobulk metadata that defines the groups
+            (e.g. `cell_type`).
+        TestSoftPowersConsensus (type=json): The arguments for [`hdWGCNA::TestSoftPowersConsensus`](https://smorabit.github.io/hdWGCNA/reference/TestSoftPowersConsensus.html).
+        ConstructNetwork (type=json): The arguments for [`hdWGCNA::ConstructNetwork`](https://smorabit.github.io/hdWGCNA/reference/ConstructNetwork.html).
+            - soft_power: The soft power to use. `None` to use the one determined by `TestSoftPowers`.
+            - tom_name: The name of the TOM matrix. Defaults to the `wgcna_name`.
+            - minModuleSize: The minimum number of genes in a module.
+            - mergeCutHeight: The cut height for merging similar modules.
+        ModuleEigengenes (type=json): The arguments for [`hdWGCNA::ModuleEigengenes`](https://smorabit.github.io/hdWGCNA/reference/ModuleEigengenes.html).
+        ModuleConnectivity (type=json): The arguments for [`hdWGCNA::ModuleConnectivity`](https://smorabit.github.io/hdWGCNA/reference/ModuleConnectivity.html).
+        ResetModuleNames: The arguments for [`hdWGCNA::ResetModuleNames`](https://smorabit.github.io/hdWGCNA/reference/ResetModuleNames.html).
+            `None` to skip. e.g. `{new_name: "M"}` to rename the modules to `M1`, `M2`, ...
+        ResetModuleColors: The arguments for [`hdWGCNA::ResetModuleColors`](https://smorabit.github.io/hdWGCNA/reference/ResetModuleColors.html).
+            `None` to skip.
+        GetHubGenes (type=json): The arguments for [`hdWGCNA::GetHubGenes`](https://smorabit.github.io/hdWGCNA/reference/GetHubGenes.html).
+        plots_defaults (ns): The default parameters for the cases in `plots`.
+            - kind: The kind of the plot. See `plots` for the available kinds.
+            - devpars (ns): The device parameters for the plots.
+            - more_formats (type=list): The formats to save the plots other than `png`.
+        plots (type=json): The plots to make. Keys are the titles of the plots and values
+            are the dicts inherited from `plots_defaults`.
+            - kind: The kind of the plot, one of `soft_powers` (the soft power selection plots,
+                SFT and fit, saved as `<title>.sft.png` and `<title>.fit.png`), `dendrogram`
+                (the gene dendrogram), `kmes` (the kME module membership plots, arguments for
+                `PlotKMEs`), `module_umap` (the module UMAP, arguments for `RunModuleUMAP` at the
+                case level except `umap_plot_args`, and the arguments for `ModuleUMAPPlot` in the
+                sub-dict `umap_plot_args`), `module_network` (the module network plots,
+                `ModuleNetworkPlot` writes the plots to `<outdir>/plots/ModuleNetworks.<title>`),
+                `hub_gene_network`, `module_feature` (arguments for `ModuleFeaturePlot`),
+                `module_radar` (arguments for `ModuleRadarPlot`), `module_correlogram`
+                (arguments for `ModuleCorrelogram`), `consensus_compare` (only when
+                `use_consensus` is true: re-runs the standard non-consensus workflow on the
+                same data under `standard_name`, then plots both the consensus and standard
+                module colors on the consensus dendrogram via `WGCNA::plotDendroAndColors`;
+                accepts `standard_name` (required), `soft_power` for the standard network
+                (given, the soft power test is skipped), and other `SetDatExpr`/`ConstructNetwork`
+                arguments, plus `main` for the plot title).
+            - descr: The description of the plot, showing in the report.
+        ModuleExprScore: The arguments for [`hdWGCNA::ModuleExprScore`](https://smorabit.github.io/hdWGCNA/reference/ModuleExprScore.html).
+            Runs before `dmes` so that the module scores can be used as the features for DMEs.
+            `None` to skip.
+        dmes_defaults (ns): The default parameters for the cases in `dmes`.
+            - mode (choice): `find_all` to use `FindAllDMEs`, `find` to use `FindDMEs`.
+            - group-by: The column in metadata to group the cells by (for `find_all`).
+            - barcodes1: The barcodes of the first group to compare (for `find`).
+            - barcodes2: The barcodes of the second group to compare (for `find`).
+            - lollipop (flag): Whether to make the lollipop plot.
+            - volcano (flag): Whether to make the volcano plot.
+            - devpars (ns): The device parameters for the plots.
+        dmes (type=json): The differential module expression analyses. Keys are the titles of the
+            cases and values are the dicts inherited from `dmes_defaults`. Other arguments of
+            `FindAllDMEs`/`FindDMEs` can also be set, plus `pvalue` for the p-value column
+            used by the lollipop plot (default: `p_val_adj`).
+        module_trait_corr_defaults (ns): The default parameters for the cases in `module_trait_corr`.
+            - traits: The columns in metadata to use as the traits (a character vector).
+            - group-by: The column in metadata to group the cells by.
+            - devpars (ns): The device parameters for the plots.
+        module_trait_corr (type=json): The module-trait correlation analyses. Keys are the titles
+            of the cases and values are the dicts inherited from `module_trait_corr_defaults`.
+        enrich_defaults (ns): The default parameters for the cases in `enrich`.
+            - dbs: The databases to use for the enrichment analysis (via [enrichit](https://github.com/pwwang/enrichit)).
+            - enrich_plots (type=json): The plots to make for each module. Keys are the titles of
+                the plots and values are the arguments for
+                [`plotthis::VizEnrichment`](https://pwwang.github.io/plotthis/reference/VizEnrichment.html),
+                including `db`, `plot_type`, `top_term`, `metric`, etc.
+            - devpars (ns): The device parameters for the plots.
+        enrich (type=json): The functional enrichment analyses for the module genes. Keys are the
+            titles of the cases and values are the dicts inherited from `enrich_defaults`.
+            The enrichment is done by `enrichit::RunEnrichment` and the plots by `plotthis::VizEnrichment`.
+            Requires internet access.
+        gsea_defaults (ns): The default parameters for the cases in `gsea`.
+            - genesets: The gene sets to test against. A dict of arguments for
+                [`msigdbr::msigdbr()`](https://igordot.github.io/msigdbr/reference/msigdbr.html)
+                (e.g. `{species: "human", collection: "C5", subcollection: "BP"}`), or a GMT file.
+            - metric: The significance metric used to rank the terms, `p.adjust` or `pvalue`.
+            - cutoff: The significance cutoff for the terms (on the `metric` column).
+            - top_term (type=int): The number of top terms to show in the summary plot, and
+                the default number of terms for the running-score plots.
+            - gsea_plots (type=json): The running-score plots. Keys are the titles and values are
+                the arguments for
+                [`plotthis::VizGSEA`](https://pwwang.github.io/plotthis/reference/GSEAPlot.html)
+                with `plot_type: "gsea"` (the summary plot is always made),
+                including `gs` (the gene set IDs to plot; default: the top significant terms),
+                `top_term`, etc.
+            - devpars (ns): The device parameters for the plots.
+        gsea (type=json): The gene set enrichment analyses of the module gene ranks (kME) for
+            each module. Keys are the titles of the cases and values are the dicts inherited
+            from `gsea_defaults`. Other arguments of
+            [`biopipen.utils::RunGSEA`](https://pwwang.github.io/biopipen.utils/reference/RunGSEA.html)
+            (e.g. `minSize`, `maxSize`) can also be set. The analysis is done by `fgsea` and
+            the plots by `plotthis::VizGSEA` (`GSEASummaryPlot`/`GSEAPlot`).
+        module_preservations_defaults (ns): The default parameters for the cases in `module_preservations`.
+            - project_modules (flag): Whether to project the modules to the reference object
+                (via `ProjectModules`).
+            - preserve (flag): Whether to test the module preservation
+                (via `ModulePreservation`).
+            - project_args (ns): The arguments for `ProjectModules`.
+            - preserve_args (ns): The arguments for `ModulePreservation`.
+            - plot (flag): Whether to make the preservation plot.
+            - lollipop (flag): Whether to make the lollipop plot.
+            - netrep (ns): The network reproduction test (via `ModulePreservationNetRep`). `{}` to skip.
+                - args: The arguments for `ModulePreservationNetRep`.
+                - topology_heatmap (type=json): The topology heatmaps. Keys are the titles and values
+                    are the arguments for `ModuleTopologyHeatmap`, with `mod` required.
+                - topology_barplot (type=json): The topology barplots. Keys are the titles and values
+                    are the arguments for `ModuleTopologyBarplot`, with `mod` required.
+            - devpars (ns): The device parameters for the plots.
+        module_preservations (type=json): The module preservation/projection analyses. Keys are the
+            titles of the cases and values are the dicts inherited from `module_preservations_defaults`.
+            Requires `ref_srtobj` to be set.
+        tf_network (ns): The TF regulatory network analysis. `{}` to skip.
+            - motif_scan (ns): The arguments for `MotifScan`. The `pfm` and `EnsDb` are constructed
+                from the JASPAR and Ensembl databases automatically.
+                - species_genome: The genome build name, e.g. `hg38` or `mm39`.
+                - ensdb_package: The name of the EnsDb package, e.g. `EnsDb.Hsapiens.v86`.
+                - jaspar_package: The name of the JASPAR package, default `JASPAR2020`.
+                - collection: The JASPAR collection, e.g. `CORE`.
+                - tax_group: The JASPAR taxonomic group, e.g. `vertebrates`.
+                - all_versions: Whether to include all versions of the JASPAR matrices.
+            - construct (ns): The arguments for `ConstructTFNetwork`, with `model_params` required.
+                `nthread` in `model_params` is set to `ncores` automatically if not set.
+            - assign (ns): The arguments for `AssignTFRegulons`.
+            - regulon_scores (ns): The arguments for `RegulonScores`. `{}` to skip.
+            - plots (type=json): The TF network plots. Keys are the titles and values are the
+                arguments for `TFNetworkPlot`, with `selected_tfs` required.
+            - regulon_bar_plots (type=json): The regulon bar plots. Keys are the titles and values
+                are the arguments for `RegulonBarPlot`, with `selected_tf` required.
+            - differential_regulons (type=json): The differential regulon analyses. Keys are the
+                titles and values are the arguments for `FindDifferentialRegulons`, with
+                `barcodes1` and `barcodes2` required.
+            - enrich_regulons (ns): The regulon enrichment of the positive/negative TF targets
+                against the Enrichr databases, using enrichit (via `biopipen.utils::RunEnrichment`,
+                requires internet access). `None` to skip.
+                - dbs: The Enrichr databases to test against.
+                - depth: The depth of the TF regulatory network to include.
+                - use_regulons: Whether to use only the regulon genes (instead of all targets).
+                - min_genes: The minimum number of target genes required to run the enrichment.
+            - regulatory_heatmap (ns): The arguments for `ModuleRegulatoryHeatmap`. `None` to skip.
+            - regulatory_network (ns): The arguments for `ModuleRegulatoryNetworkPlot`. `None` to skip.
+        motifs (ns): The motif overlap analysis. `{}` to skip. Requires `tf_network.motif_scan` to be run.
+            - overlap_bar_plot (ns): The arguments for `MotifOverlapBarPlot`. The plots are written
+                to `<outdir>/plots/MotifOverlap`.
+
+    Requires:
+        r-seurat:
+            - check: {{proc.lang}} <(echo "library(Seurat)")
+        r-hdwgcn:
+            - check: {{proc.lang}} <(echo "library(hdWGCNA)")
+        r-wgcna:
+            - check: {{proc.lang}} <(echo "library(WGCNA)")
+        r-igraph:
+            - check: {{proc.lang}} <(echo "library(igraph)")
+    """  # noqa: E501
+
+    input = "srtobj:file"
+    output = "outdir:dir:{{in.srtobj | stem}}.hdwgcn"
+    lang = config.lang.rscript
+    envs_depth = 4
+    envs = {
+        "ncores": config.misc.ncores,
+        "mutaters": {},
+        "subset": None,
+        "seed": 8525,
+        "cache": None,
+        "use_pseudobulk": False,
+        "use_consensus": False,
+        "ref_srtobj": None,
+        "SetupForWGCNA": {
+            "wgcna_name": "biopipen",
+            "gene_select": "fraction",
+            "fraction": 0.05,
+        },
+        "MetacellsByGroups": {
+            "group-by": "seurat_clusters",
+            "ident-group": "seurat_clusters",
+        },
+        "NormalizeMetacells": {},
+        "ScaleMetacells": None,
+        "RunPCAMetacells": None,
+        "RunHarmonyMetacells": None,
+        "RunUMAPMetacells": None,
+        "AggregatePseudobulk": {
+            "replicate_col": "Sample",
+            "group_col": "seurat_clusters",
+        },
+        "NormalizeCounts": {"method": "VST", "assay_name": "counts"},
+        "SetDatExpr": {},
+        "TestSoftPowers": {},
+        "SetMultiExpr": None,
+        "TestSoftPowersConsensus": {},
+        "ConstructNetwork": {},
+        "ModuleEigengenes": {},
+        "ModuleConnectivity": {},
+        "ResetModuleNames": None,
+        "ResetModuleColors": None,
+        "GetHubGenes": {"n_hubs": 10},
+        "plots_defaults": {
+            "kind": None,
+            "devpars": {"res": 100},
+            "more_formats": [],
+        },
+        "plots": {
+            "Soft Powers": {"kind": "soft_powers"},
+            "Dendrogram": {"kind": "dendrogram"},
+        },
+        "ModuleExprScore": None,
+        "dmes_defaults": {
+            "mode": "find_all",
+            "group-by": "seurat_clusters",
+            "barcodes1": None,
+            "barcodes2": None,
+            "lollipop": True,
+            "volcano": False,
+            "devpars": {"res": 100},
+        },
+        "dmes": {},
+        "module_trait_corr_defaults": {
+            "traits": None,
+            "group-by": "seurat_clusters",
+            "devpars": {"res": 100},
+        },
+        "module_trait_corr": {},
+        "enrich_defaults": {
+            "dbs": None,
+            "enrich_plots": {},
+            "devpars": {"res": 100},
+        },
+        "enrich": {},
+        "gsea_defaults": {
+            "genesets": None,
+            "metric": "p.adjust",
+            "cutoff": 0.05,
+            "top_term": 10,
+            "gsea_plots": {},
+            "devpars": {"res": 100},
+        },
+        "gsea": {},
+        "module_preservations_defaults": {
+            "project_modules": True,
+            "preserve": True,
+            "project_args": {},
+            "preserve_args": {},
+            "plot": True,
+            "lollipop": False,
+            "netrep": {},
+            "devpars": {"res": 100},
+        },
+        "module_preservations": {},
+        "tf_network": {},
+        "motifs": {},
+    }
+    script = "file://../scripts/scrna/HdWGCNA.R"
+    plugin_opts = {
+        "report": "file://../reports/common.svelte",
+        "report_paging": 2,
+    }
+
+
 class ModuleScoreCalculator(Proc):
     """Calculate the module scores for each cell
 
     The module scores are calculated by
-    [`Seurat::AddModuleScore()`](https://satijalab.org/seurat/reference/addmodulescore)
-    or [`Seurat::CellCycleScoring()`](https://satijalab.org/seurat/reference/cellcyclescoring)
-    for cell cycle scores.
+    [`biopipen.utils::RunModuleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.html)
+    with the scoring method specified by `env.defaults.method` (or per module
+    by `method` in the module dict):
 
-    The module scores are calculated as the average expression levels of each
-    program on single cell level, subtracted by the aggregated expression of
-    control feature sets. All analyzed features are binned based on averaged
-    expression, and the control features are randomly selected from each bin.
+    - `seurat`: [`Seurat::AddModuleScore()`](https://satijalab.org/seurat/reference/addmodulescore),
+        the default. The module scores are calculated as the average expression
+        levels of each program on single cell level, subtracted by the
+        aggregated expression of control feature sets. All analyzed features
+        are binned based on averaged expression, and the control features are
+        randomly selected from each bin. (Tirosh I, et al. 2016. Dissecting the
+        multicellular ecosystem of metastatic melanoma by single-cell RNA-seq.
+        *Science* 352(6282):189-196.
+        <https://www.science.org/doi/10.1126/science.aad0501>)
+    - `ucell`: [`UCell::AddModuleScore_UCell()`](https://bioconductor.org/packages/release/bioc/html/UCell.html)
+        (Andreatta M, Carmona SJ. 2021. UCell: Robust and scalable single-cell
+        gene signature scoring. *Comput Struct Biotechnol J* 19:3796-3798.
+        <https://doi.org/10.1016/j.csbj.2021.06.043>). Missing genes are
+        imputed with expression 0 (with a warning).
+    - `aucell`: [`AUCell::AUCell_calcAUC()`](https://bioconductor.org/packages/release/bioc/html/AUCell.html)
+        (Aibar S, et al. 2017. SCENIC: single-cell regulatory network inference
+        and clustering. *Nat Methods* 14:1083-1086.
+        <https://doi.org/10.1038/nmeth.4463>)
+    - `ssgsea`: [`GSVA::gsva()`](https://bioconductor.org/packages/release/bioc/html/GSVA.html)
+        with `method = "ssgsea"` (Barbie DA, et al. 2009. Systematic RNA
+        interference reveals that oncogenic KRAS-driven cancers require TBK1.
+        *Nature* 462:108-112. <https://doi.org/10.1038/nature08460>)
+    - `jasmine`: (Noureen N, et al. 2022. Integrated analysis of telomerase
+        enzymatic activity unravels an association with cancer stemness and
+        proliferation. *eLife* 11:e71994. <https://doi.org/10.7554/eLife.71994>)
+    - `scse`: (Pont F, et al. 2019. Single-cell signature explorer for
+        personalized transcriptomics studies and drug discovery. *Nucleic Acids
+        Res* 47(19):e90. <https://doi.org/10.1093/nar/gkz601>)
+    - `scps`: (the scPS benchmarking study:
+        <https://academic.oup.com/nargab/article/6/3/lqae124/7770961>)
+
+    Scores from different methods are not comparable with each other — only
+    the column names are consistent.
 
     Input:
         srtobj: The seurat object loaded by `SeuratClustering`
@@ -1005,61 +1421,94 @@ class ModuleScoreCalculator(Proc):
 
     Envs:
         defaults (ns): The default parameters for `modules`.
-            - features: The features to calculate the scores. Multiple features
-                should be separated by comma.
-                You can also specify `cc.genes` or `cc.genes.updated.2019` to
-                use the cell cycle genes to calculate cell cycle scores.
-                If so, three columns will be added to the metadata, including
-                `S.Score`, `G2M.Score` and `Phase`.
-                Only one type of cell cycle scores can be calculated at a time.
+            - method (choice): The scoring method to use, one of `seurat`,
+                `ucell`, `aucell`, `ssgsea`, `jasmine`, `scse` or `scps`.
+                Can be overridden per module.
+            - features: The features (genes) to calculate the scores.
+                A comma-separated string of genes, e.g.
+                `"HAVCR2,ENTPD1,LAYN,LAG3"`, yields one score column named by
+                the module key. A list of gene vectors, e.g.
+                `["HAVCR2","ENTPD1"]`, yields one column per element, named
+                `{key}1`, `{key}2`, ... if unnamed, or `{key}_{name}` if
+                named. You can also specify `cc.genes`,
+                `cc.genes.updated.2019` or `cc.genes.mouse` (or use
+                `kind: "cc"`, with `features` defaulting to `cc.genes`) to
+                calculate cell cycle scores. Three columns will be added to
+                the metadata: `{key}_S.Score`, `{key}_G2M.Score` and
+                `{key}_Phase`. This works for all methods. Use one of the
+                reserved no-prefix keys (`"_"`, `"-"`, `"*"` or `"#"`) as the
+                module key to keep the plain `S.Score`, `G2M.Score` and
+                `Phase` names. For diffusion map modules (`kind: "dm"`), this
+                is the number of components to keep (default 2).
             - nbin (type=int): Number of bins of aggregate expression levels
-                for all analyzed features.
+                for all analyzed features. Only for the `seurat` method.
             - ctrl (type=int): Number of control features selected from
-                the same bin per analyzed feature.
+                the same bin per analyzed feature. Only for the `seurat`
+                method.
             - k (flag): Use feature clusters returned from `DoKMeans`.
-            - assay: The assay to use.
-            - seed (type=int): Set a random seed.
-            - search (flag): Search for symbol synonyms for features in
-                features that don't match features in object?
-            - keep (flag): Keep the scores for each feature?
-                Only works for non-cell cycle scores.
-            - agg (choice): The aggregation function to use.
-                Only works for non-cell cycle scores.
-                - mean: The mean of the expression levels
-                - median: The median of the expression levels
-                - sum: The sum of the expression levels
-                - max: The max of the expression levels
-                - min: The min of the expression levels
-                - var: The variance of the expression levels
-                - sd: The standard deviation of the expression levels
-            - <more>: Other arguments passed to `Seurat::AddModuleScore()` or `Seurat::CellCycleScoring()`.
-                See <https://satijalab.org/seurat/reference/addmodulescore> and
-                <https://satijalab.org/seurat/reference/cellcyclescoring>
+                Only for the `seurat` method.
+            - assay: The assay to use (for tools that accept it).
+            - seed (type=int): Set a random seed. Only for the `seurat` method.
+            - search (flag): Search for symbol synonyms for features that
+                don't match features in object? Only for the `seurat` method.
+            - <more>: Other parameters, passed to the underlying tool of the
+                `method`. For `seurat`, they go to `Seurat::AddModuleScore()`
+                or `Seurat::CellCycleScoring()` (see
+                <https://satijalab.org/seurat/reference/addmodulescore> and
+                <https://satijalab.org/seurat/reference/cellcyclescoring>).
+                For `ucell`: `maxRank`, `w_neg` and `slot` (default
+                `"counts"`, not `layer`). For `aucell`: `aucMaxRank`,
+                `plotStats`. For `ssgsea`: `kcdf`, `verbose`, `min.sz`,
+                `max.sz`, `tau`, etc. For `scse`/`scps`: `layer` (default
+                `"data"`). `scps` uses the bundled scPS implementation, which
+                runs PCA on the `scale.data` of the object, so the signature
+                genes must be scaled first (`ScaleData(features = ...)` or
+                `SCTransform`); it also requires the
+                [`GSEABase`](https://bioconductor.org/packages/release/bioc/html/GSEABase.html)
+                package. For diffmap modules (`kind: "dm"`): `n_pcs` (use PCA
+                embeddings instead of assay data) and other arguments passed
+                to
+                [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap%20class).
+                The `agg` and `keep` parameters from old versions are removed
+                and ignored.
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
         modules (type=json): The modules to calculate the scores.
             Keys are the names of the expression programs and values are the
             dicts inherited from `env.defaults`.
             Here are some examples -
             >>> {
             >>>     "CellCycleMouse": {"features": "cc.genes.mouse"},
-            >>>     "CellCycle": {"features": "cc.genes.updated.2019"},
-            >>>     "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
-            >>>     "Activation": {"features": "IFNG"},
-            >>>     "Proliferation": {"features": "STMN1,TUBB"}
+            >>>     "CellCycle": {"kind": "cc", "features": "cc.genes.updated.2019"},
+            >>>     "TcellState": {
+            >>>         "features": {
+            >>>             "Exhaustion": ["HAVCR2", "ENTPD1", "LAYN", "LAG3"],
+            >>>             "Activation": ["IFNG"]
+            >>>         },
+            >>>         "method": "ucell",
+            >>>         "maxRank": 500
+            >>>     },
+            >>>     "Proliferation": {"features": "STMN1,TUBB"},
+            >>>     "DC": {"kind": "dm"}
             >>> }
 
-            For `CellCycle`, the columns `S.Score`, `G2M.Score` and `Phase` will
-            be added to the metadata. `S.Score` and `G2M.Score` are the cell cycle
-            scores for each cell, and `Phase` is the cell cycle phase for each cell.
+            For `CellCycle`, the columns `CellCycle_S.Score`,
+            `CellCycle_G2M.Score` and `CellCycle_Phase` will be added to the
+            metadata.
 
-            You can also add Diffusion Components (DC) to the modules
-            >>> {"DC": {"features": 2, "kind": "diffmap"}}
-            will perform diffusion map as a reduction and add the first 2
-            components as `DC_1` and `DC_2` to the metadata. `diffmap` is a shortcut
-            for `diffusion_map`. Other key-value pairs will pass to
-            [`destiny::DiffusionMap()`](https://www.rdocumentation.org/packages/destiny/versions/2.0.4/topics/DiffusionMap class).
+            For `TcellState`, the columns `TcellState_Exhaustion` and
+            `TcellState_Activation` will be added to the metadata, one for each
+            program in the named `features` list (the list values are gene
+            vectors, not comma-separated strings).
+
+            For `DC`, a diffusion map will be calculated with
+            [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html)
+            (regardless of `method`), and the first 2 components will be added
+            as the `DC` reduction as well as the `DC_1` and `DC_2` columns to
+            the metadata. `dm` is a shortcut for `diffmap`/`diffusion_map`.
             You can later plot the diffusion map by using
             `reduction = "DC"` in `env.dimplots` in `SeuratClusterStats`.
-            This requires [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
+            This requires
+            [`SingleCellExperiment`](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html)
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
         post_mutaters (type=json): The mutaters to mutate the metadata after
             calculating the module scores.
@@ -1073,6 +1522,7 @@ class ModuleScoreCalculator(Proc):
     lang = config.lang.rscript
     envs = {
         "defaults": {
+            "method": "seurat",
             "features": None,
             "nbin": 24,
             "ctrl": 100,
@@ -1080,9 +1530,8 @@ class ModuleScoreCalculator(Proc):
             "assay": None,
             "seed": 8525,
             "search": False,
-            "keep": False,
-            "agg": "mean",
         },
+        "ncores": config.misc.ncores,
         "modules": {
             # "CellCycle": {"features": "cc.genes.updated.2019"},
             # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
@@ -1238,6 +1687,7 @@ class SeuratMetadataMutater(Proc):
         outfile: The seurat object with the additional metadata
 
     Envs:
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
         mutaters (type=json): The mutaters to mutate the metadata.
             The key-value pairs will be passed the `dplyr::mutate()` to mutate the metadata.
             See <https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.html>
@@ -1256,7 +1706,7 @@ class SeuratMetadataMutater(Proc):
     input = "srtobj:file, metafile:file"
     output = "outfile:file:{{in.srtobj | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"mutaters": {}, "subset": None}
+    envs = {"mutaters": {}, "subset": None, "ncores": config.misc.ncores}
     script = "file://../scripts/scrna/SeuratMetadataMutater.R"
 
 
@@ -1376,6 +1826,10 @@ class MarkersFinder(Proc):
             use `min-pct` instead of `min.pct`.
             - <more>: See <https://satijalab.org/seurat/reference/findmarkers>
         allmarker_plots_defaults (ns): Default options for the plots for all markers when `ident_1` is not specified.
+            To reproduce what [`Seurat::DoHeatmap()`](https://satijalab.org/seurat/reference/doheatmap) does, you can
+            `each = ':seurat_cluster'` to select the top N (default: 20) markers all together (instead of selecting top N markers for each cluster),
+            and set `plot_type = "heatmap"` and `cell_type = "bars"` to plot the heatmap of the top N markers.
+            You may also want to use `order_by` to order the markers and `select = N` to select the top N markers.
             - plot_type: The type of the plot.
                 See <https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html>.
                 Available types are `violin`, `box`, `bar`, `ridge`, `dim`, `heatmap` and `dot`.
@@ -1503,10 +1957,7 @@ class MarkersFinder(Proc):
         "marker_plots": {
             "Volcano Plot (diff_pct)": {"plot_type": "volcano_pct"},
             "Volcano Plot (log2FC)": {"plot_type": "volcano_log2fc"},
-            "Dot Plot": {
-                "plot_type": "dot",
-                "devpars": {"width": 500, "height": 720},
-            },
+            "Dot Plot": {"plot_type": "dot"},
         },
         "enrich_plots_defaults": {
             "more_formats": [],
@@ -1544,6 +1995,7 @@ class TopExpressingGenes(Proc):
         outdir: The output directory for the tables and plots
 
     Envs:
+        ncores (type=int): Number of cores to use for reading and writing the seurat object.
         mutaters (type=json): The mutaters to mutate the metadata.
             You can also use the clone selectors to select the TCR clones/clusters.
             See <https://pwwang.github.io/scplotter/reference/clone_selectors.html>.
@@ -1611,6 +2063,7 @@ class TopExpressingGenes(Proc):
     lang = config.lang.rscript
     script = "file://../scripts/scrna/TopExpressingGenes.R"
     envs = {
+        "ncores": config.misc.ncores,
         "mutaters": {},
         "ident": None,
         "group_by": None,
@@ -1661,10 +2114,11 @@ class ExprImputation(Proc):
             - alra: Use RunALRA() from Seurat
             - scimpute: Use scImpute() from scimpute
             - rmagic: Use magic() from Rmagic
+        ncores (type=int): Number of cores to use for reading and writing,
+            the Seurat object, and for scimpute and rmagic if applicable.
         scimpute_args (ns): The arguments for scimpute
             - drop_thre (type=float): The dropout threshold
             - kcluster (type=int): Number of clusters to use
-            - ncores (type=int): Number of cores to use
             - refgene: The reference gene file
         rmagic_args (ns): The arguments for rmagic
             - python: The python path where magic-impute is installed.
@@ -1707,11 +2161,11 @@ class ExprImputation(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "alra",
+        "ncores": config.misc.ncores,
         "rmagic_args": {"python": config.exe.magic_python, "threshold": 0.5},
         "scimpute_args": {
             "drop_thre": 0.5,
             "kcluster": None,
-            "ncores": config.misc.ncores,
             "refgene": config.ref.refgene,
         },
         "alra_args": {},
@@ -2075,27 +2529,121 @@ class ScFGSEA(Proc):
 
 
 class CellTypeAnnotation(Proc):
-    """Annotate the cell clusters. Currently, four ways are supported:
+    """Annotate the cell clusters. Currently, the following ways are supported:
 
-    1. Pass the cell type annotation directly
-    2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type)
-    3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH)
-    4. Use [`hitype`](https://github.com/pwwang/hitype)
-    5. Use [`celltypist`](https://github.com/Teichlab/celltypist)
+    1. Pass the cell type annotation directly (at cluster-level or cell-level)
+    2. Use [`ScType`](https://github.com/IanevskiAleksandr/sc-type) (cluster-level, marker-based)
+    3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH) (cluster-level, marker-based)
+    4. Use [`hitype`](https://github.com/pwwang/hitype) (cluster-level, marker-based)
+    5. Use [`celltypist`](https://github.com/Teichlab/celltypist) (cell-level, model-based)
+    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/) (cluster-level, marker-based)
+    7. Use [`SCINA`](https://github.com/jcao89757/SCINA) (cell-level, marker-based)
+    8. Use [`SingleR`](https://github.com/dviraran/SingleR) (cluster-level, model-based)
+    9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight) (cell-level, model-based)
+    10. Use [`LLMCelltype`](https://github.com/pwwang/LLMCelltype) (cluster-level, LLM-based)
+    11. Use [`cellassign`](https://github.com/Irrationone/cellassign) (cell-level, marker-based)
+    12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT) (cell-level, model-based)
+    13. Use [`CelliD`](https://github.com/RausellLab/CelliD) (cell-level, marker-based)
+    14. Use [`scAgentType`](https://github.com/sathyasjali/scAgentType) (cluster-level, LLM-based, agentic)
 
-    The annotated cell types will replace the original identity column in the metadata,
-    so that the downstream processes will use the annotated cell types.
+    The tools can be divided into two categories:
+
+    - Cluster-level tools: annotate the clusters, each cluster being assigned one cell type.
+      These include `sctype`, `hitype`, `sccatch`, `scsorter`, `singler`, `llmcelltype`, `scagenttype`, and `direct`.
+    - Cell-level tools: annotate the cells, each cell being assigned one cell type.
+      These include `scina`, `cellassign`, `cellid`, `scbert`, `schdeepinsight`, `llmcelltype`, and `cell`.
+      For cell-level tools, a cluster-level annotation can also be generated by specifying
+      `envs.ident` (or `envs.cases.X.ident` for a specific case), where each cluster is
+      assigned the cell type by majority vote of the cells in the cluster.
+    - `celltypist` is a special cell-level tool, which can also generate cluster-level
+      annotations via its over-clustering mechanism (`envs.celltypist.over_clustering`
+      or `envs.ident`).
+
+    The tools can also be divided by their input types:
+
+    - Marker-based tools: take marker genes for the cell types, including
+      `sctype`, `hitype`, `sccatch`, `scsorter`, `scina`, `cellassign`, and `cellid`.
+      They all accept the universal marker format (see the note below).
+    - Model/reference-based tools: take a trained model or a reference object,
+      including `celltypist`, `scbert`, `singler`, and `schdeepinsight`.
+    - Direct-annotation tools: take the cell types directly via `envs.cell_types`,
+      including `direct` and `cell`.
+
+    The annotated cell types will be saved to a new column (`envs.anno_col`, default: `CellType`)
+    in the metadata, so that the downstream processes will use the annotated cell types
+    (the identity will be set to the annotation column unless `envs.set_ident` is `False`).
 
     /// Note
 
-    When cell types are annotated, the original identity column (e.g. `seurat_clusters`) will be renamed
-    to `envs.backup_col` (e.g. `seurat_clusters_id`), and the new identity column will be added.
+    The original identity column (e.g. `seurat_clusters`) is never modified.
+
+    For `tool` set to `direct`, if `envs.cell_types` is not specified or is an empty list,
+    the original cell types will be kept and nothing will be changed.
 
     ///
 
-    If you are using `ScType`, `scCATCH`, or `hitype`, a text file containing the mapping from
-    the original identity to the new cell types will be generated and saved to
-    `cluster2celltype.tsv` under `<workdir>/<pipline_name>/CellTypeAnnotation/0/output/`.
+    If you are using a cluster-level tool (or a cell-level tool with `envs.ident`), a text file
+    containing the mapping from the original identity to the new cell types will be generated
+    and saved to `cluster2celltype.tsv` under the job output directory.
+    The per-cell annotations from cell-level tools will be saved to `cell2celltype.tsv`
+    under the job output directory.
+
+    /// Note
+
+    The following envs are deprecated and will be removed in future versions:
+    `sctype_tissue`, `sctype_db`, `hitype_tissue`, `hitype_db`, `scsorter_db`, `scsorter_args`,
+    `scina_db`, `scina_args`, `singler_db`, `singler_args`, `schdeepinsight_ref`,
+    `schdeepinsight_args`, `llmcelltype_args`, `cellassign_db`, `cellassign_args`,
+    `scbert_ref`, `scbert_model`, `scbert_label_dict`, `scbert_args`, `cellid_db`,
+    `cellid_args`, `sccatch_args`, `celltypist_args`, `newcol`, and `backup_col`.
+    Use the corresponding `envs.<tool>` namespace instead (e.g. `envs.sctype_db` →
+    `envs.sctype.db`). The deprecated envs still work, with a warning, and take precedence
+    over the new-style envs when both are provided.
+    `envs.newcol` is replaced by `envs.anno_col`, and `envs.backup_col` is no longer
+    needed (the original identity column is never modified).
+
+    ///
+
+    /// Note
+
+    ### Universal marker format
+
+    The marker-based tools (`sctype`, `hitype`, `sccatch`, `scsorter`, `scina`,
+    `cellassign`, and `cellid`) accept a universal marker table in addition to
+    their native formats. The table can be a TSV, CSV, or an RDS/qs/qs2 file
+    containing a data.frame, in long format with one row per gene per cell type:
+
+    - `cell_type` (required): the cell type.
+    - `gene` (required): the marker gene.
+    - `direction`: `positive`/`negative` (aliases: `pos`/`neg`/`+`/`-`).
+      For `sctype`/`hitype`, negative markers are used as down-regulated markers
+      (`geneSymbolmore2`). For `scsorter`, negative markers become negative
+      `Weight`s. For the other tools (`scina`, `cellassign`, `cellid`,
+      `sccatch`), negative markers cannot be represented and are ignored
+      (only positive markers are used).
+    - `weight`: a numeric weight, only used by `scsorter` (as the `Weight` column).
+    - `species`, `cancer`, `tissue`: optional. When the matching env
+      (`envs.<tool>.species`/`cancer`/`tissue`) is set, only the rows with the
+      given value are kept (an error is raised if the table has no such column
+      or no rows match). For `sctype`/`hitype`, `tissue` also becomes the
+      `tissueType` column, and it can be used to filter a native ScType xlsx/TSV
+      database as well (the other two columns only exist in universal tables).
+    - `level`: an integer, only used by `sctype`/`hitype`.
+
+    Column aliases are auto-detected: `celltype`/`cellType`/`Type` → `cell_type`,
+    `marker`/`Marker`/`gene_symbol` → `gene`, `sign` → `direction`, and
+    `tissueType` → `tissue`.
+
+    You can specify the columns after `#` in the file path, for example,
+    `file:///path/to/markers.tsv#cell_type,gene,direction`, using column names
+    (aliases allowed) or 1-based indices. The `file://` prefix is optional.
+
+    A file without `cell_type`/`gene` columns is treated as the tool's native
+    format (e.g. a ScType xlsx for `sctype`/`hitype`, a per-cell-type-column CSV
+    for `scina`, a named-list RDS for `scina`/`cellassign`/`cellid`, an RDS
+    data.frame for `sccatch`, etc.).
+
+    ///
 
     Examples:
         ```toml
@@ -2120,56 +2668,302 @@ class CellTypeAnnotation(Proc):
         outfile: The rds/qs/qs2/h5ad file of seurat object with cell type annotated.
             A text file containing the mapping from the old identity to the new cell types
             will be generated and saved to `cluster2celltype.tsv` under the job output directory.
-            Note that if `envs.ident` is specified, the output Seurat object will have
-            the identity set to the specified column in metadata.
+            Another text file containing the per-cell annotations will be generated and saved
+            to `cell2celltype.tsv` under the job output directory, with the cell barcodes in
+            the first column (`Cell`) and one column per case that produces cell-level annotations.
+            Note that the identity of the output Seurat object will be set to the annotation
+            column (`envs.anno_col`) when `envs.set_ident` is `True` (see `envs.set_ident`).
 
     Envs:
         tool (choice): The tool to use for cell type annotation.
-            - sctype: Use `scType` to annotate cell types.
+            - sctype (cluster-level): Use `scType` to annotate cell types.
                 See <https://github.com/IanevskiAleksandr/sc-type>
-            - hitype: Use `hitype` to annotate cell types.
+            - hitype (cluster-level): Use `hitype` to annotate cell types.
                 See <https://github.com/pwwang/hitype>
-            - sccatch: Use `scCATCH` to annotate cell types.
+            - sccatch (cluster-level): Use `scCATCH` to annotate cell types.
                 See <https://github.com/ZJUFanLab/scCATCH>
-            - celltypist: Use `celltypist` to annotate cell types.
+            - celltypist (cell-level): Use `celltypist` to annotate cell types.
+                It can also generate cluster-level annotations via its over-clustering
+                mechanism (`envs.celltypist.over_clustering` or `envs.ident`).
                 See <https://github.com/Teichlab/celltypist>
-            - direct: Directly assign cell types
-            - cell: Directly assign cell types, but at cell-level instead of cluster-level.
-        sctype_tissue: The tissue to use for `sctype`.
-            Available tissues should be the first column (`tissueType`) of `sctype_db`.
-            If not specified, all rows in `sctype_db` will be used.
-        sctype_db: The database to use for sctype.
-            Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+            - scsorter (cluster-level): Use `scSorter` to annotate cell types.
+                See <https://github.com/pwwang/scSorter>, an optimized version of
+                <https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/>, which increases the
+                speed of the original scSorter.
+            - scina (cell-level): Use `SCINA` to annotate cell types.
+                See <https://github.com/jcao89757/SCINA>
+            - singler (cluster-level): Use `SingleR` to annotate cell types.
+                See <https://github.com/dviraran/SingleR>
+            - schdeepinsight (cell-level): Use `scHDeepInsight` to annotate cell types.
+                See <https://github.com/shangruJia/scHDeepInsight>
+            - llmcelltype (cluster-level): Use `LLMCelltype` to annotate cell types
+                with LLMs. See <https://github.com/pwwang/LLMCelltype>
+                It is the model provider agnostic version of
+                [`gptcelltype`](https://github.com/Winnie09/GPTCelltype).
+            - cellassign (cell-level): Use `cellassign` to annotate cell types
+                with a probabilistic model.
+                See <https://github.com/Irrationone/cellassign>
+            - scbert (cell-level): Use `scBERT` to annotate cell types with a
+                BERT-based transformer model.
+                See <https://github.com/TencentAILabHealthcare/scBERT>
+            - cellid (cell-level): Use `CelliD` to annotate cell types with MCA-based
+                per-cell gene signature enrichment.
+                See <https://github.com/RausellLab/CelliD>
+            - direct (cluster-level): Directly assign cell types
+            - cell (cell-level): Directly assign cell types, but at cell-level instead of cluster-level.
+        assay: The assay to use for the analysis. If not specified, the default assay will be used.
+            Will not be inherited by the cases under `envs.cases`.
+            To use a different assay for a case, specify it in the case args.
+            This will be also used to convert Seurat object to h5ad if the input is Seurat object
+            and the output is h5ad.
         ident: The column name in metadata to use as the clusters.
-            If not specified, the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
+            For cluster-level tools, this is required, and if not specified,
+            the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
             If input data is h5ad, this is required to run cluster-based annotation tools.
-            For `celltypist`, this is a shortcut to set `over_clustering` in `celltypist_args`.
-            For tool `cell`, this can be used to set the Seurat object identity to the specified
-            column in the cell type annotation file (by default, the first cell type column will
-            be set as identity).
-        backup_col: The backup column name to store the original identities.
-            If not specified, the original identity column will not be stored.
-            If `envs.newcol` is specified, this will be ignored.
-        hitype_tissue: The tissue to use for `hitype`.
-            Available tissues should be the first column (`tissueType`) of `hitype_db`.
-            If not specified, all rows in `hitype_db` will be used.
-        hitype_db: The database to use for hitype.
-            Compatible with `sctype_db`.
-            See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
-            You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
+            For cell-level tools, if specified, a cluster-level annotation will also be generated
+            by majority vote of the cells in each cluster, and saved to `cluster2celltype.tsv`.
+            For `celltypist`, this is a shortcut to set `over_clustering` in `envs.celltypist`
+            (see `envs.celltypist.over_clustering`).
+            `"ident"` can be used as an alias for the identity column.
+            To set it for a specific case, use `envs.cases.X.ident`.
+        anno_col (type=str): The name of the column to store the annotated cell types (default: `CellType`).
+            For cluster-level tools (or cell-level tools with `envs.ident`), the annotation
+            column stores the cluster-level cell types.
+            For cell-level tools, the per-cell annotations are also saved to a tool-specific
+            column (e.g. `scina_celltype`), and if `envs.ident` is specified, `anno_col` stores
+            the majority-vote results of the clusters.
+            For the default case (`DEFAULT`), the column is named as `anno_col`; for other cases,
+            the case name is prefixed to the column name unless `envs.add_prefix` is `False`.
+        set_ident (flag): Whether to set the identity of the output Seurat object to the annotation column.
+            If all cases have `set_ident` set to `False`, the original identity is kept.
+            If multiple cases have `set_ident` set to `True`, a warning is given and the last case wins.
+            Can be set per case via `envs.cases.X.set_ident` (default: True).
+        sctype (ns): The arguments for `sctype` if `tool` is `sctype`.
+            - tissue: The tissue to use for `sctype`.
+                Available tissues should be the first column (`tissueType`) of `db`.
+                If not specified, all rows in `db` will be used.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - db: The database to use for sctype.
+                Check examples at <https://github.com/IanevskiAleksandr/sc-type/blob/master/ScTypeDB_full.xlsx>
+                Can also be a universal marker table (see the note above).
+        hitype (ns): The arguments for `hitype` if `tool` is `hitype`.
+            - tissue: The tissue to use for `hitype`.
+                Available tissues should be the first column (`tissueType`) of `db`.
+                If not specified, all rows in `db` will be used.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - db: The database to use for hitype.
+                Compatible with `sctype.db`.
+                See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
+                You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
+                Can also be a universal marker table (see the note above).
+        scsorter (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
+            - db: The database to use for scSorter. It will be loaded and passed to the `anno`
+                argument of `RunScSorter()`. It could be either:
+                * A TSV file with cell type annotations, with columns `Type`, `Marker`, and `Weight`.
+                * A RDS/qs2 file of the annotation data frame with the same columns as above.
+                Can also be a universal marker table (see the note above).
+                You can also use `#` followed by the column names (aliases allowed)
+                or 1-based indices to specify the columns, for example,
+                `file:///path/to/scsorter_db.tsv#celltype,marker,weight`.
+                A third column is used as `Weight` only if it is named `weight` (or an alias of it).
+            - assay: The assay to use for `RunScSorter()`.
+                If not specified, `envs.assay` will be used.
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - <more>: Other arguments for [`scSorter::RunScSorter()`](https://github.com/pwwang/scSorter/blob/9baae9f0e0904ddbf3f9bb5dacb9227503a8ce3e/R/scSorter.R#L73).
+        scina (ns): The arguments for `SCINA::SCINA()` if `tool` is `scina`.
+            - db (type=str): The path to the SCINA signature file.
+                It can be an RDS file containing a named list of
+                signature genes (the names are the cell types and the
+                values are the marker gene symbols), or a CSV file
+                with the markers for each cell type in a column.
+                Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - max_iter (type=int): Maximum number of EM iterations (default: 100).
+            - convergence_n (type=int): Stop if assignment stays stable for N consecutive rounds (default: 10).
+            - convergence_rate (type=float): Fraction of cells with stable assignment for convergence (default: 0.99).
+            - sensitivity_cutoff (type=float): Cutoff (0-1) for removing signatures of absent cell types (default: 1).
+            - rm_overlap (flag): Whether to remove genes shared between multiple signatures (default: TRUE).
+            - allow_unknown (flag): Whether to allow unknown cells (default: TRUE).
+            - <more>: Other arguments for [`SCINA::SCINA()`](https://rdrr.io/cran/SCINA/man/SCINA.html).
+        singler (ns): The arguments for `SingleR::SingleR()` if `tool` is `singler`.
+            Both the [Bioconductor](https://bioconductor.org/packages/SingleR)
+            and [CRAN](https://github.com/dviraran/SingleR) versions are
+            auto-detected.
+            - db (type=str): The path to the SingleR reference file.
+                It can be an RDS, qs, or qs2 file containing a reference object,
+                supporting:
+                * `SummarizedExperiment` (e.g., from the `celldex` package).
+                  References can be obtained via `celldex::HumanPrimaryCellAtlasData()`,
+                  `celldex::BlueprintEncodeData()`, `celldex::MonacoImmuneData()`,
+                  `celldex::DatabaseImmuneCellExpressionData()`,
+                  `celldex::NovershternHematopoieticData()`, `celldex::ImmGenData()`,
+                  `celldex::MouseRNAseqData()`.
+                * `Seurat` object. Labels are auto-detected from metadata.
+                Save with `saveRDS()` or `biopipen.utils::write_obj()`.
+                Both the Bioconductor and CRAN versions of SingleR are supported
+                and auto-detected at runtime.
+            - label (type=str): The metadata/colData column name for
+                reference labels. Auto-detected from `label.main`,
+                `label.fine`, `label.ont`, `label` in order.
+            - <more>: See the SingleR documentation for your version:
+                [`Bioconductor`](https://rdrr.io/bioc/SingleR/man/SingleR.html)
+                or [`CRAN`](https://github.com/dviraran/SingleR).
+        schdeepinsight (ns): The arguments for scHDeepInsight
+            if `tool` is `schdeepinsight`.
+            - ref (type=str): The path to the scHDeepInsight
+                reference RDS file. The bundled `reference.rds` from the
+                scHDeepInsight repo provides immune cell reference.
+                See <https://github.com/shangruJia/scHDeepInsight>.
+            - batch_size (type=int): Batch size for CNN prediction
+                (default: 128).
+            - python (type=str): Path to Python executable with
+                `SCHdeepinsight` installed.
+            - assay (type=str): Assay to use for h5ad conversion.
+        llmcelltype (ns): The arguments for
+            `LLMCelltype::llmcelltype()` if `tool` is `llmcelltype`.
+            - api_key (type=str): OpenAI API key
+            - model (type=str): GPT model (required, e.g.
+                'gpt-4', 'gpt-4o').
+            - base_url (type=str): Custom base URL for
+                OpenAI-compatible providers.
+            - tissuename (type=str): Tissue name for context.
+            - sigmarkers (type=str): A expression to filter the result from `RunSeuratDEAnalysis()`, e.g. `avg_log2FC > 0.25 & p_val_adj < 0.05`,
+                to be used for generating the marker gene list for LLM.
+            - assay (type=str): Assay to use for
+                `FindAllMarkers()`.
+            - <more>: Additional args passed to
+                [`biopipen.utils::RunSeuratDEAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.html).
+        cellassign (ns): The arguments for
+            `cellassign::cellassign()` if `tool` is `cellassign`.
+            - db (type=str): The path to the marker gene info
+                file for `cellassign`. Supports:
+                * RDS/qs2 file: a binary gene×celltype matrix or a
+                  named list (cell type → vector of marker genes)
+                * CSV/TSV file: with columns `gene` and `cell_type`
+                Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - python (type=str): Path to Python with `tensorflow` installed.
+            - assay (type=str): Assay to extract raw counts from.
+            - min_delta (type=int): Min log-fold change for marker
+                overexpression (default: 2).
+            - B (type=int): Number of RBF dispersion bases
+                (default: 10).
+            - shrinkage (flag): Hierarchical shrinkage on delta
+                (default: TRUE).
+            - n_batches (type=int): Data subsample batches
+                (default: 1).
+            - learning_rate (type=float): ADAM learning rate
+                (default: 0.1).
+            - max_iter_em (type=int): Max EM iterations
+                (default: 20).
+            - verbose (flag): Print progress (default: TRUE).
+            - <more>: Additional args to
+                `cellassign::cellassign()`.
+        scbert (ns): The arguments for scBERT inference
+            if `tool` is `scbert`.
+            - ref (type=str): The path to the scBERT repo
+                directory (containing `performer_pytorch/`).
+            - model (type=str): The path to the fine-tuned
+                model checkpoint (.pth file).
+            - label_dict (type=str): The path to the label
+                dictionary pickle file (maps class indices to cell
+                type names).
+            - python (type=str): Path to Python with scBERT
+                dependencies (torch, scanpy, etc.).
+            - bin_num (type=int): Number of bins for
+                expression embedding (default: 5).
+            - gene_num (type=int): Number of genes expected
+                by the model (default: 16906).
+            - seed (type=int): Random seed (default: 2021).
+            - pos_embed (flag): Use Gene2vec positional
+                encoding (default: TRUE).
+            - novel_type (flag): Enable novel cell type
+                detection (default: FALSE).
+            - unassign_thres (type=float): Confidence
+                threshold for unassigned cells (default: 0.5).
+            - <more>: Additional args to the wrapper script.
+        cellid (ns): The arguments for CelliD
+            if `tool` is `cellid`.
+            - db (type=str): The path to the marker gene set
+                file for `cellid`. Supports:
+                * RDS/qs2 file: a named list (cell type → vector
+                  of marker genes)
+                * CSV/TSV file: with columns `gene` and `cell_type`
+                Can also be a universal marker table (see the note above).
+            - tissue: Filter the markers by the `tissue` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `tissue` column.
+            - cancer: Filter the markers by the `cancer` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `cancer` column.
+            - species: Filter the markers by the `species` column of a universal
+                marker table (see the note above). Only works with a universal
+                marker table that has a `species` column.
+            - nmcs (type=int): Number of MCA components
+                (default: 50).
+            - n_features (type=int): Top n features per
+                cell for hypergeometric test (default: 200).
+            - dims (type=auto): MCA dimensions to use
+                (default: seq(nmcs)).
+            - min_size (type=int): Min overlapping genes
+                (default: 10).
+            - log_trans (flag): -log10 transform p-values
+                (default: TRUE).
+            - p_adjust (flag): Benjamini-Hochberg correction
+                (default: TRUE).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
             you want to keep the original cell types. If the length of `cell_types` is shorter than the number of
             clusters, the remaining clusters will be kept as the original cell types.
-            You can also use `NA` to remove the clusters from downstream analysis. This
-            only works when `envs.newcol` is not specified.
+            You can also use `NA` to remove the clusters from downstream analysis
+            (the cells in these clusters will be removed from the Seurat object).
             If given as a dict (map), the keys are the original cluster names and the values are the new cell types.
-
-            /// Note
-            If `tool` is `direct` and `cell_types` is not specified or an empty list,
-            the original cell types will be kept and nothing will be changed.
-            ///
+            For `cell`, it must be a TSV file with cell-level annotations.
+            You can specify the column names after the `#`. For example,
+            `file:///path/to/cell_types.tsv#cell_id,cell_type` will use `cell_id` as the cell id column
+            to match the cell ids in the Seurat object, and `cell_type` as the cell type column to assign the cell types.
+            Multiple cell type columns can be specified, and the first one will be used as the annotation column
+            (the others will be added as additional annotation columns).
+            You can also use 1-based column index to specify the columns, for example, `file:///path/to/cell_types.tsv#1,3`
+            will use the first column as the cell id column and the third column as the cell type column.
+            If cells in the Seurat object are not found in the cell type file, `NA`s will be assigned to those cells.
+            If no columns are specified, the first two columns will be used as the cell id and cell type columns.
+            Prefix `file://` is optional.
 
             For `cell`, it must be a TSV file with cell-level annotations.
             You can specify the column names after the `#`. For example,
@@ -2187,16 +2981,31 @@ class CellTypeAnnotation(Proc):
             The cell type lists work the same as `cell_types` above.
             This is useful when you want to keep multiple annotations of cell types.
 
-        sccatch_args (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
+        sccatch (ns): The arguments for `scCATCH::findmarkergene()` if `tool` is `sccatch`.
             - species: The specie of cells.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - cancer: If the sample is from cancer tissue, then the cancer type may be defined.
+                Defaults to "Normal" if not `if_use_custom_marker`.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - tissue: Tissue origin of cells must be defined.
+                When `marker` is a custom (universal) marker table, only the rows
+                matching the value are kept; otherwise it is used to filter the
+                built-in scCATCH database.
             - marker: The marker genes for cell type identification.
-            - if_use_custom_marker (flag): Whether to use custom marker genes. If `True`, no `species`, `cancer`, and `tissue` are needed.
+                Can also be a universal marker table (see the note above).
+                An error is raised if `species`, `cancer`, or `tissue` is set but
+                the table has no such column or no rows match.
+            - if_use_custom_marker (flag): Whether to use custom marker genes.
+                When `marker` is provided, this is set to `True` automatically, and
+                `species`, `cancer`, and `tissue` filter the custom markers if set.
             - <more>: Other arguments for [`scCATCH::findmarkergene()`](https://rdrr.io/cran/scCATCH/man/findmarkergene.html).
-                You can pass an RDS file to `sccatch_args.marker` to work as custom marker. If so,
+                You can pass an RDS file to `sccatch.marker` to work as custom marker. If so,
                 `if_use_custom_marker` will be set to `TRUE` automatically.
-        celltypist_args (ns): The arguments for `celltypist::celltypist()` if `tool` is `celltypist`.
+        celltypist (ns): The arguments for `celltypist::celltypist()` if `tool` is `celltypist`.
             - model: The path to model file.
             - python: The python path where celltypist is installed.
             - majority_voting: When true, it refines cell identities within local subclusters after an over-clustering approach
@@ -2208,11 +3017,42 @@ class CellTypeAnnotation(Proc):
             - assay: When converting a Seurat object to AnnData, the assay to use.
                 If input is h5seurat, this defaults to RNA.
                 If input is Seurat object in RDS, this defaults to the default assay.
+        scagenttype (ns): The arguments for the scAgentType annotation agent
+            if `tool` is `scagenttype`. It annotates each cluster via an agentic
+            LLM workflow (ReAct) and needs Python >=3.10 with the `scagenttype`
+            package installed, e.g.
+            `pip install "scagenttype[llm] @ git+https://github.com/sathyasjali/scAgentType.git"`.
+            - python: The python path where `scagenttype` is installed.
+            - api: The LLM provider: `openai`, `anthropic`, or `google` (default: `openai`).
+            - api_key: The API key for the provider.
+                When not set, the key is read from the environment variable of
+                the provider (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_API_KEY`).
+            - model: The model to use. Defaults are chosen per provider when not set.
+            - base_url: Custom API base URL (e.g. for proxies).
+                Passed to the subprocess via `OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL`.
+            - tissue: The tissue of the data, e.g. `Human peripheral blood`.
+                Folded into `tissue_context` when `tissue_context` is not set.
+            - species: The species of the data.
+                Folded into `tissue_context` when `tissue_context` is not set.
+            - assay: When converting a Seurat object to AnnData, the assay to use.
+            - <more>: Other arguments for [`AnnotationAgent()`](https://github.com/sathyasjali/scAgentType),
+                e.g. `tissue_context`, `n_markers`, `max_react_steps`,
+                `confidence_threshold`, `self_consistency_n`, `cache_dir`,
+                `enable_cellxgene`.
         merge (flag): Whether to merge the clusters with the same cell types.
             Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
-        newcol: The new column name to store the cell types.
-            If not specified, the identity column will be overwritten.
-            If specified, the original identity column will be kept and `Idents` will be kept as the original identity.
+        add_prefix (flag): Whether to add a prefix to the new column names in metadata.
+            Only used when in non-default cases. The prefix will be the case name followed by `_`.
+        cases (type=json): Run multiple cases of cell type annotation on the same Seurat object.
+            The keys are the prefix of column names added to the metadata (unless `add_prefix` is `False`),
+            and the values will inherit the above options.
+            The default case is `DEFAULT`, meaning no prefix will be added to the column names.
+            The identity of the output Seurat object will be set according to `envs.set_ident` of each case
+            (see `envs.set_ident`).
+            If any case requires h5ad conversion (e.g., `celltypist`), the object is pre-converted
+            once and shared across those tools.
+        ncores (type=int): Number of cores to use for parallel execution of multiple cases.
+            When > 1, cases are run in parallel via `mclapply`. This is not inherited by individual cases.
         outtype (choice): The output file type. Currently only works for `celltypist`.
             An RDS file will be generated for other tools.
             - input: Use the same file type as the input.
@@ -2245,30 +3085,93 @@ class CellTypeAnnotation(Proc):
     lang = config.lang.rscript
     envs = {
         "tool": "hitype",
-        "sctype_tissue": None,
-        "sctype_db": config.ref.sctype_db,
+        "assay": None,
         "ident": None,
-        "backup_col": "seurat_clusters_id",
+        "anno_col": "CellType",
+        "set_ident": True,
         "cell_types": [],
         "more_cell_types": None,
-        "sccatch_args": {
+        "sctype": {
+            "tissue": None,
+            "cancer": None,
             "species": None,
-            "cancer": "Normal",
+            "db": config.ref.sctype_db,
+        },
+        "hitype": {
+            "tissue": None,
+            "cancer": None,
+            "species": None,
+            "db": None,
+        },
+        "scsorter": {
+            "db": None,
+            "assay": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
+        },
+        "scina": {
+            "db": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
+        },
+        "singler": {
+            "db": None,
+        },
+        "schdeepinsight": {
+            "ref": None,
+        },
+        "llmcelltype": {
+            "cache": config.path.tmpdir,
+            "sigmarkers": "p_val_adj < 0.05",
+        },
+        "cellassign": {
+            "db": None,
+            "python": config.lang.python,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
+        },
+        "scbert": {
+            "ref": None,
+            "model": None,
+            "label_dict": None,
+        },
+        "cellid": {
+            "db": None,
+            "tissue": None,
+            "cancer": None,
+            "species": None,
+        },
+        "sccatch": {
+            "species": None,
+            "cancer": None,
             "tissue": None,
             "marker": None,
             "if_use_custom_marker": False,
         },
-        "hitype_tissue": None,
-        "hitype_db": None,
-        "celltypist_args": {
+        "celltypist": {
             "model": None,
             "python": config.lang.python,
             "majority_voting": True,
             "over_clustering": None,
             "assay": None,
         },
+        "scagenttype": {
+            "python": config.lang.python,
+            "api": "openai",
+            "api_key": None,
+            "model": None,
+            "base_url": None,
+            "tissue": None,
+            "species": None,
+            "assay": None,
+        },
+        "add_prefix": None,
         "merge": False,
-        "newcol": None,
+        "cases": {},
+        "ncores": 1,
         "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
@@ -2988,6 +3891,7 @@ class AnnData2Seurat(Proc):
 
     Envs:
         assay: The assay to use to convert to seurat object.
+        ncores (type=int): Number of cores to use for data loading and saving.
         ident: The column name in `adfile.obs` to use as the identity
             for the seurat object.
             If not specified, no identity will be set.
@@ -3003,7 +3907,12 @@ class AnnData2Seurat(Proc):
     input = "adfile:file"
     output = "outfile:file:{{in.adfile | stem}}.qs"
     lang = config.lang.rscript
-    envs = {"assay": "RNA", "ident": None, "dotplot_check": True}
+    envs = {
+        "assay": "RNA",
+        "ident": None,
+        "dotplot_check": True,
+        "ncores": config.misc.ncores,
+    }
     script = "file://../scripts/scrna/AnnData2Seurat.R"
 
 
@@ -3144,8 +4053,11 @@ class CellCellCommunication(Proc):
                 Note that this is only available when the input is a Seurat object in RDS format and
                 only available for `envs.subset_using`, but not for `cases.<case>.subset_using`.
             - R: alias for `r`
-        split_by: The column name in metadata to split the cells to run the method separately.
+        split_by (auto): The column names in metadata to split the cells to run the method separately.
             The results will be combined together with this column in the final output.
+            Multiple columns can be provided as a list and the data will be split by the combination of the columns
+            (the column values are concatenated only for the splitting).
+            In the final output, each column will be recovered with its original values.
         assay: The assay to use for the analysis.
             Only works for Seurat object.
         seed (type=int): The seed for the random number generator.
@@ -3415,6 +4327,12 @@ class Slingshot(Proc):
         reverse (flag): Logical value indicating whether to reverse the pseudotime variable.
         align_start (flag): Whether to align the starting pseudotime values at the maximum pseudotime.
         seed (type=int): The seed for the random number generator.
+        ncores (type=int): The number of cores to use for reading and writing the seurat object.
+        subset: An expression in string to subset the cells.
+        split_by: The column name in metadata to split the cells to run the method separately.
+            After run, the results will be combined together with this column in the final output.
+            The lineages will be all stored in the columns `<prefix>_LineageX` and `<prefix>_BranchID`.
+            If a lineage is not found in a split, the corresponding columns will be filled with `NA`.
         cases: A dictionary of cases to run the analysis.
             The keys are the names of the cases, which will be served as the
             prefix to add to the column names of the resulting pseudotime variable.
@@ -3428,11 +4346,14 @@ class Slingshot(Proc):
     output = "outfile:file:{{in.sobjfile | stem}}.qs"
     lang = config.lang.rscript
     envs = {
+        "ncores": config.misc.ncores,
         "group_by": None,
         "reduction": None,
         "dims": None,
         "start": None,
         "end": None,
+        "subset": None,
+        "split_by": None,
         "cases": {},
         "reverse": False,
         "align_start": False,

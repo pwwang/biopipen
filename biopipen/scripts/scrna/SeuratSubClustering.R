@@ -18,6 +18,8 @@ FindClustersArgs <- {{envs.FindClusters | r: todot = "-"}}
 cases <- {{envs.cases | r}}
 python <- {{envs.python | r}}
 
+qs2::qopt("nthreads", value = ncores)
+
 Sys.setenv(RETICULATE_PYTHON = Sys.which(python))
 
 options(future.globals.maxSize = Inf)

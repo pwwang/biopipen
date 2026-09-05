@@ -19,8 +19,10 @@ sset <- {{ envs.subset | r }}
 enrich_plots_defaults <- {{ envs.enrich_plots_defaults | r }}
 enrich_plots <- {{ envs.enrich_plots | r }}
 cases <- {{ envs.cases | r: todot = "-" }}  # nolint
+ncores <- {{ envs.ncores | r }}
 
 set.seed(8525)
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 

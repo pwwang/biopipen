@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from pathlib import Path
 
 import os
@@ -7,6 +8,9 @@ import logging
 from subprocess import Popen
 from typing import List, Callable, Any
 from biopipen.core.filters import dict_to_cli_args  # noqa: F401
+
+if TYPE_CHECKING:
+    from pandas import DataFrame
 
 
 class _FlushStreamHandler(logging.StreamHandler):
@@ -252,3 +256,108 @@ def run_command(
         return p
 
     return p
+
+
+def write_table(
+    df: DataFrame,
+    path_or_buf=None,
+    *,
+    factor_levels_sep: str = "|",
+    **kwargs,
+) -> str | None:
+    """Write a DataFrame to a file or buffer.
+    If `path_or_buf` is None, returns the string representation of the DataFrame.
+    It works like `DataFrame.to_csv`, but with factor levels (categories) saved.
+
+    Example:
+        >>> import pandas as pd
+        >>> df = pd.DataFrame({
+        ...     'A': pd.Categorical(['a', 'b', 'a'], categories=['a', 'b', 'c']),
+        ...     'B': [1, 2, 3]
+        ... })
+        >>> write_table(df)
+        # factor-levels: A=a|b|c
+        A,B
+        a,1
+        b,2
+        a,3
+
+    Args:
+        df: The DataFrame to write.
+        path_or_buf: The file path or buffer to write to. If None, returns the
+            string representation of the DataFrame.
+        factor_levels_sep: The separator used to join the factor levels.
+        **kwargs: Additional keyword arguments to pass to `DataFrame.to_csv`.
+    """
+    from io import StringIO
+
+    factor_levels = []
+    for col in df.select_dtypes(include=["category"]).columns:
+        levels = df[col].cat.categories.tolist()
+        factor_levels.append(
+            f"# factor-levels: {col}={factor_levels_sep.join(map(str, levels))}"
+        )
+
+    if path_or_buf is None:
+        buf = StringIO()
+        df.to_csv(buf, **kwargs)
+        if factor_levels:
+            return "\n".join(factor_levels) + "\n" + buf.getvalue()
+        return buf.getvalue()
+
+    elif isinstance(path_or_buf, (str, Path)):
+        with open(path_or_buf, "w") as f:
+            if factor_levels:
+                f.write("\n".join(factor_levels) + "\n")
+            df.to_csv(f, **kwargs)
+
+    else:
+        # Buffer
+        if factor_levels:
+            path_or_buf.write("\n".join(factor_levels) + "\n")
+        df.to_csv(path_or_buf, **kwargs)
+
+    return None
+
+
+def read_table(
+    path_or_buf,
+    *,
+    factor_levels_sep: str = "|",
+    **kwargs,
+) -> DataFrame:
+    """Read a table from a file or buffer.
+    It works like `pd.read_csv`, but with factor levels (categories) restored.
+
+    Args:
+        path_or_buf: The file path or buffer to read from.
+        factor_levels_sep: The separator used to join the factor levels.
+        **kwargs: Additional keyword arguments to pass to `pd.read_csv`.
+    """
+    import pandas as pd
+    from io import StringIO
+
+    if isinstance(path_or_buf, (str, Path)):
+        with open(path_or_buf, "r") as f:
+            lines = f.readlines()
+    else:
+        # Buffer
+        lines = path_or_buf.readlines()
+
+    factor_levels = {}
+    data_lines = []
+    for line in lines:
+        if line.startswith("# factor-levels:"):
+            _, col_levels = line.strip().split(": ", 1)
+            col, levels_str = col_levels.split("=", 1)
+            levels = levels_str.split(factor_levels_sep)
+            factor_levels[col] = levels
+        else:
+            data_lines.append(line)
+    df = pd.read_csv(StringIO("".join(data_lines)), **kwargs)
+
+    for col, levels in factor_levels.items():
+        if col in df.columns:
+            df[col] = pd.Categorical(df[col], categories=levels)
+
+    return df

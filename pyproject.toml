@@ -67,8 +67,11 @@ include = [ "biopipen/**/*.py" ]
 [dependency-groups]
 docs = [
     "mkapi-fix>=0.1.1",
-    "mkdocs>=1.6.1",
+    "mkdocs>=1.6.1,<2",
     "mkdocs-rtd>=0.0.15",
     "mygene>=3.2.2",
     "pymdown-extensions>=10.21.2",
 ]
+
+[tool.uv]
+prerelease = "allow"

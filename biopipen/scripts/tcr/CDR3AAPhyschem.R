@@ -17,7 +17,9 @@ group_name <- {{envs.group | r}}
 comparison <- {{envs.comparison | r}}
 target <- {{envs.target | r}}
 each_cols <- {{envs.each | r}}
+ncores <- {{envs.ncores | r}}
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 

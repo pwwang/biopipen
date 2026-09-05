@@ -45,6 +45,7 @@ class PrepareData(Proc):
         sobj <- RunUMAP(sobj, dims = 1:10)
         sobj <- FindNeighbors(sobj, dims = 1:10)
         sobj <- FindClusters(sobj, resolution = 0.5)
+        sobj$groups <- paste0("G", sample(1:3, ncol(sobj), replace = TRUE))
 
         save_obj(sobj, "{{out.outfile}}")
     """
@@ -56,6 +57,8 @@ class Slingshot(Slingshot_):
         "cases": {
             "DEFAULT": {},
             "DIM12": {"dims": [1, 2]},
+            "G1": {"subset": "groups == 'G1'"},
+            "groups": {"split_by": "groups"},
         }
     }
 

@@ -404,3 +404,161 @@ class SamtoolsView(Proc):
         "index": True,
     }
     script = "file://../scripts/bam/SamtoolsView.py"
+
+
+class SamplotBam(Proc):
+    """Plot bam file using samplot
+
+    Input:
+        bamfiles: The bam files
+
+    Output:
+        outfile: The output plot file
+            at chrom:start-end.
+
+    Envs:
+        samplot: Path to samplot executable
+        titles (list): The titles for each bam file, in the same order as bamfiles
+        chrom: The chromosome to plot
+        start: The start position to plot
+        end: The end position to plot
+        same_yaxis_scales (flag): Whether to use the same y-axis scales for
+            all bam files
+        <more>: Other arguments passed to the samplot tool
+            See `samplot plot` command.
+    """
+    input = "bamfiles:files"
+    output = "outfile:file:{{envs.chrome}}_{{envs.start}}_{{envs.end}}.samplot.png"
+    lang = config.lang.python
+    envs = {
+        "samplot": config.exe.samplot,
+        "titles": [],
+        "chrom": None,
+        "start": None,
+        "end": None,
+        "same_yaxis_scales": True,
+    }
+    script = "file://../scripts/bam/Samplot.py"
+
+
+# Alias. It also works for VCF files
+Samplot = SamplotBam
+
+
+class BedtoolsCoverageBam(Proc):
+    """Coverage report by `bedtools coverage` for bam files
+
+    The input bedfile and bamfile will be passed to `bedtools coverage` command
+    `bedtools coverage -a <bedfile> -b <bamfile>` and this will produce a coverage
+    report for the regions defined in the bedfile.
+
+    4 extra columns will be added to the output bed file:
+    * The number of features in bamfile that overlapped (by at least one base pair) the bedfile.
+    * The number of bases in the bedfile that had non-zero coverage from features in the bamfile.
+    * The length of the entry in the bedfile.
+    * The fraction of bases in the bedfile that had non-zero coverage from features in the bamfile.
+
+    Input:
+        bamfile: The bam file
+        bedfile: The bed file defining regions to calculate coverage for
+
+    Output:
+        outfile: The output coverage report file
+
+    Envs:
+        bedtools: Path to bedtools executable
+        <more>: Other arguments passed to the bedtools coverage tool
+            See `bedtools coverage` command.
+    """  # noqa: E501
+    input = "bamfile:file, bedfile:file"
+    output = "outfile:file:{{in.bamfile | stem}}.coverage.txt"
+    lang = config.lang.python
+    envs = {
+        "bedtools": config.exe.bedtools,
+    }
+    script = "file://../scripts/bam/BedtoolsCoverageBam.py"
+
+
+class BedtoolsCoverageBamSummary(Proc):
+    """Coverage summary report by `bedtools coverage` for bam files
+
+    This should run after `BedtoolsCoverageBam` to summarize the coverage report.
+
+    Input:
+        covfiles: The coverage report files produced by `BedtoolsCoverageBam`
+            The metrics (last 4 columns) are named as -
+            - `NFeatures`: The number of features in bamfile that overlapped (by at least one base pair) the bedfile.
+            - `NRegionBases`: The number of bases in the bedfile that had non-zero coverage from features in the bamfile.
+            - `RegionSize`: The length of the entry in the bedfile.
+            - `FracRegionBases`: The fraction of bases in the bedfile that had non-zero coverage from features in the bamfile.
+
+    Output:
+        outdir: The output directory containing summary report plots and files
+
+    Envs:
+        plot_type: The type of plot to generate. The supported plot types are
+            functions from `plotthis` package in R.
+        groups (type=json): The groups to add to the data for summary and plotting.
+            It should be a dict with keys as group names and values as lists of sample names.
+            The sample names should match the bam file names (without path and extension).
+            The `.coverage` in the bam file name will be removed when matching sample names.
+        devpars (ns): The device parameters for the clustree plot.
+            - res (type=int): The resolution of the plots.
+            - height: The height of the plots.
+            - width: The width of the plots.
+        descr: The description of the plot, showing in the report.
+        more_formats (type=list): The formats to save the plots other than `png`.
+        save_code (flag): Whether to save the code to reproduce the plot.
+        save_data (flag): Whether to save and report the data used to generate the plot.
+        cases: Plotting cases. A dict with keys as case names and values as the arguments for the plot function.
+            The arguments will inherit from `envs` (except `cases`, `groups` and `save_data`), and can be overridden by the case arguments.
+        <more>: Other arguments passed to the plot function. See `plotthis` package in R.
+    """  # noqa: E501
+    input = "covfiles:files"
+    output = "outdir:dir:{{in.covfiles | first | stem}}.summary"
+    input_data = lambda ch: [ch.iloc[:, 0].tolist()]
+    lang = config.lang.rscript
+    envs = {
+        "plot_type": None,
+        "groups": {},
+        "devpars": {
+            "res": 100,
+            "height": None,
+            "width": None,
+        },
+        "descr": None,
+        "more_formats": [],
+        "save_code": False,
+        "save_data": True,
+        "cases": {
+            "Number of features": {
+                "plot_type": "box",
+                "x": "Sample",
+                "y": "NFeatures",
+                "descr": "Number of features in bamfile that overlapped the bedfile.",
+            },
+            "Number of bases": {
+                "plot_type": "box",
+                "x": "Sample",
+                "y": "NRegionBases",
+                "descr": (
+                    "Number of bases in the bedfile that had non-zero coverage "
+                    "from features in the bamfile."
+                ),
+            },
+            "Fraction of bases": {
+                "plot_type": "box",
+                "x": "Sample",
+                "y": "FracRegionBases",
+                "descr": (
+                    "Fraction of bases in the bedfile that had non-zero coverage "
+                    "from features in the bamfile."
+                ),
+            },
+        },
+    }
+    script = "file://../scripts/bam/BedtoolsCoverageBamSummary.R"
+    plugin_opts = {
+        "report": "file://../reports/common.svelte",
+        "report_paging": 20,
+    }

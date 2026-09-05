@@ -67,9 +67,11 @@ dependencies:
   - bioconda::bioconductor-ruvcorr
   - bioconda::bioconductor-slingshot
   - bioconda::bioconductor-ccplotr
+  - bioconda::bioconductor-singler
   - bioconda::maxit
   - bioconda::truvari
   - bioconda::mquad
+  - bioconda::samplot
   - pwwang::r-doubletfinder
   - pwwang::r-hitype
   - pwwang::r-ggradar
@@ -77,6 +79,9 @@ dependencies:
   - pwwang::r-gsea_r
   - pwwang::r-seuratwrappers
   - pwwang::r-sccatch
+  - pwwang::r-scsorter
+  - pwwang::r-scina
+  - pwwang::r-cellid
   - pwwang::r-aneuploidyscore
   - pwwang::r-biopipen.utils  # R utilities for biopipen and runinfo
   - pwwang::bioconductor-data-packages
@@ -96,5 +101,6 @@ dependencies:
     - celltypist2
     - mygene
     - liana
+    - filelock
     - cyvcf2==0.31.1  # works with numpy v2+
     - umap-learn  # for Seurat's RunUMAP with umap.method="umap-learn"

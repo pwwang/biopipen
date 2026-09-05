@@ -63,6 +63,7 @@ class PrepareMetafile(Proc):
         indir = {{in.indir | quote}}
         metafile = {{out.metafile | quote}}
         with open(metafile, "w") as f:
+            f.write("# factor-levels: Group=Group1|Group2\\n")
             f.write("Sample\\tGroup\\tEach\\tRNAData\\n")
             for s in os.listdir(indir):
                 if os.path.isdir(os.path.join(indir, s)):
@@ -93,7 +94,11 @@ class SeuratPreparing(SeuratPreparing_):
                 "plot_type": "bar",
             }
         },
-        "SCTransform": {"vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"]},
+        "SCTransform": {
+            "return-only-var-genes": True,
+            "min_cells": 3,
+            "vars-to-regress": ["percent.mt", "S.Score", "G2M.Score"],
+        },
         "ccs_args": {
             # Insufficient data values to produce 24 bins when using sct
             "trans_args": {"use_sct": False},
@@ -207,58 +212,13 @@ class SeuratClustering(SeuratClustering_):
     }
 
 
+# Pipeline integration: CellTypeAnnotation (hitype) for TopExpressingGenes test
+# Full CellTypeAnnotation tool tests are in tests/test_scrna/CellTypeAnnotation/
 class CellTypeAnnotation(CellTypeAnnotation_):
     requires = SeuratClustering
     envs = {
         "tool": "hitype",
-        "hitype_tissue": None,
-        "hitype_db": "hitypedb_pbmc3k",
-    }
-
-
-class CellTypeAnnotationCell(CellTypeAnnotation_):
-    requires = SeuratClustering
-    envs = {
-        "tool": "cell",
-        "cell_types": str(Path(__file__).parent / "data/celltype_annotation.tsv#1,2,3"),
-    }
-
-
-class CellTypeAnnotationScType(CellTypeAnnotation_):
-    requires = SeuratClustering
-    envs = {
-        "tool": "sctype",
-        "sctype_tissue": "Immune system",
-        "sctype_db": str(Path(__file__).parent / "data/ScTypeDB_short.xlsx"),
-    }
-
-
-class CellTypeAnnotationDirect(CellTypeAnnotation_):
-    requires = SeuratClustering
-    envs = {
-        "tool": "direct",
-        "cell_types": [
-            "Naive CD4+ T",
-            "NA",
-            "Memory CD4+",
-            "Naive CD4+ T",
-            "DC",
-            "DC",
-            "CD8+ T",
-            "NK",
-            "FCFR3A+ Mono",
-            "CD8+ T",
-        ],
-        "merge": True,
-    }
-
-
-class CellTypeAnnotationDirect2(CellTypeAnnotation_):
-    requires = SeuratClustering
-    envs = {
-        "tool": "direct",
-        "cell_types": {"c1": "Naive CD4+ T", "c2": "NA", "c5": "B"},
-        "merge": True,
+        "hitype": {"db": "hitypedb_pbmc3k"},
     }
 
 
@@ -312,8 +272,47 @@ class ClusterMarkers(MarkersFinder):
                     "Heatmap": {"plot_type": "heatmap", "descr": "Heatmap showing marker expression per cluster."},
                 },
                 "allmarker_plots": {
+                    "Heatmap_log2fc": {
+                        "plot_type": "heatmap_log2fc",
+                        "order_by": "desc(avg_log2FC)",
+                    },
                     "Heatmap": {
                         "plot_type": "heatmap",
+                        "each": "seurat_clusters",
+                        "show_column_names": False,
+                        "show_row_names": "none",
+                        "order_by": "desc(avg_log2FC)",
+                        "cutoff": 0.05,
+                        "column_annotation": {
+                            ".col": {"name": False},
+                        },
+                        "row_annotation": {
+                            ".row.split": {
+                                "type": "rownames",
+                                "params": {"wrap_by": 4, "labels_rot": 0},
+                            },
+                        },
+                        "devpars": {"height": 800, "width": 1200},
+                        "descr": "Heatmap showing top markers across all clusters.",
+                    },
+                    "Heatmap (overall)": {
+                        "plot_type": "heatmap",
+                        "each": ":seurat_clusters",
+                        "order_by": "desc(avg_log2FC)",
+                        "show_column_names": "inplace",
+                        "flatten_markers": True,
+                        "cell_type": "bars",
+                        "cutoff": 0.05,
+                        "devpars": {"height": 500, "width": 1200},
+                        "descr": "Heatmap showing overall top markers across all clusters.",
+                    },
+                    "Heatmap (bars)": {
+                        "plot_type": "heatmap",
+                        "each": "seurat_clusters",
+                        "order_by": "desc(avg_log2FC)",
+                        "cell_type": "bars",
+                        "cutoff": 0.05,
+                        "devpars": {"height": 1200, "width": 1500},
                         "descr": "Heatmap showing top markers across all clusters.",
                     },
                 },
@@ -393,11 +392,19 @@ class ModuleScoreCalculator(ModuleScoreCalculator_):
     requires = SeuratSubClustering
     envs = {
         "modules": {
-            # "CellCycle": {"features": "cc.genes.updated.2019"},
-            # "Exhaustion": {"features": "HAVCR2,ENTPD1,LAYN,LAG3"},
-            # "Activation": {"features": "IFNG"},
-            # "Proliferation": {"features": "STMN1,TUBB"},
+            # TEMP VERIFICATION MODULES — revert after new-feature checks
             "SomeModule": {"features": "CD3D,GZMM,CD8A,GNLY", "ctrl": 4, "nbin": 10},
+            "TcellState": {
+                "features": {
+                    "Exhaustion": ["CD3D", "GZMM", "CD8A", "GNLY"],
+                    "Activation": ["CD3D"],
+                },
+                "method": "ucell",
+                "maxRank": 500,
+            },
+            "CC": {"kind": "cc"},
+            "DC": {"kind": "dm"},
+            "Stale": {"features": "CD3D,GZMM", "agg": "mean", "keep": False},
         }
     }
 
@@ -450,6 +457,14 @@ class SeuratClusterStats(SeuratClusterStats_):
             "Feature plot": {"plot_type": "dim", "features": "SRSF7"},
             "Dot plot": {"plot_type": "dot"},
             "Heatmap": {"plot_type": "heatmap"},
+            "Heatmap (no scale.data)": {
+                # The features that don't exist in scale.data
+                # The pipeline is going to run GetResidual for them.
+                "features": [
+                    "MEFV", "CCDC130", "BTBD1", "POM121C"
+                ],
+                "plot_type": "heatmap"
+            },
         },
         "dimplots": {
             "3d": {"dims": [1, 2, 3], "label": True},
@@ -525,11 +540,18 @@ class PseudoBulkDEGEach(PseudoBulkDEG_):
     }
 
 
+# ---------------------------------------------------------------------------
+# Pipeline integration: minimal CellTypeAnnotation classes needed by
+# downstream pipeline tests (SeuratClusterStatsSCCatch, TopExpressingGenes).
+# Full CellTypeAnnotation tool tests are in tests/test_scrna/CellTypeAnnotation/
+# ---------------------------------------------------------------------------
+
 class CellTypeAnnotationSCCatch(CellTypeAnnotation_):
+    """Pipeline integration: SCCatch annotation for SeuratClusterStats test"""
     requires = SeuratClustering
     envs = {
         "tool": "sccatch",
-        "sccatch_args": {
+        "sccatch": {
             "species": "Human",
             "tissue": "Peripheral blood",
         },
@@ -537,11 +559,12 @@ class CellTypeAnnotationSCCatch(CellTypeAnnotation_):
 
 
 class CellTypeAnnotationSCCatch2(CellTypeAnnotation_):
+    """Pipeline integration: SCCatch (marker mode) for SeuratClusterStats test"""
     requires = SeuratClustering
     envs = {
-        "tool": "sccatch",
+        "tool": "scCATCH",
         "merge": True,
-        "sccatch_args": {
+        "sccatch": {
             "marker": str(Path(__file__).parent.joinpath("data", "tcell.sccatch.RDS")),
         },
     }
@@ -595,7 +618,7 @@ class ScFGSEAEach(ScFGSEA_):
     requires = SeuratClustering
     envs = {
         # Test if seurat_clusters == 1 gets ignored
-        "mutaters": {"Group2": "ifelse(seurat_clusters == 'c1', NA, Group)"},
+        "mutaters": {"Group2": "if_else(seurat_clusters == 'c1', NA, Group)"},
         "ident_1": "Group1",
         "ident_2": "Group2",
         "group_by": "Group2",

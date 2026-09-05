@@ -22,6 +22,8 @@ mapquery_args = {{envs.MapQuery | r: todot="-"}}
 cache = {{envs.cache | r}}
 plots = {{envs.plots | r}}
 
+qs2::qopt("nthreads", value = ncores)
+
 log <- get_logger()
 reporter <- get_reporter()
 

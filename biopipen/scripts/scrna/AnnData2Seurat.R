@@ -9,6 +9,9 @@ dotplot_check <- {{envs.dotplot_check | r}}
 outdir <- dirname(outfile)
 assay <- {{envs.assay | r}}
 ident <- {{envs.ident | r}}
+ncores <- {{envs.ncores | r}}
+
+qs2::qopt("nthreads", value = ncores)
 
 log <- get_logger()
 
@@ -30,9 +33,10 @@ if (!isFALSE(dotplot_check)) {
     # Error in (function (file = if (onefile) "Rplots.pdf" else "Rplot%03d.pdf",  :
     #  cannot open file 'Rplots.pdf'
     pdf(NULL)
+    layers <- rev(Layers(sobj, assay = assay))
     p <- FeatureStatPlot(
         sobj, features = dotplot_check, plot_type = "dot",
-        assay = assay
+        assay = assay, layer = layers[1]
     )
     dev.off()
     res = 70

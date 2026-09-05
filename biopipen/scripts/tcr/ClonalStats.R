@@ -11,12 +11,15 @@ envs <- {{envs | r: todot="-"}}
 mutaters <- envs$mutaters
 cases <- envs$cases
 cache <- envs$cache
+ncores <- envs$ncores
 envs$mutaters <- NULL
 envs$cases <- NULL
 envs$cache <- NULL
+envs$ncores <- NULL
 
 if (isTRUE(cache)) { cache = joboutdir }
 
+qs2::qopt("nthreads", value = ncores)
 log <- get_logger()
 reporter <- get_reporter()
 
@@ -446,7 +449,7 @@ do_case <- function(name, case) {
     )
 
     if (caching$is_cached()) {
-        log$info("  Using cached results.")
+        log$info("  Using cached results: {caching$get_path()}")
         caching$restore()
     } else {
         if (!is.null(subset_)) {

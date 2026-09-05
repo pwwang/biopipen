@@ -34,7 +34,6 @@ class File2Proc(Proc):
                 cp {{in.infile | quote}} {{out.outfile | quote}}
             fi
         else
-            touch "{{out.outfile}}.1"
             ln -s {{in.infile | quote}} {{out.outfile | quote}}
         fi
     """
@@ -46,10 +45,25 @@ class Glob2Dir(Proc):
     input = "pattern:var"
     output = "outdir:dir:from_glob"
     lang = config.lang.bash
+    envs = {"copy": False}
     script = """
         for infile in {{in.pattern}}; do
-            if [[ -e $infile ]]; then
-                ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+            if [[ "{{envs['copy'] | bool}}" == "True" ]]; then
+                echo "Copying $infile to {{out.outdir}}"
+                if [[ -d $infile ]]; then
+                    cp -r $infile "{{out.outdir}}"
+                elif [[ -f $infile ]]; then
+                    cp $infile "{{out.outdir}}"
+                else
+                    echo "  File $infile does not exist."
+                fi
+            else
+                echo "- Linking $infile to {{out.outdir}}"
+                if [[ -e $infile ]]; then
+                    ln -s $(realpath $infile) "{{out.outdir}}/$(basename $infile)";
+                else
+                    echo "  File $infile does not exist."
+                fi
             fi
         done
     """
@@ -135,6 +149,7 @@ class Plot(Proc):
 
     envs:
         fn: The plot function to use. Required.
+        ncores (type=int): The number of cores to use for reading the data file.
         devpars (ns): The device parameters for the plot.
             - width: The width of the plot in pixels.
             - height: The height of the plot in pixels.
@@ -151,6 +166,7 @@ class Plot(Proc):
     output = "plotfile:file:{{in.datafile | stem}}.png"
     envs = {
         "fn": None,
+        "ncores": config.misc.ncores,
         "devpars": {"res": 100},
         "more_formats": [],
         "save_code": False,

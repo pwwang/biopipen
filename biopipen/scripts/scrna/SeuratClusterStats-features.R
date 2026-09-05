@@ -101,7 +101,7 @@ do_one_features <- function(name) {
     )
 
     if (caching$is_cached()) {
-        log$info("  plots are cached, restoring ...")
+        log$info("  restoring from cache: {caching$get_path()}")
         caching$restore()
     } else {
         case$features <- .get_features(features, case$object)
@@ -113,6 +113,17 @@ do_one_features <- function(name) {
                 case$reduction = subcluster_key
             } else {
                 case$reduction = reduction
+            }
+        }
+        if (is.null(case$layer) || identical(case$layer, "scale.data")) {
+            assay <- case$assay %||% DefaultAssay(case$object)
+            missing_features <- setdiff(
+                case$features,
+                rownames(GetAssayData(case$object, assay = assay, layer = "scale.data"))
+            )
+            if (length(missing_features) > 0) {
+                log$debug("  Some features do not exist in scale.data, trying to add them ...")
+                case$object <- EnsureSeuratScaleData(case$object, missing_features, assay = assay)
             }
         }
 
