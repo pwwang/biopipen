@@ -30,16 +30,31 @@ annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
                      "Use a ScType xlsx/TSV, RDS data.frame, or a universal marker table.")
             }
             if (is_marker_canonical(db_markers)) {
-                if (!is.null(tissue) && !"tissue" %in% colnames(db_markers)) {
+                # A universal marker table — consumed natively by hitype
+                # (>= 0.0.6). Filter the rows by
+                # `envs.tissue`/`envs.cancer`/`envs.species` here and keep
+                # the table as is: notably a numeric `weight` column must
+                # survive (markers_to_sctype_df(), the sctype route, would
+                # drop it).
+                if (packageVersion("hitype") < "0.0.6") {
                     stop(paste0(
-                        "`envs.hitype.tissue` is set to `", tissue,
-                        "` but the marker table has no `tissue` column."
+                        "Universal marker tables with `tool = 'hitype'` ",
+                        "require hitype >= 0.0.6 (installed: ",
+                        as.character(packageVersion("hitype")), "). ",
+                        "Install the latest hitype or use a native ",
+                        "db-format file."
                     ))
                 }
-                db_markers <- markers_to_sctype_df(db_markers, tissue, cancer, species)
+                db_markers <- apply_marker_filters(
+                    db_markers, tissue = tissue, cancer = cancer, species = species
+                )
+                # Tissues already filtered above; gs_prepare accepts a
+                # data.frame directly
+                gs_list <- gs_prepare(db_markers, NULL)
+            } else {
+                # Native hitype/ScType db-format data.frame
+                gs_list <- gs_prepare(db_markers, tissue)
             }
-            # gs_prepare accepts a data.frame directly
-            gs_list <- gs_prepare(db_markers, tissue)
         }
     }
 

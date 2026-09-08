@@ -2624,7 +2624,9 @@ class CellTypeAnnotation(Proc):
       `Weight`s. For the other tools (`scina`, `cellassign`, `cellid`,
       `sccatch`), negative markers cannot be represented and are ignored
       (only positive markers are used).
-    - `weight`: a numeric weight, only used by `scsorter` (as the `Weight` column).
+    - `weight`: a numeric weight. Used by `scsorter` (as the `Weight`
+      column) and, when present, by `hitype` (hitype >= 0.0.6), where the
+      weights are used as-is in the scoring. Ignored by the other tools.
     - `species`, `cancer`, `tissue`: optional. When the matching env
       (`envs.<tool>.species`/`cancer`/`tissue`) is set, only the rows with the
       given value are kept (an error is raised if the table has no such column
@@ -2772,6 +2774,9 @@ class CellTypeAnnotation(Proc):
                 See also <https://pwwang.github.io/hitype/articles/prepare-gene-sets.html>
                 You can also use built-in databases, including `hitypedb_short`, `hitypedb_full`, and `hitypedb_pbmc3k`.
                 Can also be a universal marker table (see the note above).
+                When the table has a `weight` column (e.g. trained by
+                `HitypeWeightTrainer`), the weights are used as-is for
+                scoring (hitype >= 0.0.6).
         scsorter (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
             - db: The database to use for scSorter. It will be loaded and passed to the `anno`
                 argument of `RunScSorter()`. It could be either:
@@ -3357,6 +3362,158 @@ class GarnettClassifierTrainer(Proc):
         "seed": None,
     }
     script = "file://../scripts/scrna/GarnettClassifierTrainer.R"
+
+
+class HitypeWeightTrainer(Proc):
+    """Train [`hitype`](https://pwwang.github.io/hitype/) marker weights from a
+    Seurat object and marker genes.
+
+    The weights are learned with `hitype::train_weights()` (hitype >= 0.0.6;
+    the Seurat object is used as is — `data` layer, no scaling) and the output
+    is a **weighted universal marker table** (`cell_type`/`gene`/`direction`/
+    `weight`/`level`, one row per marker gene) that can be fed to
+    `CellTypeAnnotation` with `tool = "hitype"` / `envs.hitype.db`, where the
+    weights are used as-is for scoring.
+
+    The markers to train are either given by `envs.markers` or, when not
+    given, first discovered from the data with `hitype::find_markers()` (over
+    the cell types of `envs.ident` or the current Idents) and then trained —
+    both branches converge to the same weighted output. The cell types of the
+    markers must be a subset of the cell types in `envs.ident`/the Idents (an
+    error otherwise); marker genes absent from the expression data are
+    dropped by hitype with a warning.
+
+    Input:
+        srtobj: The Seurat object in RDS/qs/qs2 format.
+    Output:
+        outfile: The trained marker weights (TSV, universal marker format
+            with a numeric `weight` column). Use it with `CellTypeAnnotation`
+            (`tool = "hitype"`) as `envs.hitype.db`.
+
+    Envs:
+        markers (type=str): The marker file to train on, optional. When not
+            given, the markers are found from the data first (see
+            `envs.find_markers`). It is an env rather than a required input
+            because it is optional; note the trade-off that marker content
+            changes do not invalidate cached jobs (same as
+            `CellTypeAnnotation`'s `envs.<tool>.db`). The formats below are
+            auto-detected by `hitype::gs_prepare()` (hitype >= 0.0.6):
+
+            A universal marker table — a TSV/CSV or an RDS/qs/qs2 file of
+            a data.frame, long format, one row per gene per cell type, with
+            `cell_type` and `gene` columns (required) and optional
+            `direction`/`species`/`cancer`/`tissue`/`level` columns
+            (column aliases auto-detected: `celltype`/`cellType`/`Type` →
+            `cell_type`, `marker`/`Marker`/`gene_symbol` → `gene`,
+            `sign` → `direction`, `tissueType` → `tissue`). A `weight`
+            column, if any, is ignored — the weights are learned from the
+            data.
+
+            A native hitype/ScType db-format file — a TSV with
+            `cellName`/`geneSymbolmore1`/... columns, or a native ScType
+            xlsx — is used as is.
+
+            The cell types of the markers must be a subset of the cell
+            types in `envs.ident`/the Idents.
+        ident (type=str): The metadata column of the Seurat object whose
+            values are the cell types (the labels to learn from; default:
+            the current Idents).
+        assay (type=str): The assay to use. If not set, the default assay
+            is used.
+        level (type=int): The marker level to train/find (default: 1). For
+            markers with multiple `level`s, only `envs.level` is trained;
+            the output has a single `level`.
+        species (type=str): Filter the markers by the `species` column of a
+            universal marker table given by `envs.markers`. An error if the
+            markers are a native db-format file (which has no such columns)
+            or discovered from the data.
+        cancer (type=str): Filter the markers by the `cancer` column of a
+            universal marker table given by `envs.markers`. Same constraints
+            as `envs.species`.
+        tissue (type=str): Filter the markers by the `tissue` column of a
+            universal marker table given by `envs.markers`. Same constraints
+            as `envs.species`. Note the trained output carries no
+            `tissue`/`species`/`cancer` columns, so a downstream
+            `envs.hitype.tissue` on it (in `CellTypeAnnotation`) will error.
+        find_markers (ns): Arguments for `hitype::find_markers()`, used when
+            `envs.markers` is not given. Defaults mirror the function's.
+            `level` comes from `envs.level`.
+            - method (choice): `fc`/`seurat`/`presto` (default: `fc`). The
+              default `fc` needs no extra packages; `seurat` requires a
+              Seurat object (as given), `presto` requires the presto
+              package.
+            - top (type=int): Number of markers to return per cell type
+              (default: 20).
+            - min_log2fc (type=float): Minimum log2 fold change for a gene
+              to be kept as a marker (default: 0.25).
+            - min_pct (type=float): Minimum fraction of cells in the cell
+              type expressing the gene (default: 0.1).
+            - only_pos (flag): Only keep genes higher in the cell type than
+              in the rest of the cells (default: `True`).
+            - include_negative (flag): Also include the down-regulated
+              markers per cell type (default: `False`).
+        train_weights (ns): Arguments for `hitype::train_weights()`.
+            Defaults mirror the function's (including `seed`). `level` comes
+            from `envs.level`; `scaled` is forced `False` (Seurat input);
+            `clusters` comes from `envs.ident`/the Idents.
+            - method (choice): `glmnet`/`lr`/`rf`/`xgb`/`lrp`/`correlation`/
+              `uniform` (default: `glmnet`).
+            - range (type=json): The range of the weights
+              (default: `[1, 5]`).
+            - data_split (type=json): Fractions for training/validation/
+              testing (default: `[0.7, 0.2, 0.1]`; with two elements, no
+              testing set is used).
+            - epochs (type=int): Number of epochs to train, `lrp` method
+              only (default: 20).
+            - batch_size (type=int): The batch size, `lrp` method only
+              (default: 32).
+            - run_weights_on_test (flag): Whether to run the weights on the
+              test set (default: `True`). Requires three `data_split`
+              elements.
+            - cv_folds (type=int): Number of cross-validation folds for
+              weight estimation; > 1 averages weights across folds for
+              stability (default: 1).
+            - seed (type=int): The random seed for reproducibility
+              (default: 8525).
+
+    Requires:
+        r-seurat:
+            - check: {{proc.lang}} -e "library(Seurat)"
+        r-hitype:
+            - check: {{proc.lang}} -e "library(hitype)"
+    """  # noqa: E501
+
+    input = "srtobj:file"
+    output = "outfile:file:{{in.srtobj | stem0}}.hitype.tsv"
+    lang = config.lang.rscript
+    envs = {
+        "markers": None,
+        "ident": None,
+        "assay": None,
+        "level": 1,
+        "species": None,
+        "cancer": None,
+        "tissue": None,
+        "find_markers": {
+            "method": "fc",
+            "top": 20,
+            "min_log2fc": 0.25,
+            "min_pct": 0.1,
+            "only_pos": True,
+            "include_negative": False,
+        },
+        "train_weights": {
+            "method": "glmnet",
+            "range": [1, 5],
+            "data_split": [0.7, 0.2, 0.1],
+            "epochs": 20,
+            "batch_size": 32,
+            "run_weights_on_test": True,
+            "cv_folds": 1,
+            "seed": 8525,
+        },
+    }
+    script = "file://../scripts/scrna/HitypeWeightTrainer.R"
 
 
 class SeuratMap2Ref(Proc):

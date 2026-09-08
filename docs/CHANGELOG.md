@@ -4,6 +4,7 @@
 
 - feat(scrna.CellTypeAnnotation): add garnett tool for cell type classification with a trained classifier (`envs.garnett.classifier`)
 - feat(scrna.GarnettClassifierTrainer): add process to train a garnett classifier from a Seurat object and marker genes (garnett-native marker file or universal marker table; negative markers become `not expressed:` rules), feeding `CellTypeAnnotation`'s garnett tool
+- feat(scrna.HitypeWeightTrainer): add process to train hitype marker weights from a Seurat object and a universal/native marker table (or markers found by `hitype::find_markers()` when none is given), outputting a weighted universal marker table; requires hitype >= 0.0.6 and feeds `CellTypeAnnotation`'s hitype tool, where the numeric `weight` column of a universal marker table is now used as-is for scoring (kept instead of being dropped by the sctype-format conversion)
 
 ## 1.4.0
 
