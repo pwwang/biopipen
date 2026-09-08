@@ -1,0 +1,11 @@
+cell_type	gene	direction
+T_cell	CD3D	positive
+T_cell	CD3E	positive
+T_cell	CD3G	positive
+B_cell	MS4A1	positive
+B_cell	CD79A	positive
+B_cell	CD3D	negative
+Monocyte	CD14	positive
+Monocyte	LYZ	positive
+NK_cell	NKG7	positive
+NK_cell	KLRD1	positive

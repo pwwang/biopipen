@@ -1,5 +1,31 @@
 # CellTypeAnnotation-garnett.R — pure R function, no Jinja2 template variables
-# Source'd by CellTypeAnnotation.R
+# Source'd by CellTypeAnnotation.R and GarnettClassifierTrainer.R
+
+# Workaround for garnett 0.2.22 (monocle3 branch) against glmnet >= 4.0:
+# `predict()` on a multinomial `cv.glmnet` returns a 3D array, and the
+# `as.data.frame()` flattening inside `garnett::make_predictions()` mangles
+# the per-class names with a ".lambda.min" suffix (e.g. "T cells.lambda.min").
+# The per-type assignment masks then never match the plain cell-type names
+# of the classification tree, and every cell comes back "Unknown". Strip
+# the suffix from the returned mask names (a no-op once garnett is fixed).
+# Idempotent — safe to call before both classify_cells() and
+# train_cell_classifier() (subtype models use make_predictions too).
+patch_garnett_make_predictions <- function(log) {
+    tryCatch({
+        ns <- asNamespace("garnett")
+        orig_make_predictions <- get("make_predictions", envir = ns)
+        monkey_patch("garnett", "make_predictions", function(...) {
+            res <- orig_make_predictions(...)
+            names(res) <- sub("\\.lambda\\..*$", "", names(res))
+            res
+        })
+    }, error = function(e) {
+        log$warn(paste(
+            "Failed to patch garnett::make_predictions for glmnet >= 4.0:",
+            conditionMessage(e)
+        ))
+    })
+}
 
 annotate_garnett <- function(sobj, ident, garnett_args) {
     library(monocle3)
@@ -7,35 +33,7 @@ annotate_garnett <- function(sobj, ident, garnett_args) {
     library(SeuratWrappers)
 
     log <- get_logger()
-
-    # Workaround for garnett 0.2.22 (monocle3 branch) against glmnet >= 4.0:
-    # `predict()` on a multinomial `cv.glmnet` returns a 3D array, and the
-    # `as.data.frame()` flattening inside `garnett::make_predictions()` mangles
-    # the per-class names with a ".lambda.min" suffix (e.g. "T cells.lambda.min").
-    # The per-type assignment masks then never match the plain cell-type names
-    # of the classification tree, and every cell comes back "Unknown". Strip
-    # the suffix from the returned mask names (a no-op once garnett is fixed).
-    tryCatch({
-        ns <- asNamespace("garnett")
-        if (bindingIsLocked("make_predictions", ns)) {
-            unlockBinding("make_predictions", ns)
-        }
-        orig_make_predictions <- get("make_predictions", envir = ns)
-        assign(
-            "make_predictions",
-            function(...) {
-                res <- orig_make_predictions(...)
-                names(res) <- sub("\\.lambda\\..*$", "", names(res))
-                res
-            },
-            envir = ns
-        )
-    }, error = function(e) {
-        log$warn(paste(
-            "Failed to patch garnett::make_predictions for glmnet >= 4.0:",
-            conditionMessage(e)
-        ))
-    })
+    patch_garnett_make_predictions(log)
 
     classifier_path <- garnett_args$classifier
     if (is.null(classifier_path)) { stop("`envs.garnett.classifier` is not set") }

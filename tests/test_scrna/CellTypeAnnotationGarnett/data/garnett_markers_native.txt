@@ -1,0 +1,14 @@
+# Flat garnett-native marker file for the pbmc3k smoke test.
+# Equivalent to data/garnett_markers.tsv (same 4 cell types, same genes).
+# The leading comments and blank line also prove the format sniffing skips
+# them before looking for the first `>` block header.
+
+> T_cell
+expressed: CD3D, CD3E, CD3G
+> B_cell
+expressed: CD79A, MS4A1
+not expressed: CD3D
+> Monocyte
+expressed: CD14, LYZ
+> NK_cell
+expressed: KLRD1, NKG7

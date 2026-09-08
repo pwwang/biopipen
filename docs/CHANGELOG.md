@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- feat(scrna.CellTypeAnnotation): add garnett tool for cell type classification with a trained classifier (`envs.garnett.classifier`)
+- feat(scrna.GarnettClassifierTrainer): add process to train a garnett classifier from a Seurat object and marker genes (garnett-native marker file or universal marker table; negative markers become `not expressed:` rules), feeding `CellTypeAnnotation`'s garnett tool
+
 ## 1.4.0
 
 - feat(scrna.CellTypeAnnotation): add support for multiple cell type annotation tools (scSorter, SCINA, SingleR, scHDeepInsight, GPTCelltype, cellassign, scBERT, CelliD)

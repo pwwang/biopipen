@@ -2843,10 +2843,9 @@ class CellTypeAnnotation(Proc):
         garnett (ns): The arguments for `garnett::classify_cells()`
             if `tool` is `garnett`. The process takes a **trained** classifier
             and predicts the cell types for each cell — no training step is
-            performed. A classifier is trained from marker genes plus expression
-            data (e.g. via `garnett::train_cell_classifier()`, see
-            <https://cole-trapnell-lab.github.io/garnett/docs/>), or you can use a
-            pre-trained one from
+            performed. A classifier can be trained with the
+            `GarnettClassifierTrainer` process from a Seurat object and marker
+            genes, or you can use a pre-trained one from
             <https://cole-trapnell-lab.github.io/garnett/classifiers/>.
             The Seurat object is converted to a monocle3 `cell_data_set` for
             classification, and cells that cannot be confidently classified
@@ -3228,6 +3227,136 @@ class CellTypeAnnotation(Proc):
         "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
+
+
+class GarnettClassifierTrainer(Proc):
+    """Train a [`Garnett`](https://cole-trapnell-lab.github.io/garnett/) classifier
+    from a Seurat object and marker genes.
+
+    The classifier is trained with `garnett::train_cell_classifier()` (garnett
+    >= 0.2.22, monocle3 branch) and can be fed to `CellTypeAnnotation` with
+    `tool = "garnett"` / `envs.garnett.classifier` for classification. Cell
+    types whose marker genes are absent from the expression data are dropped
+    with a warning, and cell types with too few cells
+    (`envs.min_observations`) are dropped with a message.
+
+    Input:
+        srtobj: The Seurat object in RDS/qs/qs2 format with raw counts.
+        markerfile: The marker file. Either a garnett-native marker file or a
+            universal marker table (see below). The detection is by content: a
+            file whose first non-comment line starts with `>` is garnett-native.
+
+            A garnett-native marker file is a text file with one block per
+            cell type, headed by `> <cell type>`, followed by rules such as
+            `expressed: <marker genes>` and `not expressed: <genes>`. See the
+            [garnett docs](https://cole-trapnell-lab.github.io/garnett/docs/#1b-train-your-own-classifier)
+            for the full grammar. It is used as is, so `subtype of:`
+            hierarchies and `expressed above:`/`below:`/`between:` rules are
+            supported. `envs.species`/`envs.cancer`/`envs.tissue` cannot be
+            applied to this format (it has no such columns) and will raise an
+            error if set.
+
+            A universal marker table is a TSV/CSV (or an RDS/qs/qs2 file
+            containing a data.frame) in long format with one row per gene per
+            cell type, with `cell_type` (required) and `gene` (required)
+            columns. It can also have an optional `direction` column
+            (`positive`/`negative`, aliases: `pos`/`neg`/`+`/`-`), where
+            negative markers become `not expressed:` rules of the converted
+            garnett marker file, and optional `species`/`cancer`/`tissue`
+            columns, used only when the matching env is set, which keeps the
+            rows with the given value (an error is raised if the table has no
+            such column or no rows match). Column aliases are auto-detected:
+            `celltype`/`cellType`/`Type` → `cell_type`,
+            `marker`/`Marker`/`gene_symbol` → `gene`, `sign` → `direction`,
+            and `tissueType` → `tissue`. A table without `cell_type`/`gene`
+            columns is an error. The converted garnett marker file is saved as
+            `<stem>.markers.txt` in the job output directory for inspection.
+
+    Output:
+        outfile: The classifier file (RDS with a `garnett_classifier` object).
+            Use it with `CellTypeAnnotation` (`tool = "garnett"`) as
+            `envs.garnett.classifier`.
+
+    Envs:
+        species (type=str): Filter the markers by the `species` column of a
+            universal marker table (see `markerfile` above). An error if the
+            marker file is garnett-native.
+        cancer (type=str): Filter the markers by the `cancer` column of a
+            universal marker table (see `markerfile` above). An error if the
+            marker file is garnett-native.
+        tissue (type=str): Filter the markers by the `tissue` column of a
+            universal marker table (see `markerfile` above). An error if the
+            marker file is garnett-native.
+        db (type=str): The name of the installed annotation package
+            (e.g. `org.Hs.eg.db`) to convert the gene IDs of the markers and
+            the expression data to a common ID space (default: `none`, i.e.
+            no conversion; then the gene IDs of the markers must match those
+            of the expression data, and the classifier is said to have
+            `custom` gene IDs — classify with the garnett tool of
+            `CellTypeAnnotation` using `db: none` and the default
+            `cds_gene_id_type: custom`).
+        cds_gene_id_type (choice): The gene ID type of the expression data
+            (default: `SYMBOL`). Supported types include `SYMBOL`, `ENSEMBL`,
+            `ENTREZID`.
+        marker_file_gene_id_type (choice): The gene ID type of the marker genes
+            (default: `SYMBOL`).
+        classifier_gene_id_type (choice): The gene ID type of the gene models
+            of the classifier (default: `SYMBOL`).
+        assay (type=str): The assay of the Seurat object to use for training.
+            It must contain raw counts. If not set, the default assay is used.
+        min_observations (type=int): The minimum number of cells a cell type
+            must have in the training data for its model to be trained
+            (default: 8). Cell types with fewer cells are dropped with a
+            message.
+        max_training_samples (type=int): The maximum number of cells used to
+            train the model of each cell type (default: 500).
+        num_unknown (type=int): The maximum number of cells that do not match
+            any cell type to include in the training data as the `Unknown`
+            class (default: 500). Cells matching a cell type are all used for
+            training (up to `envs.max_training_samples`).
+        propogate_markers (flag): Whether to add the markers of parent cell
+            types to their subtypes (default: `True`). Note the spelling
+            `propogate` is garnett's.
+        lambdas (type=json): The regularization parameters for the
+            elastic-net models to consider (default: `None`, i.e. let
+            `cv.glmnet` choose). Usually no tuning is needed.
+        cores (type=int): Number of CPU cores to use for training (default: 1).
+        seed (type=int): The random seed to make the training reproducible
+            (default: `None`, i.e. not set). Note that the `Unknown` class
+            cells and the training samples are drawn at random.
+
+    Requires:
+        r-seurat:
+            - check: {{proc.lang}} -e "library(Seurat)"
+        r-monocle3:
+            - check: {{proc.lang}} -e "library(monocle3)"
+        r-garnett:
+            - check: {{proc.lang}} -e "library(garnett)"
+        r-seuratwrappers:
+            - check: {{proc.lang}} -e "library(SeuratWrappers)"
+    """  # noqa: E501
+
+    input = "srtobj:file, markerfile:file"
+    output = "outfile:file:{{in.srtobj | stem0}}.classifier.RDS"
+    lang = config.lang.rscript
+    envs = {
+        "species": None,
+        "cancer": None,
+        "tissue": None,
+        "db": "none",
+        "cds_gene_id_type": "SYMBOL",
+        "marker_file_gene_id_type": "SYMBOL",
+        "classifier_gene_id_type": "SYMBOL",
+        "assay": None,
+        "min_observations": 8,
+        "max_training_samples": 500,
+        "num_unknown": 500,
+        "propogate_markers": True,
+        "lambdas": None,
+        "cores": 1,
+        "seed": None,
+    }
+    script = "file://../scripts/scrna/GarnettClassifierTrainer.R"
 
 
 class SeuratMap2Ref(Proc):
