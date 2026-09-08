@@ -42,6 +42,10 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-garnett.R
 # are assigned via make_predictions() during training too
 patch_garnett_make_predictions(log)
 
+# Let garnett's marker-file parser accept Unicode cell type names (e.g.
+# "γδ-T cells" from ScTypeDB) instead of failing with "Syntax error 'γ'"
+patch_garnett_marker_lexer(log)
+
 # The marker file is either a garnett-native file (passed through unchanged,
 # so `subtype of:` hierarchies and `expressed above/below:` rules work) or a
 # universal marker table (auto-converted; negative markers become

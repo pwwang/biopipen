@@ -27,6 +27,32 @@ patch_garnett_make_predictions <- function(log) {
     })
 }
 
+# Workaround for garnett 0.2.22: the marker-file lexer (`t_NAME` in the rly
+# `Lexer` in garnett's namespace) only accepts ASCII letters, so a cell type
+# like "γδ-T cells" from ScTypeDB fails with `Marker file error. Syntax error
+# 'γ' ...` when train_cell_classifier() parses the file. Widen the token
+# regex to Unicode letters via (*UCP) (ASCII-only behavior is unchanged, as
+# [:alpha:]/[:alnum:] still cover the ASCII range) so such names pass through
+# verbatim. Idempotent — safe to call before train_cell_classifier().
+patch_garnett_marker_lexer <- function(log) {
+    tryCatch({
+        # parse_input() rebuilds the lexer from the generator at every call
+        # (rly::lex(Lexer)), so patching the generator in garnett's namespace
+        # is enough; its environment is not locked (R6 lock_class = FALSE)
+        ns <- asNamespace("garnett")
+        Lexer <- get("Lexer", envir = ns)
+        fields <- Lexer$public_fields
+        fields[["t_NAME"]] <- "(*UCP)[[:alnum:]_+/\\-\\.|=`~\\*&<^%?@!$();:]*[[:alpha:]][[:alnum:]_+/\\-\\.|=`~\\*&<^%?@!$();]*"
+        Lexer$public_fields <- fields
+    }, error = function(e) {
+        log$warn(paste(
+            "Failed to patch garnett's marker-file lexer for Unicode cell",
+            "type names:",
+            conditionMessage(e)
+        ))
+    })
+}
+
 annotate_garnett <- function(sobj, ident, garnett_args) {
     library(monocle3)
     library(garnett)
