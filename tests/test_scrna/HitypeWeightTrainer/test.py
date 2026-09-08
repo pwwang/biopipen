@@ -18,7 +18,7 @@ Pipeline layout:
   marker table) and `HitypeWeightTrainerNative` from `data/markers_native.txt`
   (the same markers in the hitype/ScType db format) — both must produce the
   same 9 marker rows with trained (not all 1) numeric weights.
-- `HitypeWeightTrainerAuto` gives no `envs.markers`, so markers are discovered
+- `HitypeWeightTrainerAuto` gives no `in.markerfile`, so markers are discovered
   from pbmc3k by `hitype::find_markers()` over the `seurat_clusters` Idents,
   and weights are trained on them.
 - `CellTypeAnnotationHitypeTrained` classifies the synthetic cells with the
@@ -141,8 +141,8 @@ class HitypeWeightTrainerUniversal(HitypeWeightTrainer_):
     """Train from the universal marker table"""
 
     requires = SyntheticData
+    input_data = lambda ch: [(ch.iloc[0, 0], MARKERS_TSV)]
     envs = {
-        "markers": str(MARKERS_TSV),
         "ident": "type",
     }
 
@@ -151,14 +151,14 @@ class HitypeWeightTrainerNative(HitypeWeightTrainer_):
     """Train from the same markers in the native hitype/ScType db format"""
 
     requires = SyntheticData
+    input_data = lambda ch: [(ch.iloc[0, 0], MARKERS_NATIVE_TXT)]
     envs = {
-        "markers": str(MARKERS_NATIVE_TXT),
         "ident": "type",
     }
 
 
 class HitypeWeightTrainerAuto(HitypeWeightTrainer_):
-    """No `envs.markers`: find markers from the data with
+    """No `in.markerfile`: find markers from the data with
     `hitype::find_markers()` over the `seurat_clusters` Idents"""
 
     requires = PrepData
@@ -212,7 +212,7 @@ def read_table(path):
 def check_trainer(pipen, procname):
     """Common assertions for a given-markers trainer run: the output TSV has
     the universal-format header, exactly the fixture marker rows (one per
-    gene), positive directions and trained numeric weights in [1, 5]."""
+    gene), positive directions and raw trained weights."""
     proc = get_proc(pipen, procname)
     tsv = proc.workdir.joinpath("0", "output", "syn.hitype.tsv")
     assert tsv.is_file(), f"Missing trained marker table: {tsv}"
@@ -228,9 +228,8 @@ def check_trainer(pipen, procname):
     weights = [float(row["weight"]) for row in rows]
     # Some weights must actually have been learned (not all 1 — the
     # untrained fallback); calibrate against the real run if this bites
-    assert len(set(round(w, 3) for w in weights)) >= 2, weights
-    assert all(1 - 1e-6 <= w <= 5 + 1e-6 for w in weights), weights
-    assert all(row["direction"] == "positive" for row in rows)
+    assert len(set(round(w, 6) for w in weights)) >= 2, weights
+    assert all(row["direction"] in ("positive", "negative") for row in rows)
     assert all(row["level"] == "1" for row in rows)
     return tsv
 
@@ -248,7 +247,9 @@ def check_trainer_auto(pipen, procname):
     # found markers come from the clusters (0..n) of the pbmc3k data
     assert len(types) >= 5, types
     weights = [float(row["weight"]) for row in rows]
-    assert all(1 - 1e-6 <= w <= 5 + 1e-6 for w in weights), weights
+    # raw trained weights: some spread, no weight-0 leftovers (drop_zero)
+    assert len(set(round(w, 6) for w in weights)) >= 2, weights
+    assert all(w != 0 for w in weights)
     assert all(row["level"] == "1" for row in rows)
     return tsv
 

@@ -1,6 +1,6 @@
 # HitypeWeightTrainer.R — train marker weights for hitype from a Seurat
 # object via `hitype::train_weights()`. The markers are either given by
-# `envs.markers` (a universal marker table or a native hitype/ScType
+# `in.markerfile` (a universal marker table or a native hitype/ScType
 # db-format file) or discovered from the data by `hitype::find_markers()`.
 # The output is a weighted universal marker table
 # (`cell_type`/`gene`/`direction`/`weight`/`level`, one row per marker gene)
@@ -21,8 +21,8 @@ if (packageVersion("hitype") < "0.0.6") {
 }
 
 srtobj <- {{in.srtobj | r}}
+markers <- {{in.markerfile | r}}
 outfile <- {{out.outfile | r}}
-markers <- {{envs.markers | r}}
 ident <- {{envs.ident | r}}
 assay <- {{envs.assay | r}}
 level <- {{envs.level | r}}
@@ -69,7 +69,7 @@ if (is.null(markers)) {
     if (!is.null(species) || !is.null(cancer) || !is.null(tissue)) {
         stop(paste0(
             "`envs.species`/`envs.cancer`/`envs.tissue` only filter a ",
-            "universal marker table given by `envs.markers`; they are not ",
+            "universal marker table given by `in.markerfile`; they are not ",
             "applicable when the markers are discovered from the data by ",
             "`hitype::find_markers()`."
         ))

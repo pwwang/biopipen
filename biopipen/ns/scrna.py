@@ -3375,7 +3375,7 @@ class HitypeWeightTrainer(Proc):
     `CellTypeAnnotation` with `tool = "hitype"` / `envs.hitype.db`, where the
     weights are used as-is for scoring.
 
-    The markers to train are either given by `envs.markers` or, when not
+    The markers to train are either given by `in.markerfile` or, when not
     given, first discovered from the data with `hitype::find_markers()` (over
     the cell types of `envs.ident` or the current Idents) and then trained —
     both branches converge to the same weighted output. The cell types of the
@@ -3385,19 +3385,12 @@ class HitypeWeightTrainer(Proc):
 
     Input:
         srtobj: The Seurat object in RDS/qs/qs2 format.
-    Output:
-        outfile: The trained marker weights (TSV, universal marker format
-            with a numeric `weight` column). Use it with `CellTypeAnnotation`
-            (`tool = "hitype"`) as `envs.hitype.db`.
-
-    Envs:
-        markers (type=str): The marker file to train on, optional. When not
+        markerfile: The marker file to train on, optional. When not
             given, the markers are found from the data first (see
-            `envs.find_markers`). It is an env rather than a required input
-            because it is optional; note the trade-off that marker content
-            changes do not invalidate cached jobs (same as
-            `CellTypeAnnotation`'s `envs.<tool>.db`). The formats below are
-            auto-detected by `hitype::gs_prepare()` (hitype >= 0.0.6):
+            `envs.find_markers`). It is an optional input; note the trade-off
+            that marker content changes do not invalidate cached jobs (same
+            as `CellTypeAnnotation`'s `envs.<tool>.db`). The formats below
+            are auto-detected by `hitype::gs_prepare()` (hitype >= 0.0.6):
 
             A universal marker table — a TSV/CSV or an RDS/qs/qs2 file of
             a data.frame, long format, one row per gene per cell type, with
@@ -3415,6 +3408,13 @@ class HitypeWeightTrainer(Proc):
 
             The cell types of the markers must be a subset of the cell
             types in `envs.ident`/the Idents.
+
+    Output:
+        outfile: The trained marker weights (TSV, universal marker format
+            with a numeric `weight` column). Use it with `CellTypeAnnotation`
+            (`tool = "hitype"`) as `envs.hitype.db`.
+
+    Envs:
         ident (type=str): The metadata column of the Seurat object whose
             values are the cell types (the labels to learn from; default:
             the current Idents).
@@ -3424,19 +3424,19 @@ class HitypeWeightTrainer(Proc):
             markers with multiple `level`s, only `envs.level` is trained;
             the output has a single `level`.
         species (type=str): Filter the markers by the `species` column of a
-            universal marker table given by `envs.markers`. An error if the
+            universal marker table given by `in.markerfile`. An error if the
             markers are a native db-format file (which has no such columns)
             or discovered from the data.
         cancer (type=str): Filter the markers by the `cancer` column of a
-            universal marker table given by `envs.markers`. Same constraints
+            universal marker table given by `in.markerfile`. Same constraints
             as `envs.species`.
-        tissue (type=str): Filter the markers by the `tissue` column of a
-            universal marker table given by `envs.markers`. Same constraints
+            universal marker table given by `in.markerfile`. Same constraints
             as `envs.species`. Note the trained output carries no
             `tissue`/`species`/`cancer` columns, so a downstream
             `envs.hitype.tissue` on it (in `CellTypeAnnotation`) will error.
+            `envs.hitype.tissue` on it (in `CellTypeAnnotation`) will error.
         find_markers (ns): Arguments for `hitype::find_markers()`, used when
-            `envs.markers` is not given. Defaults mirror the function's.
+            `in.markerfile` is not given. Defaults mirror the function's.
             `level` comes from `envs.level`.
             - method (choice): `fc`/`seurat`/`presto` (default: `fc`). The
               default `fc` needs no extra packages; `seurat` requires a
@@ -3458,8 +3458,6 @@ class HitypeWeightTrainer(Proc):
             `clusters` comes from `envs.ident`/the Idents.
             - method (choice): `glmnet`/`lr`/`rf`/`xgb`/`lrp`/`correlation`/
               `uniform` (default: `glmnet`).
-            - range (type=json): The range of the weights
-              (default: `[1, 5]`).
             - data_split (type=json): Fractions for training/validation/
               testing (default: `[0.7, 0.2, 0.1]`; with two elements, no
               testing set is used).
@@ -3483,11 +3481,10 @@ class HitypeWeightTrainer(Proc):
             - check: {{proc.lang}} -e "library(hitype)"
     """  # noqa: E501
 
-    input = "srtobj:file"
+    input = "srtobj:file, markerfile:file"
     output = "outfile:file:{{in.srtobj | stem0}}.hitype.tsv"
     lang = config.lang.rscript
     envs = {
-        "markers": None,
         "ident": None,
         "assay": None,
         "level": 1,
@@ -3504,7 +3501,6 @@ class HitypeWeightTrainer(Proc):
         },
         "train_weights": {
             "method": "glmnet",
-            "range": [1, 5],
             "data_split": [0.7, 0.2, 0.1],
             "epochs": 20,
             "batch_size": 32,
