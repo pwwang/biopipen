@@ -24,6 +24,7 @@ hitype <- {{envs.hitype | r}}
 scsorter <- {{envs.scsorter | r}}
 scina <- {{envs.scina | r}}
 singler <- {{envs.singler | r}}
+garnett <- {{envs.garnett | r}}
 schdeepinsight <- {{envs.schdeepinsight | r}}
 llmcelltype <- {{envs.llmcelltype | r}}
 cellassign <- {{envs.cellassign | r}}
@@ -88,6 +89,8 @@ source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-singler.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
+# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-garnett.R" | getmtime | int }}
+source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-garnett.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R" | getmtime | int }}
 source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
 # {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-llmcelltype.R" | getmtime | int }}
@@ -217,6 +220,7 @@ defaults <- list(
     scsorter = scsorter,
     scina = scina,
     singler = singler,
+    garnett = garnett,
     schdeepinsight = schdeepinsight,
     llmcelltype = llmcelltype,
     cellassign = cellassign,
@@ -260,7 +264,7 @@ cases <- lapply(cases, normalize_deprecated)
 
 # Cluster-based tools
 CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "llmcelltype", "scagenttype", "direct")
-CELL_LEVEL_TOOLS <- c("scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist")
+CELL_LEVEL_TOOLS <- c("scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist", "garnett")
 PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert", "scagenttype")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
@@ -340,6 +344,9 @@ run_case <- function(case_name) {
     if (identical(tool_name, "scsorter") && is.null(tool_cfg$assay)) {
         tool_cfg$assay <- assay
     }
+    if (identical(tool_name, "garnett") && is.null(tool_cfg$assay)) {
+        tool_cfg$assay <- assay
+    }
 
     result <- switch(tool_name,
         hitype = annotate_hitype(
@@ -360,6 +367,9 @@ run_case <- function(case_name) {
         ),
         scina = annotate_scina(
             sobj, case$ident, tool_cfg$db, tool_cfg
+        ),
+        garnett = annotate_garnett(
+            sobj, case$ident, tool_cfg
         ),
         singler = annotate_singler(
             sobj, case$ident, tool_cfg$db, tool_cfg
