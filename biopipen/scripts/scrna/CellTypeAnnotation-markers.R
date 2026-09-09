@@ -158,7 +158,7 @@ apply_marker_filters <- function(df, tissue = NULL, cancer = NULL, species = NUL
                 "No markers in the marker table match `", col, " = ", val, "`."
             ))
         }
-        df <- df[df[[col]] == val, , drop = FALSE]
+        df <- df[!is.na(df[[col]]) & df[[col]] == val, , drop = FALSE]
     }
     df
 }
