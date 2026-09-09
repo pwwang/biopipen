@@ -158,7 +158,7 @@ apply_marker_filters <- function(df, tissue = NULL, cancer = NULL, species = NUL
                 "No markers in the marker table match `", col, " = ", val, "`."
             ))
         }
-        df <- df[df[[col]] == val, , drop = FALSE]
+        df <- df[!is.na(df[[col]]) & df[[col]] == val, , drop = FALSE]
     }
     df
 }
@@ -279,4 +279,53 @@ markers_to_sccatch_df <- function(df, tissue = NULL, cancer = NULL, species = NU
         df$subtype1 <- NA_character_
     }
     df
+}
+
+# Detect a garnett-native marker file (blocks headed by `> <cell type>`) vs a
+# universal marker table. The universal binary formats (rds/qs/qs2 data.frame,
+# xlsx/xls) and a missing file are never native. Text files are decided by
+# content: the first non-blank, non-`#` line of a native file is a `>` header.
+is_garnett_native_marker <- function(path) {
+    if (!file.exists(path)) { return(FALSE) }
+    ext <- tolower(tools::file_ext(path))
+    if (ext %in% c("rds", "qs", "qs2", "xlsx", "xls")) { return(FALSE) }
+    con <- file(path, "r")
+    on.exit(close(con))
+    while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
+        line <- trimws(line)
+        if (line == "" || startsWith(line, "#")) { next }
+        return(startsWith(line, ">"))
+    }
+    FALSE
+}
+
+# Convert a canonical marker table to a garnett-native marker file
+# (`> <cell type>` blocks with `expressed:` / `not expressed:` rules).
+# Negative-direction markers become `not expressed:` rules. Returns the path.
+markers_to_garnett_file <- function(df, file, tissue = NULL, cancer = NULL, species = NULL) {
+    df <- apply_marker_filters(df, tissue, cancer, species)
+    direction <- if ("direction" %in% colnames(df)) {
+        normalize_marker_direction(df$direction)
+    } else {
+        rep("positive", nrow(df))
+    }
+    con <- file(file, "w")
+    on.exit(close(con))
+    for (ct in unique(df$cell_type)) {
+        rows <- df$cell_type == ct
+        pos <- sort(unique(df$gene[rows & direction == "positive"]))
+        neg <- sort(unique(df$gene[rows & direction == "negative"]))
+        if (length(pos) == 0) {
+            stop(paste0(
+                "Cell type `", ct, "` has no positive markers; garnett requires ",
+                "at least one `expressed:` marker per cell type."
+            ))
+        }
+        writeLines(paste0("> ", ct), con)
+        writeLines(paste0("expressed: ", paste(pos, collapse = ", ")), con)
+        if (length(neg) > 0) {
+            writeLines(paste0("not expressed: ", paste(neg, collapse = ", ")), con)
+        }
+    }
+    file
 }

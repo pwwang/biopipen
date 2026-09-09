@@ -1,0 +1,3 @@
+cellName	geneSymbolmore1	geneSymbolmore2	level
+T_cell	CD3D,CD3E,CD3G,CD2,IL7R		1
+B_cell	MS4A1,CD79A,CD79B,BANK1		1

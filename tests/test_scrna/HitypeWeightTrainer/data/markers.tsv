@@ -1,0 +1,10 @@
+cell_type	gene	direction
+T_cell	CD3D	positive
+T_cell	CD3E	positive
+T_cell	CD3G	positive
+T_cell	CD2	positive
+T_cell	IL7R	positive
+B_cell	MS4A1	positive
+B_cell	CD79A	positive
+B_cell	CD79B	positive
+B_cell	BANK1	positive

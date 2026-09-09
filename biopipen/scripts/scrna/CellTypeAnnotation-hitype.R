@@ -30,30 +30,66 @@ annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
                      "Use a ScType xlsx/TSV, RDS data.frame, or a universal marker table.")
             }
             if (is_marker_canonical(db_markers)) {
-                if (!is.null(tissue) && !"tissue" %in% colnames(db_markers)) {
+                # A universal marker table — consumed natively by hitype
+                # (>= 0.0.6). Filter the rows by
+                # `envs.tissue`/`envs.cancer`/`envs.species` here and keep
+                # the table as is: notably a numeric `weight` column must
+                # survive (markers_to_sctype_df(), the sctype route, would
+                # drop it).
+                if (packageVersion("hitype") < "0.0.6") {
                     stop(paste0(
-                        "`envs.hitype.tissue` is set to `", tissue,
-                        "` but the marker table has no `tissue` column."
+                        "Universal marker tables with `tool = 'hitype'` ",
+                        "require hitype >= 0.0.6 (installed: ",
+                        as.character(packageVersion("hitype")), "). ",
+                        "Install the latest hitype or use a native ",
+                        "db-format file."
                     ))
                 }
-                db_markers <- markers_to_sctype_df(db_markers, tissue, cancer, species)
+                db_markers <- apply_marker_filters(
+                    db_markers, tissue = tissue, cancer = cancer, species = species
+                )
+                # Tissues already filtered above; gs_prepare accepts a
+                # data.frame directly
+                gs_list <- gs_prepare(db_markers, NULL)
+            } else {
+                # Native hitype/ScType db-format data.frame
+                gs_list <- gs_prepare(db_markers, tissue)
             }
-            # gs_prepare accepts a data.frame directly
-            gs_list <- gs_prepare(db_markers, tissue)
         }
     }
 
-    # run RunHitype
+    # RunHitype() supports both annotation levels through its `ident`
+    # argument: `NULL` assigns a cell type to each cell (cell-level), a
+    # metadata column assigns one cell type per cluster of that column
+    # (cluster-level). `case$ident` arrives as `NULL` or a column name
+    # (`"ident"` was already resolved to the identity column in the main
+    # script), so it maps 1:1. Older hitype builds without the `ident`
+    # argument fail here with an "unused argument" error — update hitype.
     log$info("Running RunHitype...")
-    sobj <- RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
-
-    log$info("Extracting cell type labels...")
-    hitype_labels <- sobj@meta.data %>%
-        distinct(!!sym(ident), hitype)
-    hitype_labels <- stats::setNames(
-        as.list(hitype_labels$hitype),
-        hitype_labels[[ident]]
+    sobj <- RunHitype(
+        sobj, gs_list, ident = ident, threshold = 0.0, make_unique = TRUE
     )
 
-    list(mapping = hitype_labels)
+    if (is.null(ident)) {
+        # cell-level: one label per cell
+        log$info("Extracting per-cell labels...")
+        list(
+            cell_annotations = data.frame(
+                hitype = sobj@meta.data$hitype,
+                row.names = colnames(sobj),
+                stringsAsFactors = FALSE
+            ),
+            annotation_col = "hitype"
+        )
+    } else {
+        log$info("Extracting cell type labels...")
+        hitype_labels <- sobj@meta.data %>%
+            distinct(!!sym(ident), hitype)
+        hitype_labels <- stats::setNames(
+            as.list(hitype_labels$hitype),
+            hitype_labels[[ident]]
+        )
+
+        list(mapping = hitype_labels)
+    }
 }
