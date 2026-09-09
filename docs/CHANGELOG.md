@@ -1,5 +1,16 @@
 # Change Log
 
+## 1.4.1
+
+- fix(scrna.CellTypeAnnotation): prevent filtering of NA values in apply_marker_filters function
+- fix(scrna.HitypeWeightTrainer): rename 'only_pos' flag to 'pos_only' for consistency in parameter naming
+- fix(scrna.GarnettClassifierTrainer): add support for Unicode cell type names in garnett's marker-file parser to prevent syntax errors
+- fix(scrna.HitypeWeightTrainer): update references from `envs.markers` to `in.markerfile` for clarity and consistency in marker file handling
+- feat(scrna.CellTypeAnnotation-hitype): update RunHitype to support both annotation levels based on ident argument
+- feat(scrna.HitypeWeightTrainer): add process to train hitype marker weights from a Seurat object and a universal/native marker table (or markers found by `hitype::find_markers()` when none is given), outputting a weighted universal marker table; `CellTypeAnnotation`'s hitype tool now uses the numeric `weight` column of universal marker tables as-is for scoring (requires hitype >= 0.0.6, kept instead of being dropped by the sctype-format conversion)
+- feat(scrna.GarnettClassifierTrainer): add process to train a garnett classifier from a Seurat object and marker genes (a garnett-native marker file or a universal marker table; negative markers become `not expressed:` rules), feeding `CellTypeAnnotation`'s garnett tool
+- feat(scrna.CellTypeAnnotation): add support for `garnett` tool with new annotation function and tests
+
 ## Unreleased
 
 - feat(scrna.CellTypeAnnotation): add garnett tool for cell type classification with a trained classifier (`envs.garnett.classifier`)
