@@ -3448,7 +3448,7 @@ class HitypeWeightTrainer(Proc):
               to be kept as a marker (default: 0.25).
             - min_pct (type=float): Minimum fraction of cells in the cell
               type expressing the gene (default: 0.1).
-            - only_pos (flag): Only keep genes higher in the cell type than
+            - pos_only (flag): Only keep genes higher in the cell type than
               in the rest of the cells (default: `True`).
             - include_negative (flag): Also include the down-regulated
               markers per cell type (default: `False`).
@@ -3471,6 +3471,7 @@ class HitypeWeightTrainer(Proc):
             - cv_folds (type=int): Number of cross-validation folds for
               weight estimation; > 1 averages weights across folds for
               stability (default: 1).
+            - pos_only (flag): Only keep positive weights (default: `False`).
             - seed (type=int): The random seed for reproducibility
               (default: 8525).
 
@@ -3496,7 +3497,7 @@ class HitypeWeightTrainer(Proc):
             "top": 20,
             "min_log2fc": 0.25,
             "min_pct": 0.1,
-            "only_pos": True,
+            "pos_only": True,
             "include_negative": False,
         },
         "train_weights": {
@@ -3506,6 +3507,7 @@ class HitypeWeightTrainer(Proc):
             "batch_size": 32,
             "run_weights_on_test": True,
             "cv_folds": 1,
+            "pos_only": False,
             "seed": 8525,
         },
     }
