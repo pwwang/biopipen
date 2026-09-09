@@ -128,11 +128,9 @@ class SyntheticData(Proc):
         sobj <- CreateSeuratObject(counts, min.cells = 1, min.features = 1)
         sobj$type <- rep(c("T_cell", "B_cell"), each = 100)
         sobj <- NormalizeData(sobj)
-        # Cluster-level tools (`CellTypeAnnotation`'s hitype) group cells by
-        # the ACTIVE Idents, and key their per-cluster mapping by the
-        # `envs.ident` column — so both must carry the same values (as they
-        # do for pbmc3k where Idents = seurat_clusters = `envs.ident`).
-        Idents(sobj) <- sobj$type
+        # Cluster-level hitype runs (`CellTypeAnnotation` tool hitype /
+        # `HitypeWeightTrainer` with `envs.ident`) group cells by the
+        # `envs.ident` column directly — no need to set it as the Idents.
         saveRDS(sobj, {{out.outfile | quote}})
     """
 

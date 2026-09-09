@@ -58,17 +58,38 @@ annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
         }
     }
 
-    # run RunHitype
+    # RunHitype() supports both annotation levels through its `ident`
+    # argument: `NULL` assigns a cell type to each cell (cell-level), a
+    # metadata column assigns one cell type per cluster of that column
+    # (cluster-level). `case$ident` arrives as `NULL` or a column name
+    # (`"ident"` was already resolved to the identity column in the main
+    # script), so it maps 1:1. Older hitype builds without the `ident`
+    # argument fail here with an "unused argument" error — update hitype.
     log$info("Running RunHitype...")
-    sobj <- RunHitype(sobj, gs_list, threshold = 0.0, make_unique = TRUE)
-
-    log$info("Extracting cell type labels...")
-    hitype_labels <- sobj@meta.data %>%
-        distinct(!!sym(ident), hitype)
-    hitype_labels <- stats::setNames(
-        as.list(hitype_labels$hitype),
-        hitype_labels[[ident]]
+    sobj <- RunHitype(
+        sobj, gs_list, ident = ident, threshold = 0.0, make_unique = TRUE
     )
 
-    list(mapping = hitype_labels)
+    if (is.null(ident)) {
+        # cell-level: one label per cell
+        log$info("Extracting per-cell labels...")
+        list(
+            cell_annotations = data.frame(
+                hitype = sobj@meta.data$hitype,
+                row.names = colnames(sobj),
+                stringsAsFactors = FALSE
+            ),
+            annotation_col = "hitype"
+        )
+    } else {
+        log$info("Extracting cell type labels...")
+        hitype_labels <- sobj@meta.data %>%
+            distinct(!!sym(ident), hitype)
+        hitype_labels <- stats::setNames(
+            as.list(hitype_labels$hitype),
+            hitype_labels[[ident]]
+        )
+
+        list(mapping = hitype_labels)
+    }
 }

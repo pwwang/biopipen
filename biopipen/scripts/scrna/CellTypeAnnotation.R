@@ -263,8 +263,11 @@ cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 cases <- lapply(cases, normalize_deprecated)
 
 # Cluster-based tools
-CLUSTER_LEVEL_TOOLS <- c("hitype", "sctype", "sccatch", "singler", "scsorter", "llmcelltype", "scagenttype", "direct")
-CELL_LEVEL_TOOLS <- c("scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist", "garnett")
+CLUSTER_LEVEL_TOOLS <- c("sctype", "sccatch", "singler", "scsorter", "llmcelltype", "scagenttype", "direct")
+# Cell-level tools; `hitype`/`garnett` can also run at cluster level when
+# `envs.ident` is given (hitype natively via RunHitype(ident=), garnett via
+# majority vote of the per-cell labels)
+CELL_LEVEL_TOOLS <- c("hitype", "scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist", "garnett")
 PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert", "scagenttype")
 
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types

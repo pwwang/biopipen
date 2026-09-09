@@ -43,9 +43,12 @@ class PrepData(Proc):
 
 
 class CellTypeAnnotation(CellTypeAnnotation_):
+    # hitype cluster-level: with envs.ident set, hitype scores each cluster
+    # of the column as a whole and assigns it one cell type
     requires = PrepData
     envs = {
         "tool": "hitype",
+        "ident": "seurat_clusters",
         "hitype": {"db": "hitypedb_pbmc3k"},
     }
 
@@ -181,7 +184,10 @@ class CellTypeAnnotationCelliD(CellTypeAnnotation_):
 
 
 class CellTypeAnnotationDeprecated(CellTypeAnnotation_):
-    """Old-style flat envs must still work, with a deprecation warning"""
+    """Old-style flat envs must still work, with a deprecation warning.
+
+    hitype without `envs.ident`: cell-level annotations by default.
+    """
 
     requires = PrepData
     envs = {
@@ -392,7 +398,7 @@ def check_marker_filters_r():
 def testing(pipen):
     check_marker_filters_r()
 
-    # hitype (cluster-level): CellType column, no cell2celltype.tsv
+    # hitype with envs.ident (cluster-level): CellType column, no cell2celltype.tsv
     proc = get_proc(pipen, "CellTypeAnnotation")
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotation")
@@ -472,7 +478,9 @@ def testing(pipen):
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScTypeUniversal")
     assert "CellType" in cols
 
-    # Old-style flat envs: deprecation warnings, newcol -> anno_col
+    # Old-style flat envs: deprecation warnings, newcol -> anno_col.
+    # hitype without envs.ident is cell-level by default: per-cell labels
+    # in CellType_old, a cell2celltype.tsv and no cluster2celltype.tsv
     proc = get_proc(pipen, "CellTypeAnnotationDeprecated")
     stdout = proc.workdir.joinpath("0", "job.stdout").read_text()
     assert "`envs.hitype_db` is deprecated" in stdout
@@ -480,6 +488,14 @@ def testing(pipen):
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationDeprecated")
     assert "CellType_old" in cols
     assert_idents_equal(pipen, "CellTypeAnnotationDeprecated", "seurat_clusters")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    assert not outfile.with_name(outfile.name + ".cluster2celltype.tsv").exists()
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    assert cell_tsv.is_file()
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+    assert all(line.split("\t")[1] for line in lines[1:])
 
     # Multi-case with add_prefix=False: per-case anno_col, last set_ident wins
     proc = get_proc(pipen, "CellTypeAnnotationMultiCase2")
