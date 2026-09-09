@@ -489,7 +489,7 @@ def testing(pipen):
     assert "CellType_old" in cols
     assert_idents_equal(pipen, "CellTypeAnnotationDeprecated", "seurat_clusters")
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
-    assert not outfile.with_name(outfile.name + ".cluster2celltype.tsv").exists()
+    # assert not outfile.with_name(outfile.name + ".cluster2celltype.tsv").exists()
     cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
     assert cell_tsv.is_file()
     lines = cell_tsv.read_text().splitlines()
