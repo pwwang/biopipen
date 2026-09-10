@@ -1,7 +1,9 @@
 # CellTypeAnnotation-hitype.R — pure R function, no Jinja2 template variables
 # Source'd by CellTypeAnnotation.R
 
-annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
+annotate_hitype <- function(sobj, ident, tissue, cancer, species, db,
+                             norm = "sqrt", use_sensitivity = TRUE,
+                             threshold = 0.0) {
     library(hitype)
 
     log <- get_logger()
@@ -67,7 +69,8 @@ annotate_hitype <- function(sobj, ident, tissue, cancer, species, db) {
     # argument fail here with an "unused argument" error — update hitype.
     log$info("Running RunHitype...")
     sobj <- RunHitype(
-        sobj, gs_list, ident = ident, threshold = 0.0, make_unique = TRUE
+        sobj, gs_list, ident = ident, threshold = threshold, make_unique = TRUE,
+        norm = norm, use_sensitivity = use_sensitivity
     )
 
     if (is.null(ident)) {

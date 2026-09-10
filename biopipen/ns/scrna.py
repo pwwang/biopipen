@@ -2784,6 +2784,14 @@ class CellTypeAnnotation(Proc):
                 When the table has a `weight` column (e.g. trained by
                 `HitypeWeightTrainer`), the weights are used as-is for
                 scoring (hitype >= 0.0.6).
+            - norm: The normalization method for `hitype::hitype_score()`.
+                One of "sqrt", "weight", "none" (default: "sqrt").
+                "weight" is recommended when scoring with learned weights.
+            - use_sensitivity: Whether to weight markers by their
+                sensitivity (default: `True`). `False` is recommended when
+                scoring with learned weights.
+            - threshold: The assignment threshold passed to `RunHitype`
+                (default: `0.0`).
         scsorter (ns): The arguments for `scSorter::RunScSorter()` if `tool` is `scsorter`.
             - db: The database to use for scSorter. It will be loaded and passed to the `anno`
                 argument of `RunScSorter()`. It could be either:
@@ -2873,8 +2881,8 @@ class CellTypeAnnotation(Proc):
                 symbols you need e.g. `db: org.Hs.eg.db` together with
                 `cds_gene_id_type: SYMBOL`.
             - cds_gene_id_type (choice): The gene ID type of the expression
-                data, used when `db` is not `none` (default: `SYMBOL`).
-                Supported types include `SYMBOL`, `ENSEMBL`, `ENTREZID`.
+                data, used when `db` is not `none` (default: `custom`).
+                Supported types include `custom`, `SYMBOL`, `ENSEMBL`, `ENTREZID`.
             - assay (type=str): The assay to use for classification.
                 If not specified, `envs.assay` will be used.
                 The assay must contain raw counts.
@@ -3160,6 +3168,9 @@ class CellTypeAnnotation(Proc):
             "cancer": None,
             "species": None,
             "db": None,
+            "norm": "sqrt",
+            "use_sensitivity": True,
+            "threshold": 0.0,
         },
         "scsorter": {
             "db": None,
@@ -3180,7 +3191,7 @@ class CellTypeAnnotation(Proc):
         "garnett": {
             "classifier": None,
             "db": "none",
-            "cds_gene_id_type": "SYMBOL",
+            "cds_gene_id_type": "custom",
             "assay": None,
         },
         "schdeepinsight": {
@@ -3331,11 +3342,26 @@ class GarnettClassifierTrainer(Proc):
             `propogate` is garnett's.
         lambdas (type=json): The regularization parameters for the
             elastic-net models to consider (default: `None`, i.e. let
-            `cv.glmnet` choose). Usually no tuning is needed.
+            `cv.glmnet` choose). Usually no tuning is needed, but garnett's
+            default grid starts at `1e+05` and the cross-validation may select
+            that point, which gives an all-zero (degenerate) model
+            (see `envs.fail_on_degenerate`); e.g.
+            `10^seq(1, -3, length.out = 30)` avoids it.
         cores (type=int): Number of CPU cores to use for training (default: 1).
         seed (type=int): The random seed to make the training reproducible
             (default: `None`, i.e. not set). Note that the `Unknown` class
-            cells and the training samples are drawn at random.
+            cells and the training samples are drawn at random. A warning is
+            emitted when it is not set.
+        fail_on_degenerate (flag): Whether to fail, instead of merely warning,
+            when the fitted node models are all degenerate, i.e. have all-zero
+            coefficients (default: `False`). This happens when the
+            cross-validation selects the first point of garnett's hard-coded
+            lambda grid (`unique(c(1e+05, 50000, seq(10000, 100, by = -200),
+            ...))`, fitted with `standardize = FALSE`), which yields a null
+            model predicting the class priors, so every cell ends up as
+            `Unknown` (see `envs.lambdas` for the remedy). The per-node
+            diagnostics are always reported and written to
+            `<outfile>.diagnostics.tsv`.
 
     Requires:
         r-seurat:
@@ -3366,7 +3392,8 @@ class GarnettClassifierTrainer(Proc):
         "propogate_markers": True,
         "lambdas": None,
         "cores": 1,
-        "seed": None,
+        "seed": 8525,
+        "fail_on_degenerate": False,
     }
     script = "file://../scripts/scrna/GarnettClassifierTrainer.R"
 
@@ -3457,6 +3484,14 @@ class HitypeWeightTrainer(Proc):
               type expressing the gene (default: 0.1).
             - pos_only (flag): Only keep genes higher in the cell type than
               in the rest of the cells (default: `True`).
+            - top (type=auto): Number of markers per direction; a scalar or
+              [pos, neg] (default: [10, 10]).
+            - against (type=json): Reference group for one-vs-group contrast:
+              null (all other cells), a list of cell types, or "nearest"
+              (most-correlated type; default: null).
+            - max_pct_out (type=float): Drop positive candidates expressed
+              in more than this fraction of all other cells (pan-lineage
+              guard; default: 0.75).
         train_weights (ns): Arguments for `hitype::train_weights()`.
             Defaults mirror the function's (including `seed`). `level` comes
             from `envs.level`; `scaled` is forced `False` (Seurat input);
@@ -3499,10 +3534,12 @@ class HitypeWeightTrainer(Proc):
         "tissue": None,
         "find_markers": {
             "method": "fc",
-            "top": 20,
+            "top": [10, 10],
             "min_log2fc": 0.25,
             "min_pct": 0.1,
             "pos_only": True,
+            "against": None,
+            "max_pct_out": 0.75,
         },
         "train_weights": {
             "method": "glmnet",

@@ -353,7 +353,8 @@ run_case <- function(case_name) {
 
     result <- switch(tool_name,
         hitype = annotate_hitype(
-            sobj, case$ident, tool_cfg$tissue, tool_cfg$cancer, tool_cfg$species, tool_cfg$db
+            sobj, case$ident, tool_cfg$tissue, tool_cfg$cancer, tool_cfg$species, tool_cfg$db,
+            tool_cfg$norm, tool_cfg$use_sensitivity, tool_cfg$threshold
         ),
         sctype = annotate_sctype(
             sobj, case$ident, tool_cfg$tissue, tool_cfg$cancer, tool_cfg$species, tool_cfg$db
