@@ -2560,12 +2560,13 @@ class CellTypeAnnotation(Proc):
     27. Use [`scMapNet`](https://github.com/Yuz7/scMapNet) (cell-level, marker-based, python)
     28. Use [`mLLMCelltype`](https://github.com/cafferychen777/mLLMCelltype) (cluster-level, LLM-based)
     29. Use [`LICT`](https://github.com/Glowworm-cell/LICT) (cluster-level, LLM-based)
+    30. Use [`MapQuery`](https://satijalab.org/seurat/reference/mapquery) (cluster-level, reference-based)
 
     The tools can be divided into two categories:
 
     - Cluster-level tools: annotate the clusters, each cluster being assigned one cell type.
       These include `sctype`, `sccatch`, `scsorter`, `singler`, `azimuth`, `llmcelltype`,
-      `mllmcelltype`, `lict`, `scagenttype`, `scsa`, and `direct`.
+      `mllmcelltype`, `lict`, `scagenttype`, `scsa`, `mapquery`, and `direct`.
     - Cell-level tools: annotate the cells, each cell being assigned one cell type.
       These include `scina`, `hitype`, `cellassign`, `cellid`, `scbert`, `schdeepinsight`,
       `llmcelltype`, `cell`, `garnett`, `ucell`, `aucell`, `gsva`, `singscore`, `scmap`,
@@ -2595,7 +2596,7 @@ class CellTypeAnnotation(Proc):
       highest score, so a `weight` column in the marker table is ignored.
     - Model/reference-based tools: take a trained model or a reference object,
       including `celltypist`, `scbert`, `singler`, `schdeepinsight`, `garnett`,
-      `scmap`, `cheetah`, `scclassify`, `scpred`, and `azimuth`.
+      `scmap`, `cheetah`, `scclassify`, `scpred`, `azimuth`, and `mapquery`.
       A `garnett` classifier is trained from marker genes and expression data
       (it is model-based, not a plain marker-table input like the marker-based tools).
     - Direct-annotation tools: take the cell types directly via `envs.cell_types`,
@@ -3637,6 +3638,18 @@ class CellTypeAnnotation(Proc):
             "percent": 0.5,
             "keys": None,
             "provider": None,
+        },
+        "mapquery": {
+            "db": None,  # required
+            "use": None,  # required
+            "ident": "seurat_clusters",
+            "refnorm": "auto",
+            "skip_if_normalized": True,
+            "ncores": 1,
+            "map_query": {},
+            "find_transfer_anchors": {},
+            "sctransform": {},
+            "normalize_data": {},
         },
         "add_prefix": None,
         "merge": False,

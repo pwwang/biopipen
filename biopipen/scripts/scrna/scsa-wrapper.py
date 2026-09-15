@@ -12,6 +12,17 @@ which must hold `SCSA.py` and its reference database `whole.db`. The python of
 `--python` (default: the python running this script) needs the SCSA
 dependencies: `pandas`, `numpy`, `scipy` and `openpyxl`.
 
+`SCSA.py` is 2019-era python and does not run on current numpy/pandas: numpy 2
+removed `np.asfarray`/`np.mat`, pandas 2 removed `DataFrame.append`, and
+`whole.db` is a pandas<1.0 pickle whose index classes modern pandas removed (it
+is unpickled even with `--norefdb`). The shims restoring those APIs ship with
+biopipen in `scsa-compat/sitecustomize.py`, next to this script. The directory
+is prepended to the `PYTHONPATH` of the SCSA process, so python imports the
+shims at startup and only the SCSA interpreter is patched, not this one. Use
+`--no-compat-shims` to run SCSA without them, e.g. when `--python` points to a
+legacy environment that still has the removed APIs (SCSA's dependencies are
+then an older numpy/pandas instead).
+
 The input of SCSA.py
 --------------------
 `SCSA.py -i` is *not* an expression matrix (and it has no h5ad support): it is
@@ -69,7 +80,11 @@ def write_deg_table(adata, ident, path):
     import numpy as np
     import scanpy as sc
 
-    values = adata.X.data if hasattr(adata.X, "data") else np.asarray(adata.X)
+    # `.data` holds only the stored non-zeros of a sparse matrix (the implicit
+    # zeros are integral anyway); anything else has to be materialized: a dense
+    # `ndarray.data` is a memoryview (no `.size`/`.max()`) and a backed X is an
+    # h5py dataset
+    values = np.asarray(adata.X.data if hasattr(adata.X, "tocsr") else adata.X)
     if values.size and np.isfinite(values.max()) and np.all(values % 1 == 0):
         # raw counts (log1p-normalized data is not integral)
         sc.pp.normalize_total(adata, target_sum=1e4)
@@ -118,6 +133,12 @@ def main():
     parser.add_argument(
         "--norefdb", action="store_true",
         help="Use only the marker file, not SCSA's reference database"
+    )
+    parser.add_argument(
+        "--no-compat-shims", action="store_true",
+        help="Do not put the compatibility shims of `scsa-compat/` on the "
+             "PYTHONPATH of the SCSA process (only needed with a legacy "
+             "numpy/pandas, see the module docstring)"
     )
     parser.add_argument("-g", "--species", default=None, help="Species")
     parser.add_argument("-k", "--tissue", default=None, help="Tissue")
@@ -172,9 +193,21 @@ def main():
     if args.tissue:
         command += ["-k", args.tissue]
 
+    env = os.environ.copy()
+    if not args.no_compat_shims:
+        # SCSA.py is 2019-era python (see the module docstring): the shims have
+        # to land in the SCSA interpreter, which imports `sitecustomize` at
+        # startup, so they go on the PYTHONPATH instead of being imported here
+        compat_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "scsa-compat"
+        )
+        env["PYTHONPATH"] = os.pathsep.join(
+            filter(None, [compat_dir, env.get("PYTHONPATH")])
+        )
+
     print(f"SCSA: running {' '.join(command)}")
     proc = subprocess.run(
-        command, cwd=args.scsa_dir, capture_output=True, text=True
+        command, cwd=args.scsa_dir, capture_output=True, text=True, env=env
     )
     print(proc.stdout, end="", file=sys.stderr)
     if proc.returncode != 0:
