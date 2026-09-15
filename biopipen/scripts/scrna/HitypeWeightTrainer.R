@@ -34,10 +34,8 @@ train_args <- {{ envs.train_weights | r }}
 
 log <- get_logger()
 
-# Source shared marker helpers
-biopipen_dir <- {{ biopipen_dir | r }}
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-markers.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-markers.R"))
+# The shared marker helpers (load_marker_table, is_marker_canonical,
+# apply_marker_filters, ...) are exported by biopipen.utils (loaded above)
 
 log$info("Reading the Seurat object ...")
 sobj <- read_obj(srtobj)

@@ -38,12 +38,8 @@ if (!is.null(seed)) { set.seed(seed) } else {
     ))
 }
 
-# Source shared helper functions
-biopipen_dir <- {{ biopipen_dir | r }}
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-markers.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-markers.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-garnett.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-garnett.R"))
+# The shared marker helpers and patch_garnett_make_predictions() are exported
+# by biopipen.utils (loaded above)
 
 # Same glmnet >= 4.0 workaround as the classification side: subtype models
 # are assigned via make_predictions() during training too

@@ -47,7 +47,6 @@ from biopipen.core.testing import _get_test_dirs, get_pipeline
 
 HERE = Path(__file__).parent
 REPO = HERE.parents[2]
-MARKERS_R = REPO / "biopipen" / "scripts" / "scrna" / "CellTypeAnnotation-markers.R"
 UNIVERSAL_TSV = HERE / "data" / "garnett_markers.tsv"
 NATIVE_TXT = HERE / "data" / "garnett_markers_native.txt"
 
@@ -301,11 +300,10 @@ def check_classifier_case(pipen, procname, labels, cell_annotated=True):
 
 
 def check_markers_r():
-    """Unit-check the shared marker helpers of CellTypeAnnotation-markers.R."""
+    """Unit-check the shared marker helpers of biopipen.utils."""
     script = f"""
         suppressMessages(library(biopipen.utils))
         log <- get_logger()
-        source({str(MARKERS_R)!r})
 
         # is_garnett_native_marker(): content sniffing
         stopifnot(identical(
