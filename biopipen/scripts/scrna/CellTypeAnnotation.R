@@ -67,60 +67,15 @@ qs2::qopt("nthreads", value = ncores)
 
 log <- get_logger()
 
-# Source all tool function definitions
-biopipen_dir <- {{ biopipen_dir | r }}
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-hitype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-hitype.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "sctype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "sctype.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-sctype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sctype.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-sccatch.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-sccatch.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-celltypist.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-celltypist.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scsorter.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scsorter.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-direct.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-direct.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cell.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cell.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scina.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scina.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-singler.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-singler.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-garnett.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-garnett.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-schdeepinsight.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-llmcelltype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-llmcelltype.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellassign.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellassign.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scbert.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scbert.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-scagenttype.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-scagenttype.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-cellid.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-cellid.R"))
-# {{ biopipen_dir | joinpaths: "scripts", "scrna", "CellTypeAnnotation-markers.R" | getmtime | int }}
-source(file.path(biopipen_dir, "scripts", "scrna", "CellTypeAnnotation-markers.R"))
+# Cache directory for the tool conversions (h5ad) and the per-tool scratch files.
+# It is per-process on purpose: forked `mclapply` cases share it, so a python
+# tool converts the object once per run instead of once per case.
+cache_dir <- tempdir()
 
-# Majority-vote helper for cell-level tools with ident
-majority_vote <- function(labels, clusters, unknown = "unknown") {
-    mapping <- list()
-    for (cl in unique(as.character(clusters))) {
-        cl_labels <- labels[as.character(clusters) == cl]
-        cl_labels <- cl_labels[!is.na(cl_labels)]
-        known <- cl_labels[cl_labels != unknown]
-        mapping[[cl]] <- if (length(known) > 0) {
-            names(which.max(table(known)))
-        } else {
-            unknown
-        }
-    }
-    mapping
-}
+# The annotation tools live in biopipen.utils::RunCellTypeAnnotation() now; this
+# script keeps the process surface: cases, prefixes, applying the mappings to the
+# object, the TSV outputs and saving.
+biopipen_dir <- {{ biopipen_dir | r }}
 
 # Deprecated envs compatibility
 DEPRECATED_ENVS <- list(
@@ -262,14 +217,6 @@ defaults <- list(
 cases <- expand_cases(cases, defaults, default_case = "DEFAULT")
 cases <- lapply(cases, normalize_deprecated)
 
-# Cluster-based tools
-CLUSTER_LEVEL_TOOLS <- c("sctype", "sccatch", "singler", "scsorter", "llmcelltype", "scagenttype", "direct")
-# Cell-level tools; `hitype`/`garnett` can also run at cluster level when
-# `envs.ident` is given (hitype natively via RunHitype(ident=), garnett via
-# majority vote of the per-cell labels)
-CELL_LEVEL_TOOLS <- c("hitype", "scina", "cellassign", "cellid", "scbert", "schdeepinsight", "cell", "celltypist", "garnett")
-PYTHON_TOOLS <- c("celltypist", "schdeepinsight", "scbert", "scagenttype")
-
 # Handle the edge case: single DEFAULT case with direct tool and empty cell_types
 # Backward compat: create a symlink instead of processing
 if (length(cases) == 1 &&
@@ -293,36 +240,19 @@ original_ident <- GetIdentityColumn(sobj)
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
 
-# Pre-convert to h5ad if any case needs it
-needs_h5ad <- any(sapply(cases, function(c)
-    c$tool %in% PYTHON_TOOLS
-))
-h5ad_path <- NULL
-if (needs_h5ad) {
-    if (endsWith(tolower(sobjfile), ".h5ad")) {
-        h5ad_path <- sobjfile
-    } else {
-        log$info("Pre-converting Seurat object to h5ad for Python-based tools...")
-        h5ad_path <- paste0(outprefix, ".shared.h5ad")
-        ConvertSeuratToAnnData(
-            sobj,
-            outfile = h5ad_path,
-            assay = assay,
-            log = log
-        )
-    }
-}
-
-# Resolve ident for each case and determine tool type
+# Resolve ident for each case and read the tool level from the package's tool table
 cases <- lapply(cases, function(case) {
     case$tool <- tolower(case$tool)
     if (identical(case$ident, "ident")) {
         # "ident" is an alias for the identity column
         case$ident <- GetIdentityColumn(sobj)
     }
-    has_ident <- !is.null(case$ident)
-    is_cluster_based <- case$tool %in% CLUSTER_LEVEL_TOOLS ||
-        (case$tool %in% CELL_LEVEL_TOOLS && has_ident) ||
+    desc <- tryCatch(
+        celltype_annotation_tools(case$tool)[[1]],
+        error = function(e) stop(paste0("Unknown tool: ", case$tool))
+    )
+    is_cluster_based <- identical(desc$level, "cluster") ||
+        !is.null(case$ident) ||
         (identical(case$tool, "celltypist") &&
             !is.null(case$celltypist$over_clustering) &&
             !isFALSE(case$celltypist$over_clustering))
@@ -340,7 +270,12 @@ run_case <- function(case_name) {
 
     log$info("Running annotation for case: {case_name}")
     tool_name <- case$tool
-    tool_cfg <- case[[tool_name]] %||% list()
+    tool_cfg <- if (tool_name %in% c("direct", "cell")) {
+        # `cell_types`/`more_cell_types` are case-level envs, not envs.<tool>
+        list(cell_types = case$cell_types, more_cell_types = case$more_cell_types)
+    } else {
+        case[[tool_name]] %||% list()
+    }
     if (identical(tool_name, "celltypist") && is.null(tool_cfg$assay)) {
         tool_cfg$assay <- assay
     }
@@ -351,60 +286,9 @@ run_case <- function(case_name) {
         tool_cfg$assay <- assay
     }
 
-    result <- switch(tool_name,
-        hitype = annotate_hitype(
-            sobj, case$ident, tool_cfg$tissue, tool_cfg$cancer, tool_cfg$species, tool_cfg$db,
-            tool_cfg$norm, tool_cfg$use_sensitivity, tool_cfg$threshold
-        ),
-        sctype = annotate_sctype(
-            sobj, case$ident, tool_cfg$tissue, tool_cfg$cancer, tool_cfg$species, tool_cfg$db
-        ),
-        sccatch = annotate_sccatch(
-            sobj, case$ident, tool_cfg
-        ),
-        celltypist = annotate_celltypist(
-            sobj, case$ident, tool_cfg, outdir,
-            h5ad_path = h5ad_path, case_id = case_name
-        ),
-        scsorter = annotate_scsorter(
-            sobj, case$ident, tool_cfg$db, tool_cfg
-        ),
-        scina = annotate_scina(
-            sobj, case$ident, tool_cfg$db, tool_cfg
-        ),
-        garnett = annotate_garnett(
-            sobj, case$ident, tool_cfg
-        ),
-        singler = annotate_singler(
-            sobj, case$ident, tool_cfg$db, tool_cfg
-        ),
-        schdeepinsight = annotate_schdeepinsight(
-            sobj, case$ident, tool_cfg$ref, tool_cfg, outdir,
-            h5ad_path = h5ad_path, case_id = case_name
-        ),
-        llmcelltype = annotate_llmcelltype(
-            sobj, case$ident, tool_cfg
-        ),
-        cellassign = annotate_cellassign(
-            sobj, case$ident, tool_cfg$db, tool_cfg
-        ),
-        scbert = annotate_scbert(
-            sobj, case$ident, tool_cfg$ref, tool_cfg$model,
-            tool_cfg$label_dict, tool_cfg, outdir,
-            h5ad_path = h5ad_path, case_id = case_name
-        ),
-        scagenttype = annotate_scagenttype(
-            sobj, case$ident, tool_cfg, outdir,
-            h5ad_path = h5ad_path, case_id = case_name
-        ),
-        cellid = annotate_cellid(
-            sobj, case$ident, tool_cfg$db, tool_cfg
-        ),
-        direct = annotate_direct(
-            sobj, case$ident, case$cell_types, case$more_cell_types
-        ),
-        cell = annotate_cell(sobj, case$cell_types, case$ident),
-        stop(paste0("Unknown tool: ", case$tool))
+    record <- RunCellTypeAnnotation(
+        sobj, tool_name,
+        args = tool_cfg, ident = case$ident, cache = cache_dir, log = log
     )
 
     # For celltypist, the cluster mapping is keyed on the over_clustering column
@@ -417,15 +301,15 @@ run_case <- function(case_name) {
 
     list(
         name = case_name,
-        mapping = result$mapping,
-        cell_annotations = result$cell_annotations,
-        annotation_col = result$annotation_col,
-        more = result$more,
+        mapping = record$mapping,
+        type = record$type,
+        cells = record$cells,
+        more = record$more,
         ident = result_ident,
         anno_col = case$anno_col,
         set_ident = isTRUE(case$set_ident),
         merge = case$merge,
-        is_cluster_based = case$is_cluster_based
+        is_cluster_based = !is.null(record$mapping)
     )
 }
 
@@ -456,9 +340,10 @@ for (res in results) {
         prefix <- paste0(res$name, "_")
     }
 
-    # Add per-cell annotations to metadata (for cell-level tools)
-    if (!is.null(res$cell_annotations)) {
-        cell_annotations <- res$cell_annotations
+    # Per-cell annotations: `res$cells` for both-mode cases (type "cluster" with
+    # per-cell labels) and `res$mapping` for cell-only cases (type "cell")
+    cell_annotations <- if (identical(res$type, "cluster")) res$cells else res$mapping
+    if (!is.null(cell_annotations)) {
         # Prefix column names for non-DEFAULT cases
         if (nzchar(prefix)) {
             colnames(cell_annotations) <- paste0(
@@ -478,7 +363,7 @@ for (res in results) {
         log$info("Adding cell-level annotations to metadata")
     }
 
-    if (res$is_cluster_based) {
+    if (identical(res$type, "cluster")) {
         case_anno_col <- paste0(prefix, res$anno_col)
         log$info("Adding annotation as new column: {case_anno_col}")
         sobj <- RenameSeuratIdents(
@@ -494,7 +379,7 @@ for (res in results) {
         case_anno_cols[[res$name]] <- case_anno_col
     } else {
         # Cell-only mode: rename the per-cell annotation column to anno_col
-        annotation_col <- paste0(prefix, colnames(res$cell_annotations)[1])
+        annotation_col <- paste0(prefix, colnames(res$mapping)[1])
         case_anno_col <- paste0(prefix, res$anno_col)
         if (!identical(annotation_col, case_anno_col)) {
             colnames(sobj@meta.data)[
@@ -536,7 +421,7 @@ case_mappings <- list()
 all_clusters <- character(0)
 for (res in results) {
     if (is.null(res)) next
-    if (res$is_cluster_based && !is.null(res$mapping)) {
+    if (identical(res$type, "cluster") && !is.null(res$mapping)) {
         case_mappings[[res$name]] <- res$mapping
         all_clusters <- union(all_clusters, names(res$mapping))
     }
@@ -550,7 +435,7 @@ if (length(case_mappings) > 0) {
     # Add the size (number of cells) of each cluster
     cluster_sizes <- list()
     for (res in results) {
-        if (is.null(res) || !res$is_cluster_based || is.null(res$mapping)) next
+        if (is.null(res) || !identical(res$type, "cluster") || is.null(res$mapping)) next
         if (!res$ident %in% colnames(sobj@meta.data)) next
         cluster_sizes[[res$name]] <- table(as.character(sobj@meta.data[[res$ident]]))
     }
@@ -578,7 +463,7 @@ if (length(case_mappings) > 0) {
 # Save per-cell annotations from all cell-level cases
 cell_case_cols <- list()
 for (res in results) {
-    if (is.null(res) || is.null(res$cell_annotations)) next
+    if (is.null(res)) next
 
     prefix <- ""
     if (!identical(res$name, "DEFAULT") &&
@@ -586,13 +471,11 @@ for (res in results) {
         prefix <- paste0(res$name, "_")
     }
 
-    if (res$is_cluster_based) {
+    if (identical(res$type, "cluster")) {
         # Both-mode: the tool-specific per-cell column is kept
-        cell_case_cols[[res$name]] <- paste0(
-            prefix, colnames(res$cell_annotations)[1]
-        )
+        if (is.null(res$cells)) next
+        cell_case_cols[[res$name]] <- paste0(prefix, colnames(res$cells)[1])
     } else {
-        # Cell-only mode: the annotation column was renamed to anno_col
         cell_case_cols[[res$name]] <- paste0(prefix, res$anno_col)
     }
 }
