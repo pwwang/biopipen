@@ -61,12 +61,11 @@ dependencies:
   - bioconda::bioconductor-dropletutils
   - bioconda::bioconductor-rtracklayer
   - bioconda::bioconductor-universalmotif
-  - bioconda::bioconductor-motifbreakr
+  - pwwang::bioconductor-motifbreakr
   - bioconda::bioconductor-atsnp
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-ruvcorr
   - bioconda::bioconductor-slingshot
-  - bioconda::bioconductor-ccplotr
   - bioconda::bioconductor-singler
   - bioconda::maxit
   - bioconda::truvari
