@@ -1,5 +1,8 @@
 # Change Log
 
+## Unreleased
+
+- fix(scrna.GarnettClassifierTrainer, scrna.CellTypeAnnotation): always install monocle3 (median-ratio) size factors on the cell_data_set before training/classifying with garnett and error out on a colSums-convention Size_Factor column (e.g. from SeuratWrappers), which made train_cell_classifier (fits on the caller's Size_Factor) and classify_cells (overwrites it with its own convention) disagree; the mismatch emptied garnett's probability gate and labelled every cell Unknown with no error raised
 ## 1.4.1
 
 - fix(scrna.CellTypeAnnotation): prevent filtering of NA values in apply_marker_filters function
@@ -10,12 +13,6 @@
 - feat(scrna.HitypeWeightTrainer): add process to train hitype marker weights from a Seurat object and a universal/native marker table (or markers found by `hitype::find_markers()` when none is given), outputting a weighted universal marker table; `CellTypeAnnotation`'s hitype tool now uses the numeric `weight` column of universal marker tables as-is for scoring (requires hitype >= 0.0.6, kept instead of being dropped by the sctype-format conversion)
 - feat(scrna.GarnettClassifierTrainer): add process to train a garnett classifier from a Seurat object and marker genes (a garnett-native marker file or a universal marker table; negative markers become `not expressed:` rules), feeding `CellTypeAnnotation`'s garnett tool
 - feat(scrna.CellTypeAnnotation): add support for `garnett` tool with new annotation function and tests
-
-## Unreleased
-
-- feat(scrna.CellTypeAnnotation): add garnett tool for cell type classification with a trained classifier (`envs.garnett.classifier`)
-- feat(scrna.GarnettClassifierTrainer): add process to train a garnett classifier from a Seurat object and marker genes (garnett-native marker file or universal marker table; negative markers become `not expressed:` rules), feeding `CellTypeAnnotation`'s garnett tool
-- feat(scrna.HitypeWeightTrainer): add process to train hitype marker weights from a Seurat object and a universal/native marker table (or markers found by `hitype::find_markers()` when none is given), outputting a weighted universal marker table; requires hitype >= 0.0.6 and feeds `CellTypeAnnotation`'s hitype tool, where the numeric `weight` column of a universal marker table is now used as-is for scoring (kept instead of being dropped by the sctype-format conversion)
 
 ## 1.4.0
 

@@ -344,14 +344,10 @@ def assert_idents_equal(pipen, procname, colname):
 
 def check_marker_filters_r():
     """Negative checks for the tissue/cancer/species marker filters in
-    CellTypeAnnotation-markers.R (an explicit filter that cannot be honored
-    must error, never silently no-op)."""
-    markers_r = (
-        Path(__file__).parents[3]
-        / "biopipen" / "scripts" / "scrna" / "CellTypeAnnotation-markers.R"
-    )
+    the marker-table helpers in biopipen.utils (an explicit filter that cannot
+    be honored must error, never silently no-op)."""
     script = f"""
-        source({str(markers_r)!r})
+        suppressMessages(library(biopipen.utils))
         # 5 rows: T(1,2) Human/Immune system, B(3,4) Mouse/Blood,
         # NK(5) Human/Blood. Each row count below changes if the
         # corresponding filter is a no-op, so all failures are caught.
