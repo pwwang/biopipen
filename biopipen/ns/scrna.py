@@ -2921,13 +2921,25 @@ class CellTypeAnnotation(Proc):
             - assay (type=str): The assay to use for classification.
                 If not specified, `envs.assay` will be used.
                 The assay must contain raw counts.
+            - cluster_extend (flag): Use Garnett's own cluster mode: the
+                clusters are passed as the `garnett_cluster` column of the
+                `cell_data_set`, and `classify_cells()` extends the labels over
+                each cluster (`cluster_ext_type`) instead of the engine
+                aggregating the per-cell labels by majority vote
+                (default: FALSE).
             - <more>: Other arguments for
                 [`garnett::classify_cells()`](https://github.com/cole-trapnell-lab/garnett/blob/monocle3/R/classify.R),
-                e.g. `rank_prob_ratio`, `cluster_extend`,
+                e.g. `rank_prob_ratio`,
                 `cluster_extend_max_frac_unknown`, `cluster_extend_max_frac_incorrect`,
                 `return_type_levels`, and `verbose`.
         schdeepinsight (ns): The arguments for scHDeepInsight
-            if `tool` is `schdeepinsight`.
+            if `tool` is `schdeepinsight`. Gated by default: the
+            `SCHdeepinsight` package (0.3.5) is not installed, and the tool
+            additionally needs a reference file and a pretrained checkpoint.
+            To un-gate it, run `pip install SCHdeepinsight` (plus
+            `pip install git+https://github.com/alok-ai-lab/pyDeepInsight.git`)
+            in `python` and download the checkpoint from
+            <https://github.com/shangruJia/scHDeepInsight>.
             - ref (type=str): The path to the scHDeepInsight
                 reference RDS file. The bundled `reference.rds` from the
                 scHDeepInsight repo provides immune cell reference.
@@ -3037,6 +3049,11 @@ class CellTypeAnnotation(Proc):
                 (default: TRUE).
             - p_adjust (flag): Benjamini-Hochberg correction
                 (default: TRUE).
+            - group_gsea (flag): Use CelliD's own cluster mode
+                (`CelliD::RunGroupGSEA()`): the clusters are annotated from the
+                gene-set enrichment scores of the whole group (the best-scoring
+                pathway by NES) instead of the engine aggregating the per-cell
+                hypergeometric test by majority vote (default: FALSE).
         cell_types (type=auto): The cell types to use for direct or cell-level annotation.
             For `direct`, the cell types will be assigned to the clusters in the order of the original identities.
             If given as a list (array), you can use `"-"` or `""` as the placeholder for the clusters that
@@ -3493,6 +3510,7 @@ class CellTypeAnnotation(Proc):
             "db": "none",
             "cds_gene_id_type": "custom",
             "assay": None,
+            "cluster_extend": False,
         },
         "schdeepinsight": {
             "ref": None,
@@ -3518,6 +3536,7 @@ class CellTypeAnnotation(Proc):
             "tissue": None,
             "cancer": None,
             "species": None,
+            "group_gsea": False,
         },
         "sccatch": {
             "species": None,
