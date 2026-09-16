@@ -2540,7 +2540,7 @@ class CellTypeAnnotation(Proc):
     7. Use [`SCINA`](https://github.com/jcao89757/SCINA) (cell-level, marker-based)
     8. Use [`SingleR`](https://github.com/dviraran/SingleR) (cluster-level, model-based)
     9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight) (cell-level, model-based)
-    10. Use [`LLMCelltype`](https://github.com/pwwang/LLMCelltype) (cluster-level, LLM-based)
+    10. Use [`LLMCelltype`](https://github.com/pwwang/LLMCelltype) (cluster-level, LLM-based, a fork of [`gptcelltype`](https://github.com/Winnie09/GPTCelltype))
     11. Use [`cellassign`](https://github.com/Irrationone/cellassign) (cell-level, marker-based)
     12. Use [`scBERT`](https://github.com/TencentAILabHealthcare/scBERT) (cell-level, model-based)
     13. Use [`CelliD`](https://github.com/RausellLab/CelliD) (cell-level, marker-based)
@@ -2556,10 +2556,10 @@ class CellTypeAnnotation(Proc):
     23. Use [`scPred`](https://github.com/powellgenomicslab/scPred) (cell-level, reference-based)
     24. Use [`Azimuth`](https://github.com/satijalab/azimuth) (cluster-level, reference-based)
     25. Use [`SCSA`](https://github.com/bioinfo-ibms-pumc/SCSA) (cluster-level, marker-based, python)
-    26. Use [`MACA`](https://github.com/ImXman/MACA) (cell-level, marker-based, python)
+    26. Use [`MACA`](https://github.com/ImXman/MACA) (cell-level, marker-based, python, a modernized fork should be used, https://github.com/pwwang/MACA/tree/modernize)
     27. Use [`scMapNet`](https://github.com/Yuz7/scMapNet) (cell-level, marker-based, python)
     28. Use [`mLLMCelltype`](https://github.com/cafferychen777/mLLMCelltype) (cluster-level, LLM-based)
-    29. Use [`LICT`](https://github.com/Glowworm-cell/LICT) (cluster-level, LLM-based)
+    29. Use [`LICT`](https://github.com/Glowworm-cell/LICT) (cluster-level, LLM-based, a modernized fork should be used, https://github.com/pwwang/LICT/tree/modernize)
     30. Use [`MapQuery`](https://satijalab.org/seurat/reference/mapquery) (cell-level, reference-based)
 
     The tools can be divided into two categories:
@@ -2757,6 +2757,49 @@ class CellTypeAnnotation(Proc):
             - cellid (cell-level): Use `CelliD` to annotate cell types with MCA-based
                 per-cell gene signature enrichment.
                 See <https://github.com/RausellLab/CelliD>
+            - scagenttype (cluster-level): Use `scAgentType` to annotate cell types
+                with an agentic LLM workflow.
+                See <https://github.com/sathyasjali/scAgentType>
+            - ucell (cell-level): Use `UCell` to annotate cell types by scoring the
+                marker table with equal weights.
+                See <https://github.com/carmonalab/UCell>
+            - aucell (cell-level): Use `AUCell` to annotate cell types by scoring the
+                marker table with equal weights.
+                See <https://github.com/aertslab/AUCell>
+            - gsva (cell-level): Use `GSVA` to annotate cell types by scoring the
+                marker table with equal weights.
+                See <https://bioconductor.org/packages/release/bioc/html/GSVA.html>
+            - singscore (cell-level): Use `singscore` to annotate cell types by scoring
+                the marker table with equal weights.
+                See <https://bioconductor.org/packages/release/bioc/html/singscore.html>
+            - scmap (cell-level): Use `scmap` to transfer the cell types of a
+                reference object.
+                See <https://bioconductor.org/packages/release/bioc/html/scmap.html>
+            - cheetah (cell-level): Use `CHETAH` to transfer the cell types of a
+                reference object.
+                See <https://bioconductor.org/packages/release/bioc/html/CHETAH.html>
+            - scclassify (cell-level): Use `scClassify` to transfer the cell types of
+                a reference object.
+                See <https://bioconductor.org/packages/release/bioc/html/scClassify.html>
+            - scpred (cell-level): Use `scPred` to transfer the cell types of a
+                reference object.
+                See <https://github.com/powellgenomicslab/scPred>
+            - azimuth (cell-level): Use `Azimuth` to transfer the annotation levels of
+                a published reference.
+                See <https://github.com/satijalab/azimuth>
+            - scsa (cluster-level): Use `SCSA` to annotate cell types.
+                See <https://github.com/bioinfo-ibms-pumc/SCSA>
+            - maca (cell-level): Use `MACA` to annotate cell types.
+                See <https://github.com/ImXman/MACA>
+            - scmapnet (cell-level): Use `scMapNet` to annotate cell types.
+                See <https://github.com/Yuz7/scMapNet>
+            - mllmcelltype (cluster-level): Use `mLLMCelltype` to annotate cell types
+                with LLMs. See <https://github.com/cafferychen777/mLLMCelltype>
+            - lict (cluster-level): Use `LICT` to annotate cell types with LLMs.
+                See <https://github.com/Glowworm-cell/LICT>
+            - mapquery (cell-level): Use `Seurat::MapQuery()` to transfer the cell
+                types of a reference object.
+                See <https://satijalab.org/seurat/reference/mapquery>
             - direct (cluster-level): Directly assign cell types
             - cell (cell-level): Directly assign cell types, but at cell-level instead of cluster-level.
         assay: The assay to use for the analysis. If not specified, the default assay will be used.
