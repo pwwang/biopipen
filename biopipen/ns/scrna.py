@@ -2550,7 +2550,7 @@ class CellTypeAnnotation(Proc):
     17. Use [`AUCell`](https://github.com/aertslab/AUCell) (cell-level, marker-based scoring)
     18. Use [`GSVA`](https://bioconductor.org/packages/release/bioc/html/GSVA.html) (cell-level, marker-based scoring)
     19. Use [`singscore`](https://bioconductor.org/packages/release/bioc/html/singscore.html) (cell-level, marker-based scoring)
-    20. Use [`scmap`](https://bioconductor.org/packages/release/bioc/html/scmap.html) (cell-level, reference-based)
+    20. Use [`scmap`](https://bioconductor.org/packages/release/bioc/html/scmap.html) (cell-level or cluster-level, reference-based)
     21. Use [`CHETAH`](https://bioconductor.org/packages/release/bioc/html/CHETAH.html) (cell-level, reference-based)
     22. Use [`scClassify`](https://bioconductor.org/packages/release/bioc/html/scClassify.html) (cell-level, reference-based)
     23. Use [`scPred`](https://github.com/powellgenomicslab/scPred) (cell-level, reference-based)
@@ -3340,25 +3340,21 @@ class CellTypeAnnotation(Proc):
                 dimensionality off the reference's own annoy index.
             - k.anchor: Ignored with a warning, see `dims`.
         scsa (ns): The arguments for [`SCSA`](https://github.com/bioinfo-ibms-pumc/SCSA)
-            if `tool` is `scsa`. SCSA is not on CRAN/Bioconductor/PyPI; clone the
-            repo and point `scsa_dir` to it. The SCSA script lives in
-            `biopipen/scripts/scrna/scsa-wrapper.py`.
+            if `tool` is `scsa`. SCSA is not on CRAN/Bioconductor/PyPI and its
+            `SCSA.py` does not run on current numpy/pandas, so the wrapper
+            lives in `biopipen/scripts/scrna/scsa-wrapper.py` and ports its
+            scoring; the marker table is all it needs (SCSA's own reference
+            database is not used).
             - db (type=str): The path to the marker table (required).
                 Must be a universal marker table (see the note above).
+            - foldchange (type=float): The minimum fold change of a marker for
+                it to be used (default: 2.0, SCSA's own `-f`).
+            - pvalue (type=float): The maximum adjusted p-value of a marker for
+                it to be used (default: 0.05, SCSA's own `-p`). A cluster with
+                no marker left is not annotated.
             - python (type=str): The python path with the SCSA dependencies
-                (`pandas`, `numpy`, `scipy`, `openpyxl`) installed
+                (`pandas`, `numpy`, `scanpy`) installed
                 (default: the same python as the pipeline).
-            - scsa_dir (type=str): The path to the cloned SCSA repo (required),
-                i.e. the directory holding `SCSA.py` and `whole.db`.
-            - species (type=str): The species for the annotation, e.g. `Human`
-                or `Mouse`. Only used with the reference database.
-            - tissue (type=str): The tissue for the annotation (default: `All`).
-                Multiple tissues are separated by commas. Only used with the
-                reference database.
-            - use_refdb (flag): Whether to use SCSA's own reference database
-                (`whole.db`) in addition to the marker table
-                (default: TRUE). When `False`, only the marker table is used
-                (`-N`/`--norefdb` of `SCSA.py`).
         maca (ns): The arguments for [`MACA`](https://github.com/ImXman/MACA)
             if `tool` is `maca`. MACA pins `scanpy==1.6.0` and `anndata==0.7.5`,
             so it needs its own environment. The MACA script lives in
@@ -3413,7 +3409,10 @@ class CellTypeAnnotation(Proc):
             - top_gene_count (type=int): The number of top markers per cluster
                 put into the prompt (default: 10).
             - base_urls (type=str): The base URLs of the providers, for
-                OpenAI-compatible endpoints.
+                OpenAI-compatible endpoints. A single URL is the request URL
+                mLLMCelltype posts to, so a host-only one (or a `.../v1`) is
+                completed with the `/chat/completions` path; a named list of
+                per-provider URLs is used as it is.
             - return_reasoning (flag): Whether to return the reasoning of the
                 model along with the cell types (default: FALSE).
         lict (ns): The arguments for `LICT::LLMCellType()` if `tool` is `lict`.
@@ -3517,13 +3516,13 @@ class CellTypeAnnotation(Proc):
         "set_ident": True,
         "cell_types": [],
         "more_cell_types": None,
-        "sctype": {
+        "sctype": {  # tested
             "tissue": None,
             "cancer": None,
             "species": None,
             "db": config.ref.sctype_db,
         },
-        "hitype": {
+        "hitype": {  # tested
             "tissue": None,
             "cancer": None,
             "species": None,
@@ -3532,70 +3531,70 @@ class CellTypeAnnotation(Proc):
             "use_sensitivity": True,
             "threshold": 0.0,
         },
-        "scsorter": {
+        "scsorter": {  # tested
             "db": None,
             "assay": None,
             "tissue": None,
             "cancer": None,
             "species": None,
         },
-        "scina": {
+        "scina": {  # tested
             "db": None,
             "tissue": None,
             "cancer": None,
             "species": None,
         },
-        "singler": {
+        "singler": {  # tested
             "db": None,
         },
-        "garnett": {
+        "garnett": {  # tested locally
             "classifier": None,
             "db": "none",
             "cds_gene_id_type": "custom",
             "assay": None,
             "cluster_extend": False,
         },
-        "schdeepinsight": {
+        "schdeepinsight": {  # test needed
             "ref": None,
         },
-        "llmcelltype": {
+        "llmcelltype": {  # tested locally
             "cache": config.path.tmpdir,
             "sigmarkers": "p_val_adj < 0.05",
         },
-        "cellassign": {
+        "cellassign": {  # test needed
             "db": None,
             "python": config.lang.python,
             "tissue": None,
             "cancer": None,
             "species": None,
         },
-        "scbert": {
+        "scbert": {  # models are not available, test needed
             "ref": None,
             "model": None,
             "label_dict": None,
         },
-        "cellid": {
+        "cellid": {  # tested
             "db": None,
             "tissue": None,
             "cancer": None,
             "species": None,
             "group_gsea": False,
         },
-        "sccatch": {
+        "sccatch": {  # tested
             "species": None,
             "cancer": None,
             "tissue": None,
             "marker": None,
             "if_use_custom_marker": False,
         },
-        "celltypist": {
+        "celltypist": {  # tested
             "model": None,
             "python": config.lang.python,
             "majority_voting": True,
             "over_clustering": None,
             "assay": None,
         },
-        "scagenttype": {
+        "scagenttype": {  # tested locally
             "python": config.lang.python,
             "api": "openai",
             "api_key": None,
@@ -3605,7 +3604,7 @@ class CellTypeAnnotation(Proc):
             "species": None,
             "assay": None,
         },
-        "ucell": {
+        "ucell": {  # tested
             "db": None,  # required
             "assay": None,
             "maxRank": 1000,
@@ -3615,7 +3614,7 @@ class CellTypeAnnotation(Proc):
             "cancer": None,
             "species": None,
         },
-        "aucell": {
+        "aucell": {  # tested
             "db": None,  # required
             "assay": None,
             "aucMaxRank": None,
@@ -3624,7 +3623,7 @@ class CellTypeAnnotation(Proc):
             "cancer": None,
             "species": None,
         },
-        "gsva": {
+        "gsva": {  # tested
             "db": None,  # required
             "assay": None,
             "kcdf": "Gaussian",
@@ -3634,7 +3633,7 @@ class CellTypeAnnotation(Proc):
             "cancer": None,
             "species": None,
         },
-        "singscore": {
+        "singscore": {  # tested
             "db": None,  # required
             "assay": None,
             "subSamples": None,
@@ -3643,7 +3642,7 @@ class CellTypeAnnotation(Proc):
             "cancer": None,
             "species": None,
         },
-        "scmap": {
+        "scmap": {  # tested
             "db": None,  # required
             "assay": None,
             "cluster_col": "cell_type1",
@@ -3651,7 +3650,7 @@ class CellTypeAnnotation(Proc):
             "threshold": 0.5,
             "use_cell_index": False,
         },
-        "cheetah": {
+        "cheetah": {  # tested
             "db": None,  # required
             "assay": None,
             "input_c": None,
@@ -3662,7 +3661,7 @@ class CellTypeAnnotation(Proc):
             "ref_ct": None,
             "label": None,
         },
-        "scclassify": {
+        "scclassify": {  # test needed
             "db": None,  # required
             "assay": None,
             "algorithm": None,
@@ -3670,7 +3669,7 @@ class CellTypeAnnotation(Proc):
             "prob_threshold": None,
             "parallel": None,
         },
-        "scpred": {
+        "scpred": {  # test needed
             "db": None,  # required
             "assay": None,
             "pvar": "cell_type",
@@ -3678,7 +3677,7 @@ class CellTypeAnnotation(Proc):
             "reduction": "pca",
             "threshold": 0.55,
         },
-        "azimuth": {
+        "azimuth": {  # test needed
             "ref": None,  # required (or `db`)
             "db": None,
             "assay": None,
@@ -3686,15 +3685,13 @@ class CellTypeAnnotation(Proc):
             "dims": None,  # ignored with a warning
             "k.anchor": None,  # ignored with a warning
         },
-        "scsa": {
+        "scsa": {  # tested
             "db": None,  # required
+            "foldchange": 2.0,
+            "pvalue": 0.05,
             "python": config.lang.python,
-            "scsa_dir": None,  # required
-            "species": None,
-            "tissue": None,
-            "use_refdb": True,
         },
-        "maca": {
+        "maca": {  # tested
             "db": None,  # required
             "python": config.lang.python,
             "n_pcs": None,
@@ -3703,14 +3700,14 @@ class CellTypeAnnotation(Proc):
             "freq": 0.5,
             "use_weight": False,
         },
-        "scmapnet": {
+        "scmapnet": {  # test needed
             "db": None,  # required
             "python": config.lang.python,
             "scmapnet_dir": None,  # required
             "weights": None,  # required
             "organ": None,
         },
-        "mllmcelltype": {
+        "mllmcelltype": {  # need to pass local tests
             "tissue": None,  # required
             "model": "gpt-5.5",
             "api_key": None,
@@ -3727,7 +3724,7 @@ class CellTypeAnnotation(Proc):
             "keys": None,
             "provider": None,
         },
-        "mapquery": {
+        "mapquery": {  # tested
             "db": None,  # required
             "use": None,  # required
             "ident_name": "predicted.id",

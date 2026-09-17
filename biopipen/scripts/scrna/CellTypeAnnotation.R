@@ -33,6 +33,21 @@ cellid <- {{envs.cellid | r}}
 sccatch <- {{envs.sccatch | r}}
 celltypist <- {{envs.celltypist | r}}
 scagenttype <- {{envs.scagenttype | r}}
+ucell <- {{envs.ucell | r}}
+aucell <- {{envs.aucell | r}}
+gsva <- {{envs.gsva | r}}
+singscore <- {{envs.singscore | r}}
+scmap <- {{envs.scmap | r}}
+cheetah <- {{envs.cheetah | r}}
+scclassify <- {{envs.scclassify | r}}
+scpred <- {{envs.scpred | r}}
+azimuth <- {{envs.azimuth | r}}
+scsa <- {{envs.scsa | r}}
+maca <- {{envs.maca | r}}
+scmapnet <- {{envs.scmapnet | r}}
+mllmcelltype <- {{envs.mllmcelltype | r}}
+lict <- {{envs.lict | r}}
+mapquery <- {{envs.mapquery | r}}
 
 # Deprecated envs (still supported with a warning)
 sctype_tissue <- {{ envs["sctype_tissue"] | default: None | r }}
@@ -184,6 +199,21 @@ defaults <- list(
     sccatch = sccatch,
     celltypist = celltypist,
     scagenttype = scagenttype,
+    ucell = ucell,
+    aucell = aucell,
+    gsva = gsva,
+    singscore = singscore,
+    scmap = scmap,
+    cheetah = cheetah,
+    scclassify = scclassify,
+    scpred = scpred,
+    azimuth = azimuth,
+    scsa = scsa,
+    maca = maca,
+    scmapnet = scmapnet,
+    mllmcelltype = mllmcelltype,
+    lict = lict,
+    mapquery = mapquery,
     cell_types = cell_types,
     more_cell_types = more_cell_types,
     # Deprecated envs (ignored when NULL)
