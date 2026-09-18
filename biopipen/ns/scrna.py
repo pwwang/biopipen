@@ -3657,7 +3657,7 @@ class CellTypeAnnotation(Proc):
             "thresh": 0.1,
             "n_genes": None,
             "pc_thresh": None,
-            "only_pos": None,
+            "only_pos": False,
             "ref_ct": None,
             "label": None,
         },
