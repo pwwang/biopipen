@@ -402,7 +402,7 @@ class ModuleScoreCalculator(ModuleScoreCalculator_):
                 "method": "ucell",
                 "maxRank": 500,
             },
-            "CC": {"kind": "cc"},
+            "CC": {"kind": "cc", "ctrl": 4, "nbin": 10},
             "DC": {"kind": "dm"},
             "Stale": {"features": "CD3D,GZMM", "agg": "mean", "keep": False},
         }

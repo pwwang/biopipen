@@ -128,6 +128,46 @@ class CellTypeAnnotationScTypeUniversal(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationUCell(CellTypeAnnotation_):
+    """UCell with the universal marker table (cell-level scoring)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "ucell",
+        "ucell": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
+class CellTypeAnnotationAUCell(CellTypeAnnotation_):
+    """AUCell with the universal marker table (cell-level scoring)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "aucell",
+        "aucell": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
+class CellTypeAnnotationGSVA(CellTypeAnnotation_):
+    """GSVA with the universal marker table (cell-level scoring)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "gsva",
+        "gsva": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
+class CellTypeAnnotationSingscore(CellTypeAnnotation_):
+    """singscore with the universal marker table (cell-level scoring)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "singscore",
+        "singscore": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
 class CellTypeAnnotationDirect(CellTypeAnnotation_):
     requires = PrepData
     envs = {
@@ -180,6 +220,28 @@ class CellTypeAnnotationCelliD(CellTypeAnnotation_):
         "tool": "cellid",
         "ident": "seurat_clusters",
         "cellid": {"db": str(Path(__file__).parent / "data/cellid_markers.csv")},
+    }
+
+
+class CellTypeAnnotationMACA(CellTypeAnnotation_):
+    requires = PrepData
+    envs = {
+        "tool": "maca",
+        "ident": "seurat_clusters",
+        "maca": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
+class CellTypeAnnotationSCSA(CellTypeAnnotation_):
+    """SCSA with the universal marker table (cluster-level: the clusters are
+    labeled as a whole, so a cluster whose markers all fail SCSA's own fold
+    change/p-value thresholds is left unassigned)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "scsa",
+        "ident": "seurat_clusters",
+        "scsa": {"db": str(Path(__file__).parent / "data/markers.tsv")},
     }
 
 
@@ -344,14 +406,10 @@ def assert_idents_equal(pipen, procname, colname):
 
 def check_marker_filters_r():
     """Negative checks for the tissue/cancer/species marker filters in
-    CellTypeAnnotation-markers.R (an explicit filter that cannot be honored
-    must error, never silently no-op)."""
-    markers_r = (
-        Path(__file__).parents[3]
-        / "biopipen" / "scripts" / "scrna" / "CellTypeAnnotation-markers.R"
-    )
-    script = f"""
-        source({str(markers_r)!r})
+    the marker-table helpers in biopipen.utils (an explicit filter that cannot
+    be honored must error, never silently no-op)."""
+    script = """
+        suppressMessages(library(biopipen.utils))
         # 5 rows: T(1,2) Human/Immune system, B(3,4) Mouse/Blood,
         # NK(5) Human/Blood. Each row count below changes if the
         # corresponding filter is a no-op, so all failures are caught.
@@ -472,11 +530,49 @@ def testing(pipen):
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScSorterUniversal")
     assert "CellType" in cols
-    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    assert outfile.with_name(outfile.name + ".cell2celltype.tsv").is_file()
 
     # Universal marker table: sctype (converted to ScType format)
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScTypeUniversal")
     assert "CellType" in cols
+
+    # Universal marker table: scorer family (cell-level, one label per cell)
+    for name in (
+        "CellTypeAnnotationUCell",
+        "CellTypeAnnotationAUCell",
+        "CellTypeAnnotationGSVA",
+        "CellTypeAnnotationSingscore",
+    ):
+        proc = get_proc(pipen, name)
+        outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+        cols, idents, ncells = get_rds_info(pipen, name)
+        assert "CellType" in cols
+        cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+        lines = cell_tsv.read_text().splitlines()
+        assert lines[0] == "Cell\tDEFAULT"
+        assert len(lines) - 1 == ncells
+        assert all(line.split("\t")[1] for line in lines[1:])
+
+    # Universal marker table: SCSA (cluster-level, with per-cell labels)
+    proc = get_proc(pipen, "CellTypeAnnotationSCSA")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationSCSA")
+    assert "CellType" in cols
+    assert "scsa_celltype" in cols
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+    # SCSA labels the clusters, so the labels are the cell types of the marker
+    # table, one per cluster: a cluster whose markers all fail SCSA's fold
+    # change/p-value thresholds is unassigned, but most clusters are not
+    labels = set(line.split("\t")[1] for line in lines[1:])
+    assert labels <= {"T_cell", "B_cell", "NK_cell", "Monocyte", "DC", "unassigned"}
+    assert len(labels - {"unassigned"}) >= 3
+    cluster_tsv = outfile.with_name(outfile.name + ".cluster2celltype.tsv")
+    clust_lines = cluster_tsv.read_text().splitlines()
+    assert clust_lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
+    assert set(line.split("\t")[-1] for line in clust_lines[1:]) == labels
 
     # Old-style flat envs: deprecation warnings, newcol -> anno_col.
     # hitype without envs.ident is cell-level by default: per-cell labels

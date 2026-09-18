@@ -1,8 +1,11 @@
-"""Tests for CellTypeAnnotation with the `llmcelltype` tool.
+"""Tests for CellTypeAnnotation with the LLM tools (`llmcelltype`,
+`scagenttype`, `mllmcelltype`, `lict`).
 
-Local-only test (see run.env): it makes real OpenAI API calls, so it must
-not run in CI. It also requires the `pwwang::r-llmcelltype` package in the conda
-environment (installed in envs built from tests/conda/env_biopipen.yml).
+Local-only test (see run.env): every tool makes real LLM API calls, so it must
+not run in CI. It also requires the LLM packages in the conda environment
+(installed in envs built from tests/conda/env_biopipen.yml): the R packages
+`pwwang::r-llmcelltype`, `mLLMCelltype` and `LICT`, the python `scagenttype`
+package for `scagenttype`, and the python `openai` module for `lict`.
 
 Run with an API key exported:
     OPENAI_API_KEY=sk-... python tests/test_scrna/CellTypeAnnotationLLM/test.py
@@ -10,14 +13,18 @@ Run with an API key exported:
     OPENAI_API_KEY=sk-... bash tests/conda/run_test.sh \
         tests/test_scrna/CellTypeAnnotationLLM FORCE=true
 
-`envs.llmcelltype.model` defaults to `gpt-4o-mini`; override with the
-`LLMCELLTYPE_MODEL` environment variable. `envs.llmcelltype.api_key` is
-taken from `OPENAI_API_KEY` — never hardcode a key in this file.
+`LLMCELLTYPE_BASE_URL`/`LLMCELLTYPE_MODEL` point the tools at an
+OpenAI-compatible endpoint (`gpt-4o-mini` on OpenAI when unset); the key comes
+from `OPENAI_API_KEY` — never hardcode a key in this file.
 
-The dataset is a small pbmc3k subset (800 cells -> 8 clusters), so a single
-`llmcelltype()` API call is made. Cell-type names returned by the model are
-not asserted — only the pipeline plumbing (CellType column, cluster2celltype
-table, ident setting).
+LICT calls its provider from python, so the python reticulate picks needs the
+`openai` module; set `RETICULATE_PYTHON` to a python that has it when the
+default one does not.
+
+The dataset is a small pbmc3k subset (800 cells -> 8 clusters), so one API call
+per tool is made. Cell-type names returned by the models are not asserted —
+only the pipeline plumbing (CellType column, cluster2celltype table, ident
+setting).
 """
 
 import os
@@ -89,6 +96,57 @@ class CellTypeAnnotationLLM(CellTypeAnnotation_):
             "model": MODEL,
             "base_url": BASE_URL,
             "tissuename": "Human peripheral blood",
+        },
+    }
+
+
+class CellTypeAnnotationScAgentType(CellTypeAnnotation_):
+    requires = PrepData
+    envs = {
+        "tool": "scagenttype",
+        "scagenttype": {
+            "api_key": API_KEY,
+            "model": MODEL,
+            "base_url": BASE_URL,
+        },
+    }
+
+
+class CellTypeAnnotationScMLLMCellType(CellTypeAnnotation_):
+    requires = PrepData
+    envs = {
+        "tool": "mllmcelltype",
+        "mllmcelltype": {
+            "tissue": "Human peripheral blood",
+            "api_key": API_KEY,
+            "model": MODEL,
+            "base_urls": BASE_URL,
+        },
+    }
+
+
+class CellTypeAnnotationLICT(CellTypeAnnotation_):
+    """LICT through a single OpenAI-compatible provider.
+
+    LICT queries every provider whose key is set and combines the answers; the
+    refinement stage (`Validate()`) is off here: it needs all five providers to
+    answer (`ERNIE`, `Gemini`, `GPT`, `Llama`, `Claude`), and the runner skips
+    it otherwise. LICT reads the credentials from the process environment
+    rather than from its arguments, so they are passed through `keys`.
+    """
+
+    requires = PrepData
+    envs = {
+        "tool": "lict",
+        "lict": {
+            "species": "Human",
+            "tissue": "peripheral blood",
+            "validate": False,
+            "keys": {
+                "OPENAI_API_KEY": API_KEY,
+                "OPENAI_BASE_URL": BASE_URL,
+                "OPENAI_MODEL": MODEL,
+            },
         },
     }
 
@@ -170,6 +228,23 @@ def testing(pipen):
         in proc.workdir.joinpath("0", "job.stdout").read_text()
     )
     assert_idents_equal(pipen, "CellTypeAnnotationLLM", "CellType")
+
+    # lict (cluster-level): same plumbing, with the labels as free text; the
+    # refinement is off, so no validated table is expected either
+    proc = get_proc(pipen, "CellTypeAnnotationLICT")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated.RDS")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationLICT")
+    assert "CellType" in cols
+    cluster_tsv = outfile.with_name(
+        outfile.name.replace(".RDS", "") + ".cluster2celltype.tsv"
+    )
+    assert cluster_tsv.is_file(), f"{cluster_tsv} does not exist"
+    lines = cluster_tsv.read_text().splitlines()
+    assert lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
+    assert sum(int(line.split("\t")[1]) for line in lines[1:]) == ncells
+    assert all(line.split("\t")[2].strip() for line in lines[1:])
+    assert not outfile.with_name(outfile.name + ".cell2celltype.tsv").exists()
+    assert_idents_equal(pipen, "CellTypeAnnotationLICT", "CellType")
 
 
 if __name__ == "__main__":

@@ -43,7 +43,6 @@ from biopipen.ns.scrna import HitypeWeightTrainer as HitypeWeightTrainer_
 HERE = Path(__file__).parent
 MARKERS_TSV = HERE / "data/markers.tsv"
 MARKERS_NATIVE_TXT = HERE / "data/markers_native.txt"
-MARKERS_R = HERE.parents[2] / "biopipen" / "scripts" / "scrna" / "CellTypeAnnotation-markers.R"
 
 # The given-markers trainer (HitypeWeightTrainerUniversal) writes its output
 # at `<workdir>/<name>/HitypeWeightTrainerUniversal/0/output/syn.hitype.tsv`,
@@ -323,7 +322,6 @@ def check_gs_weights_r():
         suppressMessages(library(biopipen.utils))
         suppressMessages(library(hitype))
         log <- get_logger()
-        source({str(MARKERS_R)!r})
         stopifnot(packageVersion("hitype") >= "0.0.6")
         trained <- load_marker_table({str(TRAINED_MARKERS)!r})
         stopifnot(is_marker_canonical(trained))

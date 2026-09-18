@@ -250,7 +250,7 @@ def download_ifnb_sub():
     )
 
 
-@decor("Downloading pbmc_multimodal_2023.rds")
+@decor("Downloading pbmc_multimodal_2023.rds", local_only=True)
 def download_pbmc_multimodal():
     """Download pbmc_multimodal_2023.rds"""
     name = "pbmc_multimodal_2023.rds"
@@ -277,4 +277,4 @@ if __name__ == "__main__":
     # download_kegg_metabolism()
     download_sctype_db()
     download_ifnb_sub()
-    download_pbmc_multimodal()
+    # download_pbmc_multimodal()

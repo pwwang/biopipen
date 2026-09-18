@@ -66,9 +66,14 @@ dependencies:
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg19
   - bioconda::bioconductor-ruvcorr
   - bioconda::bioconductor-slingshot
-  - bioconda::bioconductor-ccplotr
   - bioconda::bioconductor-singler
-  - bioconda::maxit
+  - bioconda::bioconductor-gsva
+  - bioconda::bioconductor-ucell
+  - bioconda::bioconductor-aucell
+  - bioconda::bioconductor-singscore
+  - bioconda::bioconductor-scmap
+  - bioconda::bioconductor-chetah
+  # - bioconda::maxit
   - bioconda::truvari
   - bioconda::mquad
   - bioconda::samplot
@@ -82,6 +87,7 @@ dependencies:
   - pwwang::r-scsorter
   - pwwang::r-scina
   - pwwang::r-cellid
+  # - pwwang::r-cellassign
   - pwwang::r-aneuploidyscore
   - pwwang::r-biopipen.utils  # R utilities for biopipen and runinfo
   - pwwang::bioconductor-data-packages
