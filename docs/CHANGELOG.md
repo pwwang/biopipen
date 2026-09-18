@@ -1,8 +1,20 @@
 # Change Log
 
-## Unreleased
+## 1.5.0
 
-- fix(scrna.GarnettClassifierTrainer, scrna.CellTypeAnnotation): always install monocle3 (median-ratio) size factors on the cell_data_set before training/classifying with garnett and error out on a colSums-convention Size_Factor column (e.g. from SeuratWrappers), which made train_cell_classifier (fits on the caller's Size_Factor) and classify_cells (overwrites it with its own convention) disagree; the mismatch emptied garnett's probability gate and labelled every cell Unknown with no error raised
+- fix(CellTypeAnnotation): update output filename from cluster2celltype to cell2celltype
+- test(scrna.ModuleScoreCalculator): add ctrl and nbin parameters to CC configuration
+- fix(scrna.CellTypeAnnotation): ensure tool environment variable is downcased
+- fix(scrna.CellTypeAnnotation): set default value of only_pos to False
+- test(protein): add LOCAL_ONLY variable to environment configuration
+- refactor: refactor cell type annotation tools and update dependencies and add tests
+- test(scrna.SeuratMap2Ref): update environment variables and enhance CellTypeAnnotation classes
+- chore(.gitignore): add logs directory to ignore list
+- fix(env_biopipen): update motifbreakr dependency source to pwwang
+- fix(env_biopipen): correct motifbreakr dependency source to bioconda
+- test(prep_data): set local_only flag for pbmc_multimodal download decorator
+- refactor(scrna.CellTypeAnnotation): move the tool implementations into biopipen.utils (#242)
+
 ## 1.4.1
 
 - fix(scrna.CellTypeAnnotation): prevent filtering of NA values in apply_marker_filters function
