@@ -7,7 +7,7 @@ set.seed(8525)
 
 sobjfile <- {{in.sobjfile | r}}
 outfile <- {{out.outfile | r}}
-tool <- {{envs.tool | r}}
+tool <- {{envs.tool | downcase | r}}
 ident <- {{envs.ident | r }}
 merge <- {{envs.merge | r}}
 add_prefix <- {{envs.add_prefix | r}}
