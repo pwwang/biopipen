@@ -530,7 +530,7 @@ def testing(pipen):
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScSorterUniversal")
     assert "CellType" in cols
-    assert outfile.with_name(outfile.name + ".cluster2celltype.tsv").is_file()
+    assert outfile.with_name(outfile.name + ".cell2celltype.tsv").is_file()
 
     # Universal marker table: sctype (converted to ScType format)
     cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScTypeUniversal")

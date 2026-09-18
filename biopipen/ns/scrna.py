@@ -2536,7 +2536,7 @@ class CellTypeAnnotation(Proc):
     3. Use [`scCATCH`](https://github.com/ZJUFanLab/scCATCH) (cluster-level, marker-based)
     4. Use [`hitype`](https://github.com/pwwang/hitype) (cell-level or cluster-level, marker-based)
     5. Use [`celltypist`](https://github.com/Teichlab/celltypist) (cell-level, model-based)
-    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/) (cluster-level, marker-based)
+    6. Use [`scSorter`](https://pmc.ncbi.nlm.nih.gov/articles/PMC7898451/) (cell-level, marker-based)
     7. Use [`SCINA`](https://github.com/jcao89757/SCINA) (cell-level, marker-based)
     8. Use [`SingleR`](https://github.com/dviraran/SingleR) (cluster-level, model-based)
     9. Use [`scHDeepInsight`](https://github.com/shangruJia/scHDeepInsight) (cell-level, model-based)
