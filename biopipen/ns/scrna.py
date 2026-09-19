@@ -4050,6 +4050,12 @@ class HitypeWeightTrainer(Proc):
     script = "file://../scripts/scrna/HitypeWeightTrainer.R"
 
 
+@mark(
+    deprecated=(
+        "[{proc.name}] is deprecated, "
+        "use `CellTypeAnnotation` with `envs.tool = 'mapquery' instead."
+    )
+)
 class SeuratMap2Ref(Proc):
     """Map the seurat object to reference
 
