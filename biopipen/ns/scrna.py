@@ -2807,6 +2807,7 @@ class CellTypeAnnotation(Proc):
             To use a different assay for a case, specify it in the case args.
             This will be also used to convert Seurat object to h5ad if the input is Seurat object
             and the output is h5ad.
+        layer: The layer in the assay to use for the analysis. If not specified, the default layer will be used.
         ident: The column name in metadata to use as the clusters.
             For cluster-level tools, this is required, and if not specified,
             the identity column will be used when input is rds/qs/qs2 (supposing we have a Seurat object).
@@ -3511,6 +3512,7 @@ class CellTypeAnnotation(Proc):
     envs = {
         "tool": "hitype",
         "assay": None,
+        "layer": None,
         "ident": None,
         "anno_col": "CellType",
         "set_ident": True,
@@ -4048,6 +4050,12 @@ class HitypeWeightTrainer(Proc):
     script = "file://../scripts/scrna/HitypeWeightTrainer.R"
 
 
+@mark(
+    deprecated=(
+        "[{proc.name}] is deprecated, "
+        "use `CellTypeAnnotation` with `envs.tool = 'mapquery' instead."
+    )
+)
 class SeuratMap2Ref(Proc):
     """Map the seurat object to reference
 

@@ -18,6 +18,7 @@ anno_col <- {{envs.anno_col | r}}
 set_ident <- {{envs.set_ident | r}}
 
 assay <- {{envs.assay | r}}
+layer <- {{envs.layer | r}}
 # Tool-specific envs (new style)
 sctype <- {{envs.sctype | r}}
 hitype <- {{envs.hitype | r}}
@@ -306,14 +307,15 @@ run_case <- function(case_name) {
     } else {
         case[[tool_name]] %||% list()
     }
-    if (identical(tool_name, "celltypist") && is.null(tool_cfg$assay)) {
-        tool_cfg$assay <- assay
+    if (tool_name %in% c("celltypist", "garnett", "cellassign")) {
+        tool_cfg$assay <- tool_cfg$assay %||% assay
     }
-    if (identical(tool_name, "scsorter") && is.null(tool_cfg$assay)) {
-        tool_cfg$assay <- assay
-    }
-    if (identical(tool_name, "garnett") && is.null(tool_cfg$assay)) {
-        tool_cfg$assay <- assay
+    if (tool_name %in% c(
+        "scsorter", "sctype", "hitype", "singler", "scina", "sccatch", "aucell",
+        "gsva", "singscore", "scmap", "cheetah", "scclassify"
+    )) {
+        tool_cfg$assay <- tool_cfg$assay %||% assay
+        tool_cfg$layer <- tool_cfg$layer %||% layer
     }
 
     record <- RunCellTypeAnnotation(
