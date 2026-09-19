@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.1
+
+- feat(scrna.SeuratMap2Ref): mark class as deprecated, suggest using CellTypeAnnotation with mapquery
+- feat(scrna.CellTypeAnnotation): add layer parameter for assay analysis
+
 ## 1.5.0
 
 - fix(CellTypeAnnotation): update output filename from cluster2celltype to cell2celltype
