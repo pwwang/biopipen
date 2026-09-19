@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>biopipen.ns.bam - biopipen</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/v4-shims.css" rel="stylesheet" />
+        <link href="../../../css/mkapi-common.css" rel="stylesheet" />
+        <link href="../../../style.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "biopipen.ns.bam";
+        var mkdocs_page_input_path = "api/source/biopipen.ns.bam.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.configure({ ignoreUnescapedHTML: true }); hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../..">
+          <img src="../../../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="nav-scrollable-wrapper">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Pipelines</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cnvkit_pipeline/">CNVkit Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cellranger_pipeline/">CellRanger Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/pipseeker_pipeline/">Pipseeker Pipeline</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.utils</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils/">biopipen.utils</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.reference/">biopipen.utils.reference</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.vcf/">biopipen.utils.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.misc/">biopipen.utils.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.gene/">biopipen.utils.gene</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.core</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core/">biopipen.core</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.config/">biopipen.core.config</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.defaults/">biopipen.core.defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.testing/">biopipen.core.testing</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.filters/">biopipen.core.filters</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.proc/">biopipen.core.proc</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.ns</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns/">biopipen.ns</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.stats/">biopipen.ns.stats</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.regulatory/">biopipen.ns.regulatory</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit_pipeline/">biopipen.ns.cnvkit_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bed/">biopipen.ns.bed</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcr/">biopipen.ns.tcr</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.vcf/">biopipen.ns.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gsea/">biopipen.ns.gsea</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.web/">biopipen.ns.web</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.pipseeker/">biopipen.ns.pipseeker</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnv/">biopipen.ns.cnv</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.misc/">biopipen.ns.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna/">biopipen.ns.scrna</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gene/">biopipen.ns.gene</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.snp/">biopipen.ns.snp</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger_pipeline/">biopipen.ns.cellranger_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger/">biopipen.ns.cellranger</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bam/">biopipen.ns.bam</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.plot/">biopipen.ns.plot</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit/">biopipen.ns.cnvkit</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna_metabolic_landscape/">biopipen.ns.scrna_metabolic_landscape</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcgamaf/">biopipen.ns.tcgamaf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.protein/">biopipen.ns.protein</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.rnaseq/">biopipen.ns.rnaseq</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.delim/">biopipen.ns.delim</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG/">Change log</a>
+                </li>
+              </ul>
+      </div>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">biopipen</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">biopipen.ns.bam</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pwwang/biopipen/edit/master/docs/api/source/biopipen.ns.bam.md">Edit on pwwang/biopipen</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <div class="mkapi-node">
+<h1 id="" class="mkapi-object mkapi-object-code plain">
+<span class="mkapi-object-kind mkapi-object-kind-code">SOURCE CODE</span>
+<span class="mkapi-object-prefix">biopipen.ns.</span><span class="mkapi-object-name">bam</span>
+<span id="biopipen.ns.bam"></span><a class="mkapi-docs-link" href="../../biopipen.ns.bam">DOCS</a>
+</h1>
+
+<div class="mkapi-code">
+<div class="codehilite"><pre><span></span><code><span class="sd">"""Tools to process sam/bam/cram files"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.proc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Proc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+
+
+<span class="c1"># +-------------------------------------------------------------------+</span>
+<span class="c1"># | CNV callers                                                       |</span>
+<span class="c1"># +-------------------------------------------------------------------+</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CNVpytor</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.CNVpytor"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.CNVpytor" href="../../biopipen.ns.bam/#biopipen.ns.bam.CNVpytor">DOCS</a>
+<span class="w">    </span><span class="sd">"""Detect CNV using CNVpytor</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+<span class="sd">            Will try to index it if it's not indexed.</span>
+<span class="sd">        snpfile: The snp file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        cnvpytor: Path to cnvpytor</span>
+<span class="sd">        samtools: Path to samtools, used to index bam file in case it's not</span>
+<span class="sd">        ncores: Number of cores to use (`-j` for cnvpytor)</span>
+<span class="sd">        refdir: The directory containing the fasta file for each chromosome</span>
+<span class="sd">        genome: The genome assembly to put in the VCF file</span>
+<span class="sd">        chrsize: The geome size file to fix missing contigs in VCF header</span>
+<span class="sd">        chrom: The chromosomes to run on</span>
+<span class="sd">        binsizes: The binsizes</span>
+<span class="sd">        snp: How to read snp data</span>
+<span class="sd">        filters: The filters to filter the result</span>
+<span class="sd">            See - https://github.com/abyzovlab/CNVpytor/blob/master/GettingStarted.md#predicting-cnv-regions</span>
+<span class="sd">        mask_snps: Whether mask 1000 Genome snps</span>
+<span class="sd">        baf_nomask: Do not use P mask in BAF histograms</span>
+
+<span class="sd">    Requires:</span>
+<span class="sd">        cnvpytor:</span>
+<span class="sd">           - check: {{proc.envs.cnvpytor}} --version</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file, snpfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outdir:dir:{{in.bamfile | stem}}.cnvpytor"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"cnvpytor"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">cnvpytor</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"refdir"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">refdir</span><span class="p">,</span>
+        <span class="s2">"genome"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span>
+        <span class="s2">"chrsize"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">chrsize</span><span class="p">,</span>
+        <span class="s2">"chrom"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"binsizes"</span><span class="p">:</span> <span class="p">[</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">100000</span><span class="p">],</span>
+        <span class="c1"># set False to disable snp data importing</span>
+        <span class="s2">"snp"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"sample"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"name1"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"ad"</span><span class="p">:</span> <span class="s2">"AD"</span><span class="p">,</span>
+            <span class="s2">"gt"</span><span class="p">:</span> <span class="s2">"GT"</span><span class="p">,</span>
+            <span class="s2">"noAD"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"filters"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># https://github.com/abyzovlab/CNVpytor/blob/master/</span>
+            <span class="c1"># GettingStarted.md#predicting-cnv-regions</span>
+            <span class="s2">"CNVsize"</span><span class="p">:</span> <span class="p">[</span><span class="mi">50000</span><span class="p">,</span> <span class="s2">"inf"</span><span class="p">],</span>  <span class="c1"># CNV size</span>
+            <span class="s2">"eval1"</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.0001</span><span class="p">],</span>  <span class="c1"># filter on e-val1</span>
+            <span class="s2">"eval2"</span><span class="p">:</span> <span class="p">[],</span>  <span class="c1"># filter on e-val2</span>
+            <span class="s2">"eval3"</span><span class="p">:</span> <span class="p">[],</span>  <span class="c1"># filter on e-val3</span>
+            <span class="s2">"eval4"</span><span class="p">:</span> <span class="p">[],</span>  <span class="c1"># filter on e-val4</span>
+            <span class="s2">"q0"</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>  <span class="c1"># filter on Q0</span>
+            <span class="s2">"pN"</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>  <span class="c1"># filter on pN</span>
+            <span class="s2">"dG"</span><span class="p">:</span> <span class="p">[</span><span class="mi">100000</span><span class="p">,</span> <span class="s2">"inf"</span><span class="p">],</span>  <span class="c1"># filter on dG</span>
+        <span class="p">},</span>
+        <span class="s2">"mask_snps"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"baf_nomask"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="c1"># other arguments for -rd</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/CNVpytor.py"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/bam/CNVpytor.svelte"</span><span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ControlFREEC</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.ControlFREEC"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.ControlFREEC" href="../../biopipen.ns.bam/#biopipen.ns.bam.ControlFREEC">DOCS</a>
+<span class="w">    </span><span class="sd">"""Detect CNVs using Control-FREEC</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+<span class="sd">        snpfile: The snp file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        freec: Path to Control-FREEC executable</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        arggs: Other arguments for Control-FREEC</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file, snpfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outdir:dir:{{in.bamfile | stem}}.freec"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"freec"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">freec</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"tabix"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">tabix</span><span class="p">,</span>
+        <span class="s2">"bedtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">bedtools</span><span class="p">,</span>
+        <span class="s2">"sambamba"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">sambamba</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="c1"># The "&lt;ref&gt;.fai" file will be used as chrLenFile</span>
+        <span class="s2">"ref"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">reffa</span><span class="p">,</span>
+        <span class="s2">"refdir"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">refdir</span><span class="p">,</span>
+        <span class="s2">"rscript"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">rscript</span><span class="p">,</span>
+        <span class="s2">"binsize"</span><span class="p">:</span> <span class="mi">50_000</span><span class="p">,</span>  <span class="c1"># shortcut for args.general.window</span>
+        <span class="s2">"args"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"general"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"ploidy"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="s2">"breakPointThreshold"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">"sample"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"mateOrientation"</span><span class="p">:</span> <span class="s2">"FR"</span><span class="p">},</span>
+            <span class="s2">"control"</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">"BAF"</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">"target"</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/ControlFREEC.py"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/bam/ControlFREEC.svelte"</span><span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CNAClinic</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.CNAClinic"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.CNAClinic" href="../../biopipen.ns.bam/#biopipen.ns.bam.CNAClinic">DOCS</a>
+<span class="w">    </span><span class="sd">"""Detect CNVs using CNAClinic</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        metafile: The meta file, header included, tab-delimited, including</span>
+<span class="sd">            following columns:</span>
+<span class="sd">            - Bam: The path to bam file</span>
+<span class="sd">            - Sample: Optional. The sample names,</span>
+<span class="sd">                if you don't want filename of bam file to be used</span>
+<span class="sd">            - Group: Optional. The group names, either "Case" or "Control"</span>
+<span class="sd">            - Patient: Optional. The patient names. Since CNAClinic only</span>
+<span class="sd">                supports paired samples, you need to provide the patient names</span>
+<span class="sd">                for each sample. Required if "Group" is provided.</span>
+<span class="sd">            - Binsizer: Optional. Samples used to estimate the bin size</span>
+<span class="sd">                "Y", "Yes", "T", "True", will be treated as True</span>
+<span class="sd">                If not provided, will use `envs.binsizer` to get the samples</span>
+<span class="sd">                to use. Either this column or `envs.binsizer` should be</span>
+<span class="sd">                provided.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        seed: The seed for random number generator for choosing samples</span>
+<span class="sd">            for estimating bin size</span>
+<span class="sd">        binsizer: The samples used to estimate the bin size, it could be:</span>
+<span class="sd">            A list of sample names</span>
+<span class="sd">            A float number (0 &lt; x &lt;= 1), the fraction of samples to use</span>
+<span class="sd">            A integer number (x &gt; 1), the number of samples to use</span>
+<span class="sd">        binsize: Directly use this binsize for CNAClinic, in bp.</span>
+<span class="sd">        genome: The genome assembly</span>
+<span class="sd">        run_args: The arguments for CNAClinic::runSegmentation</span>
+<span class="sd">        plot_args: The arguments for CNAClinic::plotSampleData</span>
+<span class="sd">        plot_multi_args: The arguments for CNAClinic::plotMultiSampleData</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"metafile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outdir:dir:{{in.metafile | stem}}.cnaclinic"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">rscript</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"binsizer"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"binsize"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"seed"</span><span class="p">:</span> <span class="mi">123</span><span class="p">,</span>
+        <span class="s2">"genome"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">ref</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span>
+        <span class="s2">"run_args"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># HMM is errored</span>
+            <span class="s2">"segmentType"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"CBS"</span><span class="p">,</span> <span class="s2">"LACBS"</span><span class="p">,</span> <span class="s2">"PLS"</span><span class="p">],</span>
+            <span class="s2">"segmentsToSummarise"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"CBS"</span><span class="p">,</span> <span class="s2">"LACBS"</span><span class="p">,</span> <span class="s2">"PLS"</span><span class="p">],</span>
+            <span class="s2">"summaryMethod"</span><span class="p">:</span> <span class="s2">"mean"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"plot_args"</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="s2">"plot_multi_args"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/CNAClinic.R"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/bam/CNAClinic.svelte"</span><span class="p">,</span>
+        <span class="s2">"report_paging"</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="c1"># +-------------------------------------------------------------------+</span>
+<span class="c1"># | Bam processing tools                                              |</span>
+<span class="c1"># +-------------------------------------------------------------------+</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BamSplitChroms</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BamSplitChroms"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BamSplitChroms" href="../../biopipen.ns.bam/#biopipen.ns.bam.BamSplitChroms">DOCS</a>
+<span class="w">    </span><span class="sd">"""Split bam file by chromosomes</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory with bam files for each chromosome</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        sambamba: Path to sambamba executable</span>
+<span class="sd">        tool: The tool to use, either "samtools" or "sambamba"</span>
+<span class="sd">        keep_other_sq: Keep other chromosomes in "@SQ" field in header</span>
+<span class="sd">        chroms: The chromosomes to keep, if not provided, will use all</span>
+<span class="sd">        index: Whether to index the output bam files. Requires the input bam</span>
+<span class="sd">            file to be sorted.</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outdir:dir:{{in.bamfile | stem}}.split"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"sambamba"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">sambamba</span><span class="p">,</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"samtools"</span><span class="p">,</span>
+        <span class="s2">"keep_other_sq"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"chroms"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BamSplitChroms.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BamMerge</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BamMerge"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BamMerge" href="../../biopipen.ns.bam/#biopipen.ns.bam.BamMerge">DOCS</a>
+<span class="w">    </span><span class="sd">"""Merge bam files</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfiles: The bam files</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output bam file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        tool: The tool to use, either "samtools" or "sambamba"</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        sambamba: Path to sambamba executable</span>
+<span class="sd">        sort: Whether to sort the output bam file</span>
+<span class="sd">        index: Whether to index the output bam file</span>
+<span class="sd">            Requires envs.sort to be True</span>
+<span class="sd">        merge_args: The arguments for merging bam files</span>
+<span class="sd">            `samtools merge` or `sambamba merge`, depending on `tool`</span>
+<span class="sd">            For `samtools`, these keys are not allowed: `-o`, `-O`,</span>
+<span class="sd">            `--output-fmt`, `-@`, and `--threads`, as they are managed by</span>
+<span class="sd">            the script</span>
+<span class="sd">            For `sambamba`, these keys are not allowed: `-t`, and `--nthreads`,</span>
+<span class="sd">            as they are managed by the script</span>
+<span class="sd">        sort_args: The arguments for sorting bam files</span>
+<span class="sd">            `samtools sort` or `sambamba sort`, depending on `tool`</span>
+<span class="sd">            For `samtools`, these keys are not allowed: `-o`, `-@`,</span>
+<span class="sd">            and `--threads`, as they are managed by the script</span>
+<span class="sd">            For `sambamba`, these keys are not allowed: `-t`, `--nthreads`,</span>
+<span class="sd">            `-o` and `--out`, as they are managed by the script</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfiles:files"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfiles | first | stem}}.merged.bam"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"sambamba"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">sambamba</span><span class="p">,</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"samtools"</span><span class="p">,</span>
+        <span class="s2">"sort"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"merge_args"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"sort_args"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BamMerge.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BamSampling</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BamSampling"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BamSampling" href="../../biopipen.ns.bam/#biopipen.ns.bam.BamSampling">DOCS</a>
+<span class="w">    </span><span class="sd">"""Keeping only a fraction of read pairs from a bam file</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output bam file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        tool: The tool to use, currently only "samtools" is supported</span>
+<span class="sd">        fraction (type=float): The fraction of reads to keep.</span>
+<span class="sd">            If `0 &lt; fraction &lt;= 1`, it's the fraction of reads to keep.</span>
+<span class="sd">            If `fraction &gt; 1`, it's the number of reads to keep.</span>
+<span class="sd">            Note that when fraction &gt; 1, you may not get the exact number</span>
+<span class="sd">            of reads specified but a close number.</span>
+<span class="sd">        seed: The seed for random number generator</span>
+<span class="sd">        index: Whether to index the output bam file</span>
+<span class="sd">        sort: Whether to sort the output bam file</span>
+<span class="sd">        sort_args: The arguments for sorting bam file using `samtools sort`.</span>
+<span class="sd">            These keys are not allowed: `-o`, `-@`,</span>
+<span class="sd">            and `--threads`, as they are managed by the script.</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfile | stem}}.sampled{{envs.fraction}}.bam"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"samtools"</span><span class="p">,</span>
+        <span class="s2">"fraction"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"seed"</span><span class="p">:</span> <span class="mi">8525</span><span class="p">,</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"sort"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"sort_args"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BamSampling.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BamSubsetByBed</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BamSubsetByBed"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BamSubsetByBed" href="../../biopipen.ns.bam/#biopipen.ns.bam.BamSubsetByBed">DOCS</a>
+<span class="w">    </span><span class="sd">"""Subset bam file by the regions in a bed file</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+<span class="sd">        bedfile: The bed file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output bam file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        tool: The tool to use, currently only "samtools" is supported</span>
+<span class="sd">        index: Whether to index the output bam file</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file, bedfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfile | stem}}-subset.bam"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"samtools"</span><span class="p">,</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BamSubsetByBed.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BamSort</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BamSort"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BamSort" href="../../biopipen.ns.bam/#biopipen.ns.bam.BamSort">DOCS</a>
+<span class="w">    </span><span class="sd">"""Sort bam file</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output bam file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        tool (choice): The tool to use.</span>
+<span class="sd">            - samtools: Use `samtools`</span>
+<span class="sd">            - sambamba: Use `sambamba`</span>
+<span class="sd">        ncores (type=int): Number of cores to use</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        sambamba: Path to sambamba executable</span>
+<span class="sd">        tmpdir: The temporary directory to use</span>
+<span class="sd">        byname (flag): Whether to sort by read name</span>
+<span class="sd">        index (flag): Whether to index the output bam file</span>
+<span class="sd">            The index file will be created in the same directory as the output</span>
+<span class="sd">            bam file</span>
+<span class="sd">        &lt;more&gt;: Other arguments passed to the sorting tool</span>
+<span class="sd">            See `samtools sort` or `sambamba sort`</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfile | stem}}.sorted.bam"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"samtools"</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"sambamba"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">sambamba</span><span class="p">,</span>
+        <span class="s2">"tmpdir"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">tmpdir</span><span class="p">,</span>
+        <span class="s2">"byname"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BamSort.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SamtoolsView</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.SamtoolsView"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.SamtoolsView" href="../../biopipen.ns.bam/#biopipen.ns.bam.SamtoolsView">DOCS</a>
+<span class="w">    </span><span class="sd">"""View bam file using samtools, mostly used for filtering</span>
+
+<span class="sd">    This is a wrapper for `samtools view` command.</span>
+<span class="sd">    It will create a new bam file with the same name as the input bam file.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output bam file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        ncores: Number of cores to use</span>
+<span class="sd">        samtools: Path to samtools executable</span>
+<span class="sd">        index: Whether to index the output bam file</span>
+<span class="sd">            Requires the input bam file to be sorted.</span>
+<span class="sd">        &lt;more&gt;: Other arguments passed to the view tool</span>
+<span class="sd">            See `samtools view` or `sambamba view`.</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfile | stem}}.bam"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"samtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samtools</span><span class="p">,</span>
+        <span class="s2">"index"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/SamtoolsView.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SamplotBam</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.SamplotBam"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.SamplotBam" href="../../biopipen.ns.bam/#biopipen.ns.bam.SamplotBam">DOCS</a>
+<span class="w">    </span><span class="sd">"""Plot bam file using samplot</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfiles: The bam files</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output plot file</span>
+<span class="sd">            at chrom:start-end.</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        samplot: Path to samplot executable</span>
+<span class="sd">        titles (list): The titles for each bam file, in the same order as bamfiles</span>
+<span class="sd">        chrom: The chromosome to plot</span>
+<span class="sd">        start: The start position to plot</span>
+<span class="sd">        end: The end position to plot</span>
+<span class="sd">        same_yaxis_scales (flag): Whether to use the same y-axis scales for</span>
+<span class="sd">            all bam files</span>
+<span class="sd">        &lt;more&gt;: Other arguments passed to the samplot tool</span>
+<span class="sd">            See `samplot plot` command.</span>
+<span class="sd">    """</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfiles:files"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{envs.chrome}}_{{envs.start}}_{{envs.end}}.samplot.png"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"samplot"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">samplot</span><span class="p">,</span>
+        <span class="s2">"titles"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"chrom"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"start"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"end"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"same_yaxis_scales"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/Samplot.py"</span>
+
+
+<span class="c1"># Alias. It also works for VCF files</span>
+<span class="n">Samplot</span> <span class="o">=</span> <span class="n">SamplotBam</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BedtoolsCoverageBam</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BedtoolsCoverageBam"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BedtoolsCoverageBam" href="../../biopipen.ns.bam/#biopipen.ns.bam.BedtoolsCoverageBam">DOCS</a>
+<span class="w">    </span><span class="sd">"""Coverage report by `bedtools coverage` for bam files</span>
+
+<span class="sd">    The input bedfile and bamfile will be passed to `bedtools coverage` command</span>
+<span class="sd">    `bedtools coverage -a &lt;bedfile&gt; -b &lt;bamfile&gt;` and this will produce a coverage</span>
+<span class="sd">    report for the regions defined in the bedfile.</span>
+
+<span class="sd">    4 extra columns will be added to the output bed file:</span>
+<span class="sd">    * The number of features in bamfile that overlapped (by at least one base pair) the bedfile.</span>
+<span class="sd">    * The number of bases in the bedfile that had non-zero coverage from features in the bamfile.</span>
+<span class="sd">    * The length of the entry in the bedfile.</span>
+<span class="sd">    * The fraction of bases in the bedfile that had non-zero coverage from features in the bamfile.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        bamfile: The bam file</span>
+<span class="sd">        bedfile: The bed file defining regions to calculate coverage for</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outfile: The output coverage report file</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        bedtools: Path to bedtools executable</span>
+<span class="sd">        &lt;more&gt;: Other arguments passed to the bedtools coverage tool</span>
+<span class="sd">            See `bedtools coverage` command.</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"bamfile:file, bedfile:file"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outfile:file:{{in.bamfile | stem}}.coverage.txt"</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"bedtools"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">bedtools</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BedtoolsCoverageBam.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BedtoolsCoverageBamSummary</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.bam.BedtoolsCoverageBamSummary"></span><a class="mkapi-docs-link" title="biopipen.ns.bam.BedtoolsCoverageBamSummary" href="../../biopipen.ns.bam/#biopipen.ns.bam.BedtoolsCoverageBamSummary">DOCS</a>
+<span class="w">    </span><span class="sd">"""Coverage summary report by `bedtools coverage` for bam files</span>
+
+<span class="sd">    This should run after `BedtoolsCoverageBam` to summarize the coverage report.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        covfiles: The coverage report files produced by `BedtoolsCoverageBam`</span>
+<span class="sd">            The metrics (last 4 columns) are named as -</span>
+<span class="sd">            - `NFeatures`: The number of features in bamfile that overlapped (by at least one base pair) the bedfile.</span>
+<span class="sd">            - `NRegionBases`: The number of bases in the bedfile that had non-zero coverage from features in the bamfile.</span>
+<span class="sd">            - `RegionSize`: The length of the entry in the bedfile.</span>
+<span class="sd">            - `FracRegionBases`: The fraction of bases in the bedfile that had non-zero coverage from features in the bamfile.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory containing summary report plots and files</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        plot_type: The type of plot to generate. The supported plot types are</span>
+<span class="sd">            functions from `plotthis` package in R.</span>
+<span class="sd">        groups (type=json): The groups to add to the data for summary and plotting.</span>
+<span class="sd">            It should be a dict with keys as group names and values as lists of sample names.</span>
+<span class="sd">            The sample names should match the bam file names (without path and extension).</span>
+<span class="sd">            The `.coverage` in the bam file name will be removed when matching sample names.</span>
+<span class="sd">        devpars (ns): The device parameters for the clustree plot.</span>
+<span class="sd">            - res (type=int): The resolution of the plots.</span>
+<span class="sd">            - height: The height of the plots.</span>
+<span class="sd">            - width: The width of the plots.</span>
+<span class="sd">        descr: The description of the plot, showing in the report.</span>
+<span class="sd">        more_formats (type=list): The formats to save the plots other than `png`.</span>
+<span class="sd">        save_code (flag): Whether to save the code to reproduce the plot.</span>
+<span class="sd">        save_data (flag): Whether to save and report the data used to generate the plot.</span>
+<span class="sd">        cases: Plotting cases. A dict with keys as case names and values as the arguments for the plot function.</span>
+<span class="sd">            The arguments will inherit from `envs` (except `cases`, `groups` and `save_data`), and can be overridden by the case arguments.</span>
+<span class="sd">        &lt;more&gt;: Other arguments passed to the plot function. See `plotthis` package in R.</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"covfiles:files"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"outdir:dir:{{in.covfiles | first | stem}}.summary"</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ch</span><span class="p">:</span> <span class="p">[</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">rscript</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"plot_type"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"groups"</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="s2">"devpars"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"res"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="s2">"height"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"width"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"descr"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"more_formats"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"save_code"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"save_data"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"cases"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"Number of features"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"plot_type"</span><span class="p">:</span> <span class="s2">"box"</span><span class="p">,</span>
+                <span class="s2">"x"</span><span class="p">:</span> <span class="s2">"Sample"</span><span class="p">,</span>
+                <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"NFeatures"</span><span class="p">,</span>
+                <span class="s2">"descr"</span><span class="p">:</span> <span class="s2">"Number of features in bamfile that overlapped the bedfile."</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">"Number of bases"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"plot_type"</span><span class="p">:</span> <span class="s2">"box"</span><span class="p">,</span>
+                <span class="s2">"x"</span><span class="p">:</span> <span class="s2">"Sample"</span><span class="p">,</span>
+                <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"NRegionBases"</span><span class="p">,</span>
+                <span class="s2">"descr"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"Number of bases in the bedfile that had non-zero coverage "</span>
+                    <span class="s2">"from features in the bamfile."</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+            <span class="s2">"Fraction of bases"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"plot_type"</span><span class="p">:</span> <span class="s2">"box"</span><span class="p">,</span>
+                <span class="s2">"x"</span><span class="p">:</span> <span class="s2">"Sample"</span><span class="p">,</span>
+                <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"FracRegionBases"</span><span class="p">,</span>
+                <span class="s2">"descr"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"Fraction of bases in the bedfile that had non-zero coverage "</span>
+                    <span class="s2">"from features in the bamfile."</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/bam/BedtoolsCoverageBamSummary.R"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/common.svelte"</span><span class="p">,</span>
+        <span class="s2">"report_paging"</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  <div class="footer-notes">
+    <a href="https://github.com/pwwang/biopipen" title="Open repository in GitHub">Github Repo</a>
+    <div class="footer-sep"></div>Built with <a href="https://www.mkdocs.org/">MkDocs</a> using theme <a href="https://github.com/pwwang/mkdocs-rtd">mkdocs-rtd</a>.
+  </div>
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+    <script src="../../../js/version-select.js"></script>
+      <script src="../../../js/mkapi.js"></script>
+      <script src="../../../extra.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
