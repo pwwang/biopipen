@@ -263,10 +263,6 @@ if (length(cases) == 1 &&
 
 log$info("Reading Seurat object...")
 sobj <- read_obj(sobjfile)
-# Capture the original identity column; RenameSeuratIdents sets Idents() when
-# the ident column is the active identity, so restore it after each case and
-# let `set_ident` decide the final identity
-original_ident <- GetIdentityColumn(sobj)
 
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
@@ -333,10 +329,10 @@ run_case <- function(case_name) {
 
     list(
         name = case_name,
+        record = record,
         mapping = record$mapping,
         type = record$type,
         cells = record$cells,
-        more = record$more,
         ident = result_ident,
         anno_col = case$anno_col,
         set_ident = isTRUE(case$set_ident),
@@ -365,85 +361,31 @@ set_ident_cases <- list()
 for (res in results) {
     if (is.null(res)) next
 
-    # Determine prefix for non-DEFAULT cases
+    # Non-DEFAULT cases get their name as the prefix of every column the
+    # annotation adds (unless add_prefix is disabled)
     prefix <- ""
     if (!identical(res$name, "DEFAULT") &&
         (is.null(add_prefix) || isTRUE(add_prefix))) {
         prefix <- paste0(res$name, "_")
     }
 
-    # Per-cell annotations: `res$cells` for both-mode cases (type "cluster" with
-    # per-cell labels) and `res$mapping` for cell-only cases (type "cell")
-    cell_annotations <- if (identical(res$type, "cluster")) res$cells else res$mapping
-    if (!is.null(cell_annotations)) {
-        # Prefix column names for non-DEFAULT cases
-        if (nzchar(prefix)) {
-            colnames(cell_annotations) <- paste0(
-                prefix, colnames(cell_annotations)
-            )
-        }
-
-        # Remove existing columns that will be overwritten
-        existing <- intersect(
-            colnames(cell_annotations),
-            colnames(sobj@meta.data)
-        )
-        if (length(existing) > 0) {
-            sobj@meta.data[, existing] <- NULL
-        }
-        sobj@meta.data <- cbind(sobj@meta.data, cell_annotations)
-        log$info("Adding cell-level annotations to metadata")
-    }
-
-    if (identical(res$type, "cluster")) {
-        case_anno_col <- paste0(prefix, res$anno_col)
-        log$info("Adding annotation as new column: {case_anno_col}")
-        sobj <- RenameSeuratIdents(
-            sobj,
-            mapping = res$mapping,
-            ident = res$ident,
-            save_as = case_anno_col,
-            merge = res$merge
-        )
-        if (!is.null(original_ident)) {
-            Idents(sobj) <- original_ident
-        }
-        case_anno_cols[[res$name]] <- case_anno_col
-    } else {
-        # Cell-only mode: rename the per-cell annotation column to anno_col
-        annotation_col <- paste0(prefix, colnames(res$mapping)[1])
-        case_anno_col <- paste0(prefix, res$anno_col)
-        if (!identical(annotation_col, case_anno_col)) {
-            colnames(sobj@meta.data)[
-                colnames(sobj@meta.data) == annotation_col
-            ] <- case_anno_col
-            log$info(
-                "Renamed annotation column '{annotation_col}' to '{case_anno_col}'"
-            )
-        }
-        case_anno_cols[[res$name]] <- case_anno_col
-    }
+    sobj <- EmbedSeuratCellTypeAnnotation(
+        sobj,
+        record = res$record,
+        # NULL means "no prefix"; the case name alone carries no other meaning
+        case = if (nzchar(prefix)) res$name else NULL,
+        ident = res$ident,
+        anno_col = res$anno_col,
+        # The identity is set at the end instead, where the last enabled case
+        # wins
+        set_ident = FALSE,
+        merge = res$merge,
+        log = log
+    )
+    case_anno_cols[[res$name]] <- paste0(prefix, res$anno_col)
 
     if (isTRUE(res$set_ident)) {
         set_ident_cases[[length(set_ident_cases) + 1]] <- res$name
-    }
-
-    # Handle additional columns from more_cell_types (direct tool)
-    if (!is.null(res$more)) {
-        for (key in names(res$more)) {
-            more_col <- paste0(prefix, key)
-            log$info("Adding additional annotation column: {more_col}")
-            sobj <- RenameSeuratIdents(
-                sobj,
-                mapping = res$more[[key]],
-                ident = res$ident,
-                save_as = more_col,
-                merge = res$merge
-            )
-            if (!is.null(original_ident)) {
-                Idents(sobj) <- original_ident
-            }
-        }
     }
 }
 
