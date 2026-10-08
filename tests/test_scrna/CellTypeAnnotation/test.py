@@ -245,6 +245,19 @@ class CellTypeAnnotationSCSA(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationScInfeR(CellTypeAnnotation_):
+    """ScInfeR with the universal marker table (cluster-level: its signature
+    requires the clusters, and it labels the cells within a cluster in its own
+    second round; the object must carry the reduction it walks -- PrepData's umap)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "scinfer",
+        "ident": "seurat_clusters",
+        "scinfer": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
 class CellTypeAnnotationDeprecated(CellTypeAnnotation_):
     """Old-style flat envs must still work, with a deprecation warning.
 
@@ -573,6 +586,24 @@ def testing(pipen):
     clust_lines = cluster_tsv.read_text().splitlines()
     assert clust_lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
     assert set(line.split("\t")[-1] for line in clust_lines[1:]) == labels
+
+    # ScInfeR (cluster-level, with its own per-cell round)
+    proc = get_proc(pipen, "CellTypeAnnotationScInfeR")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScInfeR")
+    assert "CellType" in cols
+    assert "scinfer_celltype" in cols
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+    labels = set(line.split("\t")[1] for line in lines[1:])
+    assert labels <= {"T_cell", "B_cell", "NK_cell", "Monocyte", "DC", "unassigned"}
+    assert len(labels - {"unassigned"}) >= 3
+    cluster_tsv = outfile.with_name(outfile.name + ".cluster2celltype.tsv")
+    clust_lines = cluster_tsv.read_text().splitlines()
+    assert clust_lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
+    assert len(set(line.split("\t")[-1] for line in clust_lines[1:]) - labels) == 0
 
     # Old-style flat envs: deprecation warnings, newcol -> anno_col.
     # hitype without envs.ident is cell-level by default: per-cell labels

@@ -49,6 +49,7 @@ scmapnet <- {{envs.scmapnet | r}}
 mllmcelltype <- {{envs.mllmcelltype | r}}
 lict <- {{envs.lict | r}}
 mapquery <- {{envs.mapquery | r}}
+scinfer <- {{envs.scinfer | r}}
 
 # Deprecated envs (still supported with a warning)
 sctype_tissue <- {{ envs["sctype_tissue"] | default: None | r }}
@@ -215,6 +216,7 @@ defaults <- list(
     mllmcelltype = mllmcelltype,
     lict = lict,
     mapquery = mapquery,
+    scinfer = scinfer,
     cell_types = cell_types,
     more_cell_types = more_cell_types,
     # Deprecated envs (ignored when NULL)
