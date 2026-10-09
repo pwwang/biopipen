@@ -1,0 +1,7 @@
+# Parameter file for `split-pipe --mode mkref`
+# The synthetic genome is 300000 bp long. STAR's suffix-array index needs
+# genomeSAindexNbases <= log2(300000) / 2 - 1 = 8.10, hence 8.
+# STAR options go through the single `mkref_star_args` parameter as a
+# comma-separated list: split-pipe lowercases parfile keys, so the camelCase
+# `mkref_star_genomeSAindexNbases` of Parse's shipped example is not recognized.
+mkref_star_args  --genomeSAindexNbases,8,--genomeSAsparseD,2,--limitGenomeGenerateRAM,4000000000

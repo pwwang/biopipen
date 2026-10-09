@@ -55,6 +55,8 @@ sambamba = "sambamba"
 samplot = "samplot"
 # samtools
 samtools = "samtools"
+# split-pipe, Parse Biosciences pipeline
+splitpipe = "split-pipe"
 # python path where magic-impute is installed
 # for scrna.ExprImpution
 magic_python = "python"
