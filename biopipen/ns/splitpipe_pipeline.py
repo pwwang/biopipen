@@ -3,6 +3,9 @@
 Parse Biosciences pipeline (split-pipe) processes plus a combine process to
 merge the sublibraries of a sequencing run and a summary process to summarize
 the metrics of multiple (combined) runs.
+
+The reference genome is not built by this pipeline: build it once with the
+`SplitPipeRef` process and pass its output directory as `genome_dir`.
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING, Type
@@ -21,6 +24,10 @@ class SplitPipePipeline(ProcGroup):
     Run split-pipe for the sublibraries of one sequencing run, combine them
     into a single dataset and summarize the metrics.
 
+    The reference genome must be built beforehand with the `SplitPipeRef`
+    process (`split-pipe --mode mkref`), and its output directory passed as
+    `genome_dir`.
+
     Args:
         fq1 (list): The list of lists of fastq (R1) files, one list per
             sublibrary, or the list of comma-separated strings of fastq files.
@@ -33,15 +40,10 @@ class SplitPipePipeline(ProcGroup):
             derived from the R1 ones by split-pipe, which requires the R1 and
             R2 files to differ only by `R1`/`R2` in their names.
         ids (list): The list of ids for the sublibraries.
-        fasta (list): The reference sequence file(s) in fasta format, to build
-            the genome with `SplitPipeRef`.
-        genes (list): The reference gene annotation file(s) in GTF format, to
-            build the genome with `SplitPipeRef`.
-        genome_name (list): The name(s) of the genome(s), used to name the
-            genome directory built by `SplitPipeRef`.
-        genome_dir: The directory of an already built genome. If not given,
-            the genome directory is built by `SplitPipeRef` from
-            `fasta`/`genes`/`genome_name`.
+        genome_dir: The directory of a genome built by `SplitPipeRef`
+            (`split-pipe --mode mkref`). Required: run the `SplitPipeRef`
+            process once beforehand (see
+            `docs/pipelines/splitpipe_pipeline.md`).
         combine (flag): Whether to combine the sublibraries into a single
             dataset with `SplitPipeCombine` (`--mode comb`).
         summary (flag): Whether to summarize the metrics of the sublibrary
@@ -67,13 +69,11 @@ class SplitPipePipeline(ProcGroup):
                     "The input of `SplitPipePipeline` should be a list of lists of "
                     "fastq files, one per sublibrary."
                 )
-            if not self.opts.genome_dir and not (
-                self.opts.fasta and self.opts.genes and self.opts.genome_name
-            ):
+            if not self.opts.genome_dir:
                 raise TypeError(
-                    "The `genome_dir` is required unless `fasta`, `genes` and "
-                    "`genome_name` are provided, so that the genome can be "
-                    "built by `SplitPipeRef`."
+                    "The `genome_dir` of `SplitPipePipeline` is required: build "
+                    "the genome first with the `SplitPipeRef` process (see "
+                    "`docs/pipelines/splitpipe_pipeline.md`)."
                 )
             if self.opts.fq2 and (
                 not isinstance(self.opts.fq2, (list, tuple))
@@ -100,30 +100,6 @@ class SplitPipePipeline(ProcGroup):
             ]
 
     @ProcGroup.add_proc  # type: ignore
-    def p_splitpipe_ref(self) -> Type[Proc] | None:
-        """Build SplitPipeRef process"""
-        if self.opts.genome_dir:
-            return None
-
-        from .splitpipe import SplitPipeRef as _SplitPipeRef
-
-        fasta = self.opts.fasta
-        if not isinstance(fasta, (list, tuple)):
-            fasta = [fasta]
-        genes = self.opts.genes
-        if not isinstance(genes, (list, tuple)):
-            genes = [genes]
-        genome_name = self.opts.genome_name
-
-        class SplitPipeRef(_SplitPipeRef):
-            input_data = [(fasta, genes)]
-            # pass the genome name(s) to name the genome directory and to
-            # validate the pairing with the fasta/genes files
-            envs = {"genome_name": genome_name}
-
-        return SplitPipeRef
-
-    @ProcGroup.add_proc  # type: ignore
     def p_splitpipe_count(self) -> Type[Proc]:
         """Build SplitPipeCount process"""
         from .splitpipe import SplitPipeCount as _SplitPipeCount
@@ -138,20 +114,10 @@ class SplitPipePipeline(ProcGroup):
             else [(fq1, fq2, None) for fq1, fq2 in zip(inputs_, fq2_)]
         )
 
-        if self.opts.genome_dir:
-            genome_dir = self.opts.genome_dir
-
-            class SplitPipeCount(_SplitPipeCount):
-                input = "fq1:files, fq2:files, id, genome_dir:dir"
-                input_data = [(*fq1fq2id, genome_dir) for fq1fq2id in input_]
-
-            return SplitPipeCount
-
         class SplitPipeCount(_SplitPipeCount):
             input = "fq1:files, fq2:files, id, genome_dir:dir"
-            requires = self.p_splitpipe_ref
-            input_data = lambda ch: [
-                (*fq1fq2id, ch.iloc[0, 0]) for fq1fq2id in input_
+            input_data = [
+                (*fq1fq2id, self.opts.genome_dir) for fq1fq2id in input_
             ]
 
         return SplitPipeCount

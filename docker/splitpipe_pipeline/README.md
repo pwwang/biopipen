@@ -50,8 +50,18 @@ the `splitpipe` namespace (not released on PyPI yet).
 
 ## Push
 
+`wslc push` dials an IPv6 address of the registry and never falls back to IPv4,
+which fails on hosts without routable IPv6 (microsoft/WSL#41854). Save the image
+and push it with [crane](https://github.com/google/go-containerregistry) from a
+WSL distro instead:
+
 ```powershell
-wslc push biopipen/splitpipe:1.9.0
+wslc save -o D:\splitpipe-1.9.0.tar biopipen/splitpipe:1.9.0
+```
+
+```bash
+crane auth login docker.io -u <user>
+crane push /mnt/d/splitpipe-1.9.0.tar docker.io/biopipen/splitpipe:1.9.0
 ```
 
 ## Run
@@ -82,12 +92,10 @@ fq2 = [
     ["/data/s1_S1_L001_R2_001.fastq.gz", "/data/s1_S1_L002_R2_001.fastq.gz"],
     ["/data/s2_S1_L001_R2_001.fastq.gz"],
 ]
-# use an already built genome ...
+# the genome directory, built once with the SplitPipeRef process, e.g.:
+#   pipen run splitpipe SplitPipeRef --in.fasta /genomes/ref.fa \
+#       --in.genes /genomes/ref.gtf --envs '{"genome_name": "GRCh38"}'
 genome_dir = "/genomes/GRCh38"
-# ... or build one from the reference files:
-# fasta = ["/genomes/ref.fa"]
-# genes = ["/genomes/ref.gtf"]
-# genome_name = ["GRCh38"]
 
 combine = true   # combine the sublibraries into a single dataset
 summary = true   # summarize the metrics into one table

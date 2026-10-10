@@ -20,10 +20,12 @@ the same way other biopipen processes execute their wrapped tools.
 - `SplitPipeSummary`: Merge the metrics of the sublibrary (or combined) output directories
     into one table.
 
-`SplitPipePipeline` runs `SplitPipeRef` (unless `genome_dir` is given), then
-`SplitPipeCount` for each sublibrary, then `SplitPipeCombine` and `SplitPipeSummary`.
-`SplitPipeCount`, `SplitPipeCombine` and `SplitPipeSummary` can also be run individually
-with `pipen run splitpipe <Process>`.
+`SplitPipePipeline` runs `SplitPipeCount` for each sublibrary, then
+`SplitPipeCombine` and `SplitPipeSummary`. The reference genome is not built by
+the pipeline: build it once with the `SplitPipeRef` process (see
+[Reference genome](#reference-genome)) and pass its directory as `genome_dir`.
+`SplitPipeRef`, `SplitPipeCount`, `SplitPipeCombine` and `SplitPipeSummary` can
+also be run individually with `pipen run splitpipe <Process>`.
 
 ## Sublibraries and combining
 
@@ -97,11 +99,10 @@ by `R1`/`R2` in their names.
     Optional: if not given, the R2 file names are derived from the R1 ones by
     split-pipe.
 - `ids`: The ids for each sublibrary. See [Input files](#input-files).
-- `fasta`, `genes`, `genome_name`: The reference sequence/annotation and the genome name(s),
-    used to build the genome with `SplitPipeRef`.
-- `genome_dir`: The directory of an already built genome. If given, `SplitPipeRef`
-    is not run and this directory is passed to `SplitPipeCount` directly.
-    If not given, the genome is built by `SplitPipeRef` from `fasta`/`genes`/`genome_name`.
+- `genome_dir`: The directory of a genome built by `SplitPipeRef`
+    (`split-pipe --mode mkref`). Required: build the genome first (see
+    [Reference genome](#reference-genome)); its directory is passed to
+    `SplitPipeCount`.
 - `combine`: Whether to combine the sublibraries into a single dataset with
     `SplitPipeCombine`.
 - `summary`: Whether to summarize the metrics with `SplitPipeSummary`.
@@ -119,9 +120,7 @@ fq2 = [
     ["/data/s1_S1_L001_R2_001.fastq.gz", "/data/s1_S1_L002_R2_001.fastq.gz"],
     ["/data/s2_S1_L001_R2_001.fastq.gz"],
 ]
-fasta = ["/genomes/ref.fa"]
-genes = ["/genomes/ref.gtf"]
-genome_name = ["GRCh38"]
+genome_dir = "/genomes/GRCh38"   # built with SplitPipeRef, see "Reference genome"
 
 [SplitPipeCount.envs]
 chemistry = "v3"
@@ -138,21 +137,27 @@ Check the documentation of each process for all the environment variables:
 
 ### Reference genome
 
-You can either build a genome with `SplitPipeRef` (used automatically by
-`SplitPipePipeline` when `genome_dir` is not given):
+Build the genome once with `SplitPipeRef` before running the pipeline:
 
 ```toml
 [SplitPipeRef.envs]
 genome_name = "GRCh38"
 ```
 
-or pass the directory of a genome already built by `split-pipe --mode mkref`:
+```bash
+pipen run splitpipe SplitPipeRef \
+    --in.fasta /genomes/ref.fa --in.genes /genomes/ref.gtf \
+    --envs '{"genome_name": "GRCh38"}'
+```
+
+then pass the output directory of `SplitPipeRef` to the pipeline:
 
 ```toml
 [SplitPipePipeline]
 genome_dir = "/genomes/GRCh38"
 ```
 
+The genome directory can also be one built by `split-pipe --mode mkref` directly.
 For a species-mix reference, pass one genome name per fasta/genes pair,
 e.g. `genome_name = ["hg38", "GRCm39"]`.
 
