@@ -72,7 +72,7 @@ with `SplitPipePipeline.config.toml`:
 [SplitPipePipeline]
 # fastq (R1) files, one list per sublibrary (lanes of the same sublibrary
 # belong in the same list)
-input = [
+fq1 = [
     ["/data/s1_S1_L001_R1_001.fastq.gz", "/data/s1_S1_L002_R1_001.fastq.gz"],
     ["/data/s2_S1_L001_R1_001.fastq.gz"],
 ]

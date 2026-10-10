@@ -22,7 +22,7 @@ class SplitPipePipeline(ProcGroup):
     into a single dataset and summarize the metrics.
 
     Args:
-        input (list): The list of lists of fastq (R1) files, one list per
+        fq1 (list): The list of lists of fastq (R1) files, one list per
             sublibrary, or the list of comma-separated strings of fastq files.
             Fastq files of multiple sequencing lanes of the same sublibrary
             belong in the same list.
@@ -48,12 +48,9 @@ class SplitPipePipeline(ProcGroup):
             (or combined) output directories with `SplitPipeSummary`.
     """
     DEFAULTS = Diot(
-        input=None,
+        fq1=None,
         fq2=None,
         ids=None,
-        fasta=None,
-        genes=None,
-        genome_name=None,
         genome_dir=None,
         combine=True,
         summary=True,
@@ -63,8 +60,8 @@ class SplitPipePipeline(ProcGroup):
         """Check the input and the genome"""
         if not is_loading_pipeline("-h", "-h+", "--help", "--help+"):
             if (
-                not isinstance(self.opts.input, (list, tuple))
-                or len(self.opts.input) == 0
+                not isinstance(self.opts.fq1, (list, tuple))
+                or len(self.opts.fq1) == 0
             ):
                 raise TypeError(
                     "The input of `SplitPipePipeline` should be a list of lists of "
@@ -80,19 +77,19 @@ class SplitPipePipeline(ProcGroup):
                 )
             if self.opts.fq2 and (
                 not isinstance(self.opts.fq2, (list, tuple))
-                or len(self.opts.fq2) != len(self.opts.input)
+                or len(self.opts.fq2) != len(self.opts.fq1)
             ):
                 raise TypeError(
                     "The `fq2` of `SplitPipePipeline` should be a list of lists "
-                    "of fastq files, one per sublibrary (same length as `input`)."
+                    "of fastq files, one per sublibrary (same length as `fq1`)."
                 )
 
-        if isinstance(self.opts.input, (list, tuple)):
-            self.opts.input = [
+        if isinstance(self.opts.fq1, (list, tuple)):
+            self.opts.fq1 = [
                 [y.strip() for y in x.split(",")]
                 if isinstance(x, str)
                 else x
-                for x in self.opts.input
+                for x in self.opts.fq1
             ]
         if isinstance(self.opts.fq2, (list, tuple)):
             self.opts.fq2 = [
@@ -133,7 +130,7 @@ class SplitPipePipeline(ProcGroup):
 
         # `fq2` may be absent (the R2 names are then derived from R1 by
         # split-pipe), in which case `None` is passed as the input
-        inputs_ = self.opts.input or []  # empty when loading the pipeline (--help)
+        inputs_ = self.opts.fq1 or []  # empty when loading the pipeline (--help)
         fq2_ = self.opts.fq2 or [None] * len(inputs_)
         input_ = (
             list(zip(inputs_, fq2_, self.opts.ids))

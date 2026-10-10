@@ -30,7 +30,7 @@ with `pipen run splitpipe <Process>`.
 A **sublibrary** is one well-pool of one sequencing run (the reads of one sample
 well-pool). Each sublibrary is processed independently by `SplitPipeCount`
 (`--mode all`): fastq files of multiple sequencing *lanes* of the same sublibrary
-are passed together in the same list of `input`, while fastq files of different
+are passed together in the same list of `fq1`, while fastq files of different
 sublibraries belong in different lists.
 
 Sublibraries with the same chemistry/kit are merged into one dataset afterwards
@@ -40,7 +40,7 @@ the whole run. `SplitPipePipeline` does this automatically with `combine = true`
 
 ## Input files
 
-Each sublibrary should have a set of fastq (R1) files, in the format of:
+Each sublibrary should have a set of fastq (R1) files, passed as `fq1`, in the format of:
 
 ```python
 [
@@ -62,7 +62,7 @@ The ids of the sublibraries are inferred from the fastq file names this way
 use different ids, you can specify them:
 
 ```python
-input = [
+fq1 = [
     ["s1_S1_L001_R1_001.fastq.gz", "s1_S1_L002_R1_001.fastq.gz"],
     ["s2_S1_L001_R1_001.fastq.gz"],
 ]
@@ -92,8 +92,8 @@ by `R1`/`R2` in their names.
 
 ## Configurations
 
-- `input`: The fastq (R1) files for each sublibrary. See [Input files](#input-files).
-- `fq2`: The fastq (R2) files for each sublibrary, in the same format as `input`.
+- `fq1`: The fastq (R1) files for each sublibrary. See [Input files](#input-files).
+- `fq2`: The fastq (R2) files for each sublibrary, in the same format as `fq1`.
     Optional: if not given, the R2 file names are derived from the R1 ones by
     split-pipe.
 - `ids`: The ids for each sublibrary. See [Input files](#input-files).
@@ -111,7 +111,7 @@ process, e.g. the chemistry and kit of the sublibrary:
 
 ```toml
 [SplitPipePipeline]
-input = [
+fq1 = [
     ["/data/s1_S1_L001_R1_001.fastq.gz", "/data/s1_S1_L002_R1_001.fastq.gz"],
     ["/data/s2_S1_L001_R1_001.fastq.gz"],
 ]
