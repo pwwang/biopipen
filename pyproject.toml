@@ -73,5 +73,5 @@ docs = [
     "pymdown-extensions>=10.21.2",
 ]
 
-[tool.uv]
-prerelease = "allow"
+# [tool.uv]
+# prerelease = "allow"
