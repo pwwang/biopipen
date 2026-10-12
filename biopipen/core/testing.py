@@ -28,7 +28,10 @@ class PipenShowSessionInfoAfterFail:
     @plugin.impl
     async def on_proc_done(self, proc: Proc, succeeded) -> None:
         if not succeeded:
-            session_info_file = Path(proc.workdir).joinpath("0", "job.runinfo.session")
+            session_info_file = Path(proc.workdir).joinpath(  # type: ignore
+                "0",
+                "job.runinfo.session",
+            )
             if session_info_file.exists():
                 print("\n\n==================== Session Info ====================")
                 print(session_info_file.read_text())

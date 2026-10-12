@@ -65,6 +65,7 @@ include = '\.pyi?$'
 
 [tool.pyright]
 include = [ "biopipen/**/*.py" ]
+reportMissingImports = false
 
 [dependency-groups]
 docs = [

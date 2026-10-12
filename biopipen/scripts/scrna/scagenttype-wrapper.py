@@ -5,6 +5,7 @@ AnnotationAgent configuration come from files; API credentials are expected
 in the environment (injected by the R wrapper from `envs.scagenttype.api_key`
 and `envs.scagenttype.base_url`, or exported in the job environment).
 """
+
 from argparse import ArgumentParser
 import json
 import os
@@ -37,20 +38,15 @@ DEFAULT_MODELS = {
 }
 
 parser = ArgumentParser(description="Run scAgentType")
+parser.add_argument("-i", "--input", required=True, help="Input H5AD file (AnnData)")
 parser.add_argument(
-    "-i", "--input", required=True, help="Input H5AD file (AnnData)"
+    "-c", "--clusters", required=True, help="Cluster TSV file (barcode, cluster)"
 )
 parser.add_argument(
-    "-c", "--clusters", required=True,
-    help="Cluster TSV file (barcode, cluster)"
+    "-o", "--output", required=True, help="Output TSV file for per-cell labels"
 )
 parser.add_argument(
-    "-o", "--output", required=True,
-    help="Output TSV file for per-cell labels"
-)
-parser.add_argument(
-    "--config", required=True,
-    help="JSON config file for AnnotationAgent"
+    "--config", required=True, help="JSON config file for AnnotationAgent"
 )
 args = parser.parse_args()
 
@@ -73,9 +69,7 @@ if not cfg.get("model"):
 adata = sc.read_h5ad(args.input)
 clusters = pd.read_csv(args.clusters, sep="\t", index_col=0)
 # scAgentType requires the cluster_key column to be categorical
-adata.obs["cluster"] = pd.Categorical(
-    clusters["cluster"].reindex(adata.obs_names)
-)
+adata.obs["cluster"] = pd.Categorical(clusters["cluster"].reindex(adata.obs_names))
 n_missing = int(adata.obs["cluster"].isna().sum())
 if n_missing:
     sys.exit(
@@ -111,6 +105,7 @@ def _sanitized_complete_json_structured(self, messages, system):
 
 
 LLMBackend.complete_json_structured = _sanitized_complete_json_structured
+
 
 def make_agent():
     agent = AnnotationAgent(**{k: v for k, v in cfg.items() if v is not None})

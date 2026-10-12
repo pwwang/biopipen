@@ -19,7 +19,7 @@ bare ModuleNotFoundError.
 from argparse import ArgumentParser
 import os
 import sys
-import pandas as pd
+# import pandas as pd
 
 parser = ArgumentParser(description="Run scHDeepInsight")
 parser.add_argument(
