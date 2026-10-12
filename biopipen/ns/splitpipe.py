@@ -1,4 +1,5 @@
 """Split-pipe processes for Parse Biosciences split-pool data"""
+
 from ..core.proc import Proc
 from ..core.config import config
 
@@ -41,6 +42,7 @@ class SplitPipeRef(Proc):
             See <https://support.parsebiosciences.com/hc/en-us/articles/23060102930580>
             for more details.
     """  # noqa: E501
+
     input = "fasta:files, genes:files"
     output = """outdir:dir:
         {%- if envs.genome_name is string -%}
@@ -59,6 +61,7 @@ class SplitPipeRef(Proc):
         "parfile": None,
     }
     script = "file://../scripts/splitpipe/SplitPipeRef.py"
+
 
 class SplitPipeCount(Proc):
     """Run split-pipe on one sublibrary
@@ -152,6 +155,7 @@ class SplitPipeCount(Proc):
             See <https://support.parsebiosciences.com/hc/en-us/articles/23060220494228>
             for more details.
     """  # noqa: E501
+
     input = "fq1:files, fq2:files, id"
     output = """outdir:dir:
         {%- if in.id -%}
@@ -246,6 +250,7 @@ class SplitPipeCombine(Proc):
             See <https://support.parsebiosciences.com/hc/en-us/articles/23060220494228>
             for more details.
     """  # noqa: E501
+
     input = "sublibs:dirs, id"
     output = """outdir:dir:
         {%- if in.id -%}
@@ -296,9 +301,12 @@ class SplitPipeSummary(Proc):
             The directories are searched recursively, so metrics files nested
             in per-sample subdirectories are found as well.
     """
+
     input = "indirs:dirs"
     input_data = lambda ch: [list(ch.iloc[:, 0])]
-    output = "outdir:dir:{{in.indirs | first | stem | append: '-etc.splitpipe_summary'}}"
+    output = (
+        "outdir:dir:{{in.indirs | first | stem | append: '-etc.splitpipe_summary'}}"
+    )
     lang = config.lang.rscript
     script = "file://../scripts/splitpipe/SplitPipeSummary.R"
     envs = {"metrics_glob": "*agg_sample_summary.csv"}

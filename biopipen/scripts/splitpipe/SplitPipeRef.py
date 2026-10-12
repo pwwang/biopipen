@@ -8,9 +8,9 @@ fasta: list[Path] = {{in.fasta | each: as_path}}  # pyright: ignore  # noqa
 genes: list[Path] = {{in.genes | each: as_path}}  # pyright: ignore  # noqa
 outdir: Path = Path({{out.outdir | quote}})  # pyright: ignore
 
-splitpipe = {{envs.splitpipe | quote}}  # pyright: ignore
-nthreads = {{ (envs.ncores if envs.ncores is not none else envs.nthreads) | int }}  # pyright: ignore
-genome_name = {{envs.genome_name | repr}}  # pyright: ignore
+splitpipe: str = {{envs.splitpipe | quote}}  # pyright: ignore
+nthreads: int = {{ (envs.ncores if envs.ncores is not none else envs.nthreads) | int }}  # pyright: ignore
+genome_name: str = {{envs.genome_name | repr}}  # pyright: ignore
 
 other_args = {{envs | dict_to_cli_args: exclude=['splitpipe', 'nthreads', 'ncores', 'genome_name']}}  # pyright: ignore
 

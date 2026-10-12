@@ -7,6 +7,7 @@ the metrics of multiple (combined) runs.
 The reference genome is not built by this pipeline: build it once with the
 `SplitPipeRef` process and pass its output directory as `genome_dir`.
 """
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
@@ -49,6 +50,7 @@ class SplitPipePipeline(ProcGroup):
         summary (flag): Whether to summarize the metrics of the sublibrary
             (or combined) output directories with `SplitPipeSummary`.
     """
+
     DEFAULTS = Diot(
         fq1=None,
         fq2=None,
@@ -61,10 +63,7 @@ class SplitPipePipeline(ProcGroup):
     def post_init(self):
         """Check the input and the genome"""
         if not is_loading_pipeline("-h", "-h+", "--help", "--help+"):
-            if (
-                not isinstance(self.opts.fq1, (list, tuple))
-                or len(self.opts.fq1) == 0
-            ):
+            if not isinstance(self.opts.fq1, (list, tuple)) or len(self.opts.fq1) == 0:
                 raise TypeError(
                     "The input of `SplitPipePipeline` should be a list of lists of "
                     "fastq files, one per sublibrary."
@@ -86,16 +85,12 @@ class SplitPipePipeline(ProcGroup):
 
         if isinstance(self.opts.fq1, (list, tuple)):
             self.opts.fq1 = [
-                [y.strip() for y in x.split(",")]
-                if isinstance(x, str)
-                else x
+                [y.strip() for y in x.split(",")] if isinstance(x, str) else x
                 for x in self.opts.fq1
             ]
         if isinstance(self.opts.fq2, (list, tuple)):
             self.opts.fq2 = [
-                [y.strip() for y in x.split(",")]
-                if isinstance(x, str)
-                else x
+                [y.strip() for y in x.split(",")] if isinstance(x, str) else x
                 for x in self.opts.fq2
             ]
 
@@ -116,9 +111,7 @@ class SplitPipePipeline(ProcGroup):
 
         class SplitPipeCount(_SplitPipeCount):
             input = "fq1:files, fq2:files, id, genome_dir:dir"
-            input_data = [
-                (*fq1fq2id, self.opts.genome_dir) for fq1fq2id in input_
-            ]
+            input_data = [(*fq1fq2id, self.opts.genome_dir) for fq1fq2id in input_]
 
         return SplitPipeCount
 
@@ -145,8 +138,7 @@ class SplitPipePipeline(ProcGroup):
         from .splitpipe import SplitPipeSummary as _SplitPipeSummary
 
         requires_ = (
-            self.p_splitpipe_combine if self.opts.combine
-            else self.p_splitpipe_count
+            self.p_splitpipe_combine if self.opts.combine else self.p_splitpipe_count
         )
 
         class SplitPipeSummary(_SplitPipeSummary):
