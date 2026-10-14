@@ -9,12 +9,13 @@
     <p>No HTML report was found in <code>{{job.out.outdir}}</code>.</p>
     {%- endif -%}
     {%- for report_file in report_files -%}
-    <h{{h + 1}}>{{report_file | basename | escape}}</h{{h + 1}}>
+    <h{{h}}>{{report_file | basename | replace: "_analysis_summary.html", "" | escape}}</h{{h}}>
     <Iframe
         src="{{report_file}}"
         width="100%"
         frameborder="0"
         style="min-height: 60vh" />
+    <p> </p>
     {%- endfor -%}
 {%- endmacro -%}
 
