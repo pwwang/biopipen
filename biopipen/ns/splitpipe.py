@@ -197,7 +197,7 @@ class SplitPipeCount(Proc):
     script = "file://../scripts/splitpipe/SplitPipeCount.py"
     plugin_opts = {
         "report": "file://../reports/splitpipe/SplitPipeCount.svelte",
-        "report_paging": 5,
+        "report_paging": 1,
     }
 
 
@@ -273,7 +273,7 @@ class SplitPipeCombine(Proc):
     script = "file://../scripts/splitpipe/SplitPipeCombine.py"
     plugin_opts = {
         "report": "file://../reports/splitpipe/SplitPipeCombine.svelte",
-        "report_paging": 5,
+        "report_paging": 2,
     }
 
 
