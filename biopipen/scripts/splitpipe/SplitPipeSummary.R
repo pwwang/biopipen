@@ -71,9 +71,23 @@ for (i in seq_len(nrow(metrics_files))) {
     logger$debug("- Reading metrics: {file}")
     metric <- read.csv(file, header = TRUE, row.names = NULL, check.names = FALSE)
     metric <- cbind(
-        data.frame(Sample = sample, File = metrics_files$Rel[i]),
+        data.frame(Sample = sample, Source = sample, File = metrics_files$Rel[i]),
         metric
     )
+    # split-pipe writes one row per `--sample` definition and names it in its
+    # own `sample` column. When samples were defined in `SplitPipeCount`,
+    # promote that column to the key so the merged table is per sample (and the
+    # per-metric bar plots get one bar per sample) instead of per input
+    # directory. `Source` keeps the input directory for traceability.
+    if (
+        "sample" %in% colnames(metric) &&
+        (
+            length(unique(metric$sample)) > 1 ||
+            any(metric$sample != "all-sample", na.rm = TRUE)
+        )
+    ) {
+        metric$Sample <- metric$sample
+    }
     if (!is.null(metrics)) {
         missing_cols <- setdiff(colnames(metrics), colnames(metric))
         if (length(missing_cols) > 0) {
@@ -105,7 +119,8 @@ reporter$add(
             "Metrics of all sublibraries merged into one table ",
             "(`raw/` keeps a copy of each metrics file). ",
             "One section per metric with its description and a bar plot ",
-            "follows the table."
+            "follows the table (the `all-sample` aggregate row is left out ",
+            "of the plots)."
         )
     ),
     list(kind = "table", src = file.path(outdir, "metrics.txt")),
@@ -117,9 +132,10 @@ reporter$add(
 # columns are fractions in [0, 1], TSCP is split-pipe's molecule count, and the
 # test_* columns are its run-level QC statistics.
 METRIC_DESCR <- list(
-    `Sample` = "The input directory this row came from (the sublibrary or the combined run).",
+    `Sample` = "The sample: a `samples` definition of `SplitPipeCount` (`NAME WELLS`), or the input directory this row came from when no samples were defined (the sublibrary or the combined run).",
+    `Source` = "The input directory this row came from (the sublibrary or the combined run).",
     `File` = "The metrics file the row was read from, relative to that directory.",
-    `sample` = "split-pipe's sample name (usually `all-sample` for an all-well run).",
+    `sample` = "split-pipe's own sample name (usually `all-sample` when no samples were defined).",
     `sample_well_count` = "Number of wells defined for the sample.",
     `number_of_cells` = "Cells called for the sample.",
     `test_median_tscp_per_cell` = "Median TSCPs per cell.",
@@ -146,7 +162,7 @@ METRIC_DESCR <- list(
 
 logger$info("Plotting metrics ...")
 for (metric in colnames(metrics)) {
-    if (metric %in% c("Sample", "File")) next
+    if (metric %in% c("Sample", "Source", "File")) next
     if (!is.numeric(metrics[[metric]])) {
         logger$info("- {metric}: not numeric, skipping plot")
         next
@@ -161,10 +177,17 @@ for (metric in colnames(metrics)) {
         h1 = metric
     )
 
-    # barplot over the input directories
-    p <- BarPlot(metrics, x = "Sample", y = metric, x_text_angle = 90)
+    # barplot over the samples (or the input directories when no samples were
+    # defined in SplitPipeCount). The `all-sample` row aggregates the samples,
+    # so it is left out of the plots (it stays in the table above); when it is
+    # the only row, keep it.
+    plotdata <- metrics[metrics$Sample != "all-sample", , drop = FALSE]
+    if (nrow(plotdata) == 0) {
+        plotdata <- metrics
+    }
+    p <- BarPlot(plotdata, x = "Sample", y = metric, x_text_angle = 90)
     figfile <- file.path(outdir, paste0(slugify(metric), ".barplot.png"))
-    png(figfile, height = 600, res = 100, width = max(nrow(metrics) * 30 + 200, 400))
+    png(figfile, height = 600, res = 100, width = max(nrow(plotdata) * 30 + 200, 400))
     print(p)
     dev.off()
 
