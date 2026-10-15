@@ -111,7 +111,8 @@ class SplitPipePipeline(ProcGroup):
 
         class SplitPipeCount(_SplitPipeCount):
             input = "fq1:files, fq2:files, id, genome_dir:dir"
-            input_data = [(*fq1fq2id, self.opts.genome_dir) for fq1fq2id in input_]
+            input_data = input_
+            envs = {"genome_dir": self.opts.genome_dir}
 
         return SplitPipeCount
 
