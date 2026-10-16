@@ -1,5 +1,6 @@
 library(rlang)
 library(dplyr)
+library(tidyr)
 library(plotthis)
 library(biopipen.utils)
 
@@ -63,6 +64,16 @@ for (indir in indirs) {
 if (is.null(metrics)) {
     stop("No samples found, check the input directories.")
 }
+
+# cellranger "multi" writes metrics_summary.csv in long format (one row per metric) and each per-sample
+# file also repeats the run/library-level rows (Grouped By = "Physical library ID", "Fastq ID",
+# "Probe barcode ID", ...). Only the Category == "Cells" rows describe the sample itself. Pivot them into
+# the one-row-per-sample / one-column-per-metric layout the rest of this script expects (the layout a
+# CellRangerCount metrics_summary.csv already has).
+metrics <- metrics %>%
+    filter(Category == "Cells") %>%
+    dplyr::select(Sample, MetricName = `Metric Name`, MetricValue = `Metric Value`) %>%
+    pivot_wider(names_from = MetricName, values_from = MetricValue, values_fn = first)
 
 # Percent columns come in two forms: "40.8%" (count pipelines) and plain fractions such as 0.408
 # (cellranger 10 "multi" metrics_summary.csv). Detect whichever form this file uses; a file with any
