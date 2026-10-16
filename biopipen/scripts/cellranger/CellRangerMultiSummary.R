@@ -64,14 +64,31 @@ if (is.null(metrics)) {
     stop("No samples found, check the input directories.")
 }
 
-percent_columns <- sapply(colnames(metrics), function(x) {
-    is.character(metrics[[x]]) && grepl("%", metrics[[x]][1]) && x != "Sample"
-})
-percent_columns <- colnames(metrics)[percent_columns]
-# Remove %
+# Percent columns come in two forms: "40.8%" (count pipelines) and plain fractions such as 0.408
+# (cellranger 10 "multi" metrics_summary.csv). Detect whichever form this file uses; a file with any
+# "%" value keeps the original handling exactly, so count summaries are unaffected.
+pct_symbol <- function(v) is.character(v) && any(grepl("%", v[!is.na(v)]))
+pct_fraction <- function(v) {
+    if (!is.character(v)) return(FALSE)
+    v <- v[!is.na(v) & v != ""]
+    if (length(v) == 0 || any(grepl("%", v))) return(FALSE)
+    nums <- suppressWarnings(as.numeric(v))
+    !any(is.na(nums)) && all(nums >= 0 & nums <= 1)
+}
+has_symbols <- any(sapply(metrics, pct_symbol))
+detect <- if (has_symbols) pct_symbol else pct_fraction
+percent_columns <- setdiff(colnames(metrics)[sapply(metrics, detect)], "Sample")
+percent_symbol <- if (has_symbols) percent_columns else character(0)
+percent_fraction <- if (has_symbols) character(0) else percent_columns
+# Remove % / scale fractions, then label those columns as (%). Guard the empty case: rename_with()
+# aborts when the selection is empty (metrics with no percent-like column at all).
+if (length(percent_columns) > 0) {
+    metrics <- metrics %>%
+        mutate(across(all_of(percent_symbol), ~as.numeric(gsub("%", "", .x)))) %>%
+        mutate(across(all_of(percent_fraction), ~as.numeric(.x) * 100)) %>%
+        rename_with(.fn = function(x) { paste0(x, " (%)") }, .cols = all_of(percent_columns))
+}
 metrics <- metrics %>%
-    mutate(across(all_of(percent_columns), ~as.numeric(gsub("%", "", .x)))) %>%
-    rename_with(.fn = function(x) { paste0(x, " (%)") }, .cols = percent_columns) %>%
     mutate(across(-Sample, ~as.numeric(gsub(",", "", .x))))
 
 # Save metrics
