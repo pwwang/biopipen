@@ -102,6 +102,21 @@ if (length(percent_columns) > 0) {
 metrics <- metrics %>%
     mutate(across(-Sample, ~as.numeric(gsub(",", "", .x))))
 
+# Sample labels: with a single run the "<run id>/" prefix adds nothing, and it disagrees with the
+# per_sample_outs/<sample>/ directories. Strip it from the metrics and from the group keys, so group
+# entries are valid either with or without the run prefix. With several runs the prefix stays, because
+# it is what disambiguates same-named samples across runs.
+if (length(indirs) == 1) {
+    metrics$Sample <- sub("^[^/]+/", "", metrics$Sample)
+    if (!is.null(group)) {
+        group$Sample <- sub("^[^/]+/", "", group$Sample)
+        missing_samples <- setdiff(group$Sample, metrics$Sample)
+        if (length(missing_samples) > 0) {
+            logger$warn("Group samples not found in metrics: ", paste0(missing_samples, collapse = ", "))
+        }
+    }
+}
+
 # Save metrics
 write.table(
     metrics,
