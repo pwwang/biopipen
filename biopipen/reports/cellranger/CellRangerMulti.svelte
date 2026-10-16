@@ -14,10 +14,9 @@
         style="min-height: 60vh" />
     {%- endif -%}
     {%- set per_sample_dir = str(job.out.outdir) + "/outs/per_sample_outs" -%}
-    {%- for sample_dir in per_sample_dir | glob: "*" | sort -%}
-        {%- set sample_id = sample_dir | basename -%}
-        {%- set web_summary = sample_dir + "/web_summary.html" -%}
-        {%- if web_summary | exists -%}
+    {%- for web_summary in per_sample_dir | glob: "**" | sort -%}
+        {%- if web_summary | basename == "web_summary.html" -%}
+        {%- set sample_id = web_summary | replace: "/web_summary.html", "" | basename -%}
         <h{{h}}>Sample: {{sample_id | escape}}</h{{h}}>
         <Iframe
             src="{{web_summary}}"
