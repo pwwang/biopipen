@@ -16,6 +16,8 @@ cases <- {{envs.cases | r}}
 ncores <- {{envs.ncores | r}}
 anno_col <- {{envs.anno_col | r}}
 set_ident <- {{envs.set_ident | r}}
+subset <- {{envs.subset | r}}
+post_mutaters <- {{envs.post_mutaters | r}}
 
 assay <- {{envs.assay | r}}
 layer <- {{envs.layer | r}}
@@ -186,6 +188,7 @@ defaults <- list(
     ident = ident,
     anno_col = anno_col,
     set_ident = set_ident,
+    subset = subset,
     merge = merge,
     sctype = sctype,
     hitype = hitype,
@@ -316,8 +319,29 @@ run_case <- function(case_name) {
         tool_cfg$layer <- tool_cfg$layer %||% layer
     }
 
+    # Restrict the tool to the case's subset; the cells outside it get NA
+    # when the record is embedded
+    sobj_case <- sobj
+    subset_cells <- NULL
+    if (!is.null(case$subset) && length(case$subset) > 0 &&
+        any(nzchar(case$subset))) {
+        subobj <- filter(sobj, !!parse_expr(case$subset))
+        if (ncol(subobj) == 0) {
+            stop(paste0(
+                "No cells left after applying `subset` for case '", case_name,
+                "': ", case$subset
+            ))
+        }
+        log$info(paste0(
+            "Subsetting case '", case_name, "' to ", ncol(subobj),
+            " of ", ncol(sobj), " cells"
+        ))
+        subset_cells <- colnames(subobj)
+        sobj_case <- subobj
+    }
+
     record <- RunCellTypeAnnotation(
-        sobj, tool_name,
+        sobj_case, tool_name,
         args = tool_cfg, ident = case$ident, cache = cache_dir, log = log
     )
 
@@ -339,6 +363,7 @@ run_case <- function(case_name) {
         anno_col = case$anno_col,
         set_ident = isTRUE(case$set_ident),
         merge = case$merge,
+        subset_cells = subset_cells,
         is_cluster_based = !is.null(record$mapping)
     )
 }
@@ -382,6 +407,7 @@ for (res in results) {
         # wins
         set_ident = FALSE,
         merge = res$merge,
+        subset = res$subset_cells,
         log = log
     )
     case_anno_cols[[res$name]] <- paste0(prefix, res$anno_col)
@@ -491,6 +517,11 @@ if (length(set_ident_cases) > 0) {
         "SETTING IDENTS to '", last_col, "' (from case '", last_case, "') ..."
     ))
     Idents(sobj) <- last_col
+}
+
+if (!is.null(post_mutaters) && length(post_mutaters) > 0) {
+    log$info("Applying post mutaters ...")
+    sobj <- MutateSeuratMeta(sobj, post_mutaters, log = log)
 }
 
 log$info("Saving Seurat object...")

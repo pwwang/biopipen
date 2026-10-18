@@ -2842,6 +2842,14 @@ class CellTypeAnnotation(Proc):
             If all cases have `set_ident` set to `False`, the original identity is kept.
             If multiple cases have `set_ident` set to `True`, a warning is given and the last case wins.
             Can be set per case via `envs.cases.X.set_ident` (default: True).
+        subset (type=str): An expression to subset the cells for each case.
+            It is passed to `tidyrseurat::filter()` on the metadata of the Seurat object.
+            When set, the tool only receives the cells in the subset, and the annotation
+            columns of the case are `NA` for the cells outside it. This makes
+            complementary cases cover all cells (e.g., two `mapquery` runs on the
+            bone-marrow and blood cells), which can be merged back with
+            `envs.post_mutaters`.
+            Can be set per case via `envs.cases.X.subset`.
         sctype (ns): The arguments for `sctype` if `tool` is `sctype`.
             - tissue: The tissue to use for `sctype`.
                 Available tissues should be the first column (`tissueType`) of `db`.
@@ -3514,11 +3522,18 @@ class CellTypeAnnotation(Proc):
                 averaged in the per-cell prediction, from 5 to 30 (default: 10).
         merge (flag): Whether to merge the clusters with the same cell types.
             Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
+        post_mutaters (type=json): Mutaters to apply to the metadata after all cases
+            are embedded and after the identity is set (see `envs.set_ident`).
+            They are applied via `biopipen.utils::MutateSeuratMeta()`.
+            The key with the `:ident` suffix creates the column and sets it as the
+            identity, e.g. `CellType:ident = "coalesce(BM_CellType, PB_CellType)"`
+            merges two per-case columns into `CellType` and makes it the identity.
+            Not inherited by the cases.
         add_prefix (flag): Whether to add a prefix to the new column names in metadata.
             Only used when in non-default cases. The prefix will be the case name followed by `_`.
         cases (type=json): Run multiple cases of cell type annotation on the same Seurat object.
             The keys are the prefix of column names added to the metadata (unless `add_prefix` is `False`),
-            and the values will inherit the above options.
+            and the values will inherit the above options (including `subset`).
             The default case is `DEFAULT`, meaning no prefix will be added to the column names.
             The identity of the output Seurat object will be set according to `envs.set_ident` of each case
             (see `envs.set_ident`).
@@ -3572,6 +3587,7 @@ class CellTypeAnnotation(Proc):
         "ident": None,
         "anno_col": "CellType",
         "set_ident": True,
+        "subset": None,
         "cell_types": [],
         "more_cell_types": None,
         "sctype": {  # tested
@@ -3807,6 +3823,7 @@ class CellTypeAnnotation(Proc):
         },
         "add_prefix": None,
         "merge": False,
+        "post_mutaters": {},
         "cases": {},
         "ncores": 1,
         "outtype": "input",
