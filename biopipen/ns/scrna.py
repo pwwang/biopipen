@@ -2561,12 +2561,18 @@ class CellTypeAnnotation(Proc):
     28. Use [`mLLMCelltype`](https://github.com/cafferychen777/mLLMCelltype) (cluster-level, LLM-based)
     29. Use [`LICT`](https://github.com/Glowworm-cell/LICT) (cluster-level, LLM-based, a modernized fork should be used, https://github.com/pwwang/LICT/tree/modernize)
     30. Use [`MapQuery`](https://satijalab.org/seurat/reference/mapquery) (cell-level, reference-based)
+    31. Use [`ScInfeR`](https://github.com/swainasish/ScInfeR) (cluster-level, marker-based; graph-based,
+        in two rounds: it calls the clusters from the marker table first, then the cells within a cluster
+        when two cell types score within 0.1 of each other; the marker table is either a universal one
+        in `envs.scinfer.db`, or one of ScInfeR's own ScInfeRDB tissues in `envs.scinfer.tissue`)
+        (Swain, Shekhawat & Yadav, 2025, doi:[10.1093/bib/bbaf253](https://doi.org/10.1093/bib/bbaf253);
+        there is a published correction, doi:[10.1093/bib/bbaf337](https://doi.org/10.1093/bib/bbaf337))
 
     The tools can be divided into two categories:
 
     - Cluster-level tools: annotate the clusters, each cluster being assigned one cell type.
       These include `sctype`, `sccatch`, `scsorter`, `singler`, `azimuth`, `llmcelltype`,
-      `mllmcelltype`, `lict`, `scagenttype`, `scsa`, and `direct`.
+      `mllmcelltype`, `lict`, `scagenttype`, `scsa`, `scinfer`, and `direct`.
     - Cell-level tools: annotate the cells, each cell being assigned one cell type.
       These include `scina`, `hitype`, `cellassign`, `cellid`, `scbert`, `schdeepinsight`,
       `llmcelltype`, `cell`, `garnett`, `ucell`, `aucell`, `gsva`, `singscore`, `scmap`,
@@ -2590,6 +2596,10 @@ class CellTypeAnnotation(Proc):
     - Marker-based tools: take marker genes for the cell types, including
       `sctype`, `hitype`, `sccatch`, `scsorter`, `scina`, `cellassign`, and `cellid`.
       They all accept the universal marker format (see the note below).
+      `scinfer` is marker-based as well: it takes the universal marker table through
+      `envs.scinfer.db`, or, like `sctype` and `sccatch` with their bundled databases,
+      a database of its own through `envs.scinfer.tissue` (ScInfeRDB: ScInfeR's own
+      per-tissue cell type → marker → weight set, fetched at call time).
       The scorer family (`ucell`, `aucell`, `gsva`, and `singscore`) is also
       marker-based: it scores the *same* marker table for every cell with equal
       weights (no learned weights), and assigns each cell the cell type with the
@@ -2832,6 +2842,14 @@ class CellTypeAnnotation(Proc):
             If all cases have `set_ident` set to `False`, the original identity is kept.
             If multiple cases have `set_ident` set to `True`, a warning is given and the last case wins.
             Can be set per case via `envs.cases.X.set_ident` (default: True).
+        subset (type=str): An expression to subset the cells for each case.
+            It is passed to `tidyrseurat::filter()` on the metadata of the Seurat object.
+            When set, the tool only receives the cells in the subset, and the annotation
+            columns of the case are `NA` for the cells outside it. This makes
+            complementary cases cover all cells (e.g., two `mapquery` runs on the
+            bone-marrow and blood cells), which can be merged back with
+            `envs.post_mutaters`.
+            Can be set per case via `envs.cases.X.subset`.
         sctype (ns): The arguments for `sctype` if `tool` is `sctype`.
             - tissue: The tissue to use for `sctype`.
                 Available tissues should be the first column (`tissueType`) of `db`.
@@ -3456,13 +3474,66 @@ class CellTypeAnnotation(Proc):
             - find_transfer_anchors (ns): The arguments for `Seurat::FindTransferAnchors()`.
             - sctransform (ns): The arguments for `Seurat::SCTransform()`.
             - normalize_data (ns): The arguments for `Seurat::NormalizeData()`.
+        scinfer (ns): The arguments for `ScInfeR::predict_celltype_scRNA_seurat()`
+            if `tool` is `scinfer`. ScInfeR is a graph-based annotator (GPL-3,
+            GitHub-only, not on CRAN): it scores the cell types of the marker table
+            against the top cluster markers, and resolves a cluster cell by cell
+            (over the reduction's neighborhood graph) when a second cell type scores
+            within 0.1 of the best, so the per-cell labels are saved to
+            `cell2celltype.tsv` along with the cluster mapping.
+            One of `db` and `tissue` is required, and the `tissue` route needs
+            network access.
+            - db (type=str): The path to the marker table (required, unless
+                `tissue` is set). Must be a universal marker table (see the note
+                above); a `weight` column is used as the marker weight
+                (default: 1), and the negative-direction markers are dropped
+                (ScInfeR has no direction, so a negative marker would be counted
+                as a marker of the cell type).
+            - tissue (type=str): The tissue of the cells. With `db`, it filters
+                the marker table by its `tissue` column (see the note above).
+                Without `db`, it selects one of ScInfeR's own tissues: `Bladder`,
+                `Bone marrow`, `Brain`, `Breast`, `Eye`, `Heart`, `Intestine`,
+                `Kidney`, `Liver`, `Lungs`, `Pancreas`, `PBMC`, or `Skin`.
+                ScInfeRDB is not part of the package, so the sheet of the tissue
+                is downloaded from GitHub at call time -- this route needs
+                network access, and an unknown tissue is an error.
+            - subtype_present (flag): Whether the marker table carries subtypes,
+                i.e. whether the cell types of `envs.scinfer.subtype_info` are
+                rows of the marker table as well (default: FALSE). They are then
+                held out of the round-1 scoring of their parent cell type, and
+                each cell gets its subtype in the second round.
+            - subtype_info (type=json): The subtypes of each cell type, as a named
+                list mapping a cell type of the marker table to its subtypes,
+                e.g. `{ "T-cell": ["CD8+ T-cell", "CD4+ T-cell"], "B cell": ["Naive B cell", "Memory B cell"] }`.
+                Only read when `subtype_present` is `True`; a cell type without an
+                entry (or without the list at all) keeps its round-1 label.
+            - assay (type=str): The assay of the object to annotate
+                (default: `RNA`).
+            - slot (type=str): The slot of the assay (default: `counts`).
+                Ignored by ScInfeR in this version: it reads the default layer of
+                the assay whichever slot is asked for.
+            - reduction (type=str): The reduction ScInfeR walks to resolve the
+                cells of a mixed cluster (default: `umap`). The object must carry
+                it; the run stops if it does not.
+            - own_weightage (type=float): The weight of a cell's own expression
+                (against that of its neighbors) in the per-cell prediction, from
+                0 to 1 (default: 0.5).
+            - n_neighbor (type=int): The number of neighbors whose expression is
+                averaged in the per-cell prediction, from 5 to 30 (default: 10).
         merge (flag): Whether to merge the clusters with the same cell types.
             Otherwise, a suffix will be added to the cell types (ie. `.1`, `.2`, etc).
+        post_mutaters (type=json): Mutaters to apply to the metadata after all cases
+            are embedded and after the identity is set (see `envs.set_ident`).
+            They are applied via `biopipen.utils::MutateSeuratMeta()`.
+            The key with the `:ident` suffix creates the column and sets it as the
+            identity, e.g. `CellType:ident = "coalesce(BM_CellType, PB_CellType)"`
+            merges two per-case columns into `CellType` and makes it the identity.
+            Not inherited by the cases.
         add_prefix (flag): Whether to add a prefix to the new column names in metadata.
             Only used when in non-default cases. The prefix will be the case name followed by `_`.
         cases (type=json): Run multiple cases of cell type annotation on the same Seurat object.
             The keys are the prefix of column names added to the metadata (unless `add_prefix` is `False`),
-            and the values will inherit the above options.
+            and the values will inherit the above options (including `subset`).
             The default case is `DEFAULT`, meaning no prefix will be added to the column names.
             The identity of the output Seurat object will be set according to `envs.set_ident` of each case
             (see `envs.set_ident`).
@@ -3516,6 +3587,7 @@ class CellTypeAnnotation(Proc):
         "ident": None,
         "anno_col": "CellType",
         "set_ident": True,
+        "subset": None,
         "cell_types": [],
         "more_cell_types": None,
         "sctype": {  # tested
@@ -3738,8 +3810,20 @@ class CellTypeAnnotation(Proc):
             "sctransform": {},
             "normalize_data": {},
         },
+        "scinfer": {  # test needed
+            "db": None,  # required (or `tissue`)
+            "tissue": None,  # required (or `db`); fetched from GitHub
+            "subtype_present": False,
+            "subtype_info": False,
+            "assay": "RNA",
+            "slot": "counts",
+            "reduction": "umap",
+            "own_weightage": 0.5,
+            "n_neighbor": 10,
+        },
         "add_prefix": None,
         "merge": False,
+        "post_mutaters": {},
         "cases": {},
         "ncores": 1,
         "outtype": "input",

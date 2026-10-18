@@ -1,0 +1,114 @@
+# Docker image cleanup manifest
+# Processed by docker/splitpipe_pipeline/cleanup.py during the builder stage to
+# reduce the final image size (adapted from immunopipe's docker/cleanup.list).
+#
+# Format:
+#   path/to/remove        — exact path relative to /opt/conda (removed with rm -rf / rm -f)
+#   path/with/*/glob      — shell glob (* and ** supported) relative to /opt/conda
+#   # comment             — ignored
+#   ! (blank line)        — ignored
+#   !path/to/keep         — exclusion: never remove this path even if matched above
+#
+# NOT removed on purpose (checked, not worth the risk on this image):
+#   conda-meta            — keeps `conda list`/`conda install` usable in the image
+#   lib/tcl8.*, lib/tk8.* — conda's r-base links against tcl/tk
+#   lib/libgomp.so*       — OpenMP runtime used by STAR/samtools
+#   lib/R/library/**      — R is the report/summary runtime; only dev-only
+#                           header packages are removed (see below)
+
+# =====================================================================
+# conda package cache — the dominant contributor on this image (~4.7 GB);
+# the final image needs the installed envs, not the cache
+# =====================================================================
+pkgs
+etc/conda/test-files/*
+
+# =====================================================================
+# Compiler & dev headers (compile-time only; the envs are already built)
+# =====================================================================
+include
+lib/pkgconfig
+lib/cmake
+compiler_compat
+lib/gcc
+lib/libcc1.so*
+libexec/gcc
+x86_64-conda-linux-gnu
+bin/gcc*
+bin/g++*
+bin/cpp*
+bin/x86_64-conda-*
+bin/as
+bin/ld
+bin/ar
+bin/nm
+bin/objcopy
+bin/objdump
+bin/ranlib
+bin/strip
+bin/size
+bin/strings
+bin/addr2line
+bin/c++filt
+
+# =====================================================================
+# Build artefacts
+# =====================================================================
+**/*.a
+**/*.pyx
+**/*.js.map
+**/*.pyc
+
+# =====================================================================
+# LLVM / Clang shared libraries (orphaned copies, nothing loads them)
+# =====================================================================
+lib/libLLVM.so.*
+lib/libclang-cpp.so.*
+lib/libclang.so.*
+
+# =====================================================================
+# Debug / sanitizer / profiling libraries
+# =====================================================================
+lib/libompd.so
+lib/libhwasan.so*
+lib/libarcher.so.bak
+lib/libasan.so*
+lib/libtsan.so*
+lib/liblsan.so*
+lib/libubsan.so*
+
+# =====================================================================
+# Protobuf compiler (only libprotobuf.so is needed at runtime)
+# =====================================================================
+lib/libprotoc.so*
+
+# =====================================================================
+# npm documentation and man pages
+# =====================================================================
+lib/node_modules/npm/docs
+lib/node_modules/npm/man
+
+# =====================================================================
+# Qt / PySide (GUI framework, unused in this pipeline)
+# =====================================================================
+lib/qt6*
+lib/libQt6*
+lib/python*/site-packages/PySide*
+share/PySide*
+PySide*
+lib/libpyside*
+
+# =====================================================================
+# R: header-only and dev-only packages (compile/test-time only)
+# =====================================================================
+lib/R/library/BH
+lib/R/library/testthat
+lib/R/library/assorthead
+lib/R/library/BiocManager
+lib/R/library/Rcpp/include
+lib/R/library/RcppEigen/include
+lib/R/library/RcppArmadillo/include
+lib/R/library/RcppParallel/include
+lib/R/library/RcppThread/include
+lib/R/library/RcppHNSW/include
+lib/R/library/RcppAnnoy/include

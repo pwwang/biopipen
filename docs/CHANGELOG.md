@@ -1,5 +1,28 @@
 # Change Log
 
+## 1.5.2
+
+- feat(scrna.CellTypeAnnotation): add support for cell subsetting and post-mutation processing
+- fix(cellranger.CellRangerMultiSummary): strip run prefix from sample labels for consistency in metrics
+- fix(cellranger.CellRangerMulti): update sample directory handling to support globbing for web_summary.html files
+- fix(cellranger.CellRangerMultiSummary): pivot metrics for sample traceability and enhance data structure
+- fix(cellranger.CellRangerMultiSummary): improve detection and handling of percent columns in metrics
+- fix(splitpipe): update input handling in SplitPipeCount to use environment variables for genome directory
+- fix(cellranger.CellRangerMulti): ensure proper string conversion for output directory paths in report generation
+- fix(splitpipe): enhance metrics handling and plotting for sample traceability
+- chore(splitpipe): fix heading level for report file display in SplitPipeCount and SplitPipeCombine
+- chore(splitpipe): update report paging options for SplitPipeCount and SplitPipeCombine
+- style: improve code formatting and readability across multiple scripts
+- style(splitpipe): clean up code formatting and improve readability
+- chore(uv.lock): remove options section and prerelease mode
+- refactor(splitpipe-pipeline): remove reference making from the pipeline
+- fix(splitpipe): rename input parameter to fq1 for clarity
+- chore: disallow pre-released dependencies
+- feat: add splitpipe and splitpipe-pipeline
+- feat(scrna.CellTypeAnnotation): add ScInfeR class for cluster-level annotation with universal marker table
+- refactor(scrna.CellTypeAnnotation): streamline cell annotation post process using biopipen.utils::EmbedSeuratCellTypeAnnotation
+- docs(scrna.CellTypeAnnotation): wire ScInfeR into the proc's envs
+
 ## 1.5.1
 
 - feat(scrna.SeuratMap2Ref): mark class as deprecated, suggest using CellTypeAnnotation with mapquery

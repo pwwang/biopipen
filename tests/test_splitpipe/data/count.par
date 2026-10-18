@@ -1,0 +1,30 @@
+# Parameter file for `split-pipe --mode all` on the tiny fixture data.
+# Each sublibrary has only 4,800 reads, far below split-pipe's 100,000-read
+# minimum estimate (`fq_size_guess_min`), which would abort before alignment.
+fq_size_guess_min  1000
+# Tiny-data overrides, each verified against split-pipe v1.9.0.
+# `fastq_samp_slice` keeps the sample real: `check_fastq_samp_slice`
+# only rewrites the slice while guess*guess_fac > its end, and with
+# end <= 0.75 X 4,800 the slice survives — the default end lets the
+# start be clamped to read 100,000, which makes the sample empty and
+# crashes the chemistry scoring / InQC. `inqc_min_reads` is InQC's
+# read-count minimum (default 100,000) and the two `*_score_skip`
+# flags drop the chemistry/kit scoring, which needs real-scale data.
+fastq_samp_slice  0 3000
+inqc_min_reads  1000
+chem_score_skip  True
+kit_score_skip  True
+# Remaining floors, all from split-pipe's own parameter list:
+# multiprocess chunk splitting indexes one record per jump and
+# needs more than the tiny file provides; the alignment wants
+# 50,000 reads; DGE's TSCP/cell cuts assume real-scale data, and
+# the 'given' hints keep it from float()-ing an unset estimate.
+pre_num_multiproc  1
+align_min_start_reads  1000
+dge_min_start_tscp  100
+dge_tscp_cut_min  3
+dge_tscp_cut_given  3
+dge_cell_min  2
+dge_cell_hard_min  2
+dge_cell_given  120
+pre_perfect_bc_cell_min  2

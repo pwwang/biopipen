@@ -245,6 +245,19 @@ class CellTypeAnnotationSCSA(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationScInfeR(CellTypeAnnotation_):
+    """ScInfeR with the universal marker table (cluster-level: its signature
+    requires the clusters, and it labels the cells within a cluster in its own
+    second round; the object must carry the reduction it walks -- PrepData's umap)"""
+
+    requires = PrepData
+    envs = {
+        "tool": "scinfer",
+        "ident": "seurat_clusters",
+        "scinfer": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+    }
+
+
 class CellTypeAnnotationDeprecated(CellTypeAnnotation_):
     """Old-style flat envs must still work, with a deprecation warning.
 
@@ -351,6 +364,54 @@ class CellTypeAnnotationMultiCase3(CellTypeAnnotation_):
     }
 
 
+class CellTypeAnnotationSubset(CellTypeAnnotation_):
+    """Complementary per-sample subsets, merged back into one column"""
+
+    requires = PrepData
+    envs = {
+        "cases": {
+            "BM": {
+                "tool": "ucell",
+                "ucell": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+                "subset": "Sample %in% c('S1', 'S2', 'S3', 'S4', 'S5', 'S6')",
+                "set_ident": False,
+            },
+            "PB": {
+                "tool": "ucell",
+                "ucell": {"db": str(Path(__file__).parent / "data/markers.tsv")},
+                "subset": "Sample %in% c('S7', 'S8', 'S9', 'S10', 'S11', 'S12')",
+                "set_ident": False,
+            },
+        },
+        "post_mutaters": {
+            "CellType:ident": "coalesce(BM_CellType, PB_CellType)",
+        },
+    }
+
+
+class CellTypeAnnotationSubsetCluster(CellTypeAnnotation_):
+    """Cluster-level cases on complementary cluster subsets"""
+
+    requires = PrepData
+    envs = {
+        "ident": "seurat_clusters",
+        "cases": {
+            "Low": {
+                "tool": "direct",
+                "subset": "seurat_clusters %in% c('0', '1', '2', '3', '4')",
+                "cell_types": {str(i): f"CT{i}" for i in range(10)},
+                "set_ident": False,
+            },
+            "High": {
+                "tool": "direct",
+                "subset": "!seurat_clusters %in% c('0', '1', '2', '3', '4')",
+                "cell_types": {str(i): f"CT{i}" for i in range(10)},
+                "set_ident": False,
+            },
+        },
+    }
+
+
 def pipeline():
     return get_pipeline(__file__).set_starts(PrepData)
 
@@ -402,6 +463,23 @@ def assert_idents_equal(pipen, procname, colname):
     subprocess.run(
         ["Rscript", "-e", script], capture_output=True, text=True, check=True
     )
+
+
+def assert_meta_checks(pipen, procname, checks):
+    """Run R `stopifnot()` checks against the annotated RDS"""
+    proc = get_proc(pipen, procname)
+    rds = proc.workdir.joinpath("0", "output", "pbmc3k.annotated.RDS")
+    body = "\n".join(f"        {check}" for check in checks)
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- readRDS({str(rds)!r})
+{body}
+        cat("META_CHECKS_OK\\n")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+    assert "META_CHECKS_OK" in result.stdout
 
 
 def check_marker_filters_r():
@@ -574,6 +652,24 @@ def testing(pipen):
     assert clust_lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
     assert set(line.split("\t")[-1] for line in clust_lines[1:]) == labels
 
+    # ScInfeR (cluster-level, with its own per-cell round)
+    proc = get_proc(pipen, "CellTypeAnnotationScInfeR")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationScInfeR")
+    assert "CellType" in cols
+    assert "scinfer_celltype" in cols
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tDEFAULT"
+    assert len(lines) - 1 == ncells
+    labels = set(line.split("\t")[1] for line in lines[1:])
+    assert labels <= {"T_cell", "B_cell", "NK_cell", "Monocyte", "DC", "unassigned"}
+    assert len(labels - {"unassigned"}) >= 3
+    cluster_tsv = outfile.with_name(outfile.name + ".cluster2celltype.tsv")
+    clust_lines = cluster_tsv.read_text().splitlines()
+    assert clust_lines[0].split("\t")[:3] == ["Cluster", "Size", "DEFAULT"]
+    assert len(set(line.split("\t")[-1] for line in clust_lines[1:]) - labels) == 0
+
     # Old-style flat envs: deprecation warnings, newcol -> anno_col.
     # hitype without envs.ident is cell-level by default: per-cell labels
     # in CellType_old, a cell2celltype.tsv and no cluster2celltype.tsv
@@ -601,6 +697,51 @@ def testing(pipen):
     assert "CellType_sctype" in cols
     assert "CellType_direct" in cols
     assert_idents_equal(pipen, "CellTypeAnnotationMultiCase2", "CellType_direct")
+
+    # Per-case subsets: each case column covers exactly its cells and is NA
+    # elsewhere; post_mutaters merges them and sets the merged identity.
+    proc = get_proc(pipen, "CellTypeAnnotationSubset")
+    outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationSubset")
+    assert "BM_CellType" in cols
+    assert "PB_CellType" in cols
+    assert "CellType" in cols
+    bm_cells = "obj$Sample %in% c('S1', 'S2', 'S3', 'S4', 'S5', 'S6')"
+    pb_cells = "obj$Sample %in% c('S7', 'S8', 'S9', 'S10', 'S11', 'S12')"
+    assert_meta_checks(
+        pipen,
+        "CellTypeAnnotationSubset",
+        [
+            f"stopifnot(all(!is.na(obj@meta.data[['BM_CellType']][{bm_cells}])))",
+            f"stopifnot(all(is.na(obj@meta.data[['BM_CellType']][!({bm_cells})])))",
+            f"stopifnot(all(!is.na(obj@meta.data[['PB_CellType']][{pb_cells}])))",
+            f"stopifnot(all(is.na(obj@meta.data[['PB_CellType']][!({pb_cells})])))",
+            "stopifnot(!anyNA(obj@meta.data[['CellType']]))",
+        ],
+    )
+    assert_idents_equal(pipen, "CellTypeAnnotationSubset", "CellType")
+    cell_tsv = outfile.with_name(outfile.name + ".cell2celltype.tsv")
+    lines = cell_tsv.read_text().splitlines()
+    assert lines[0] == "Cell\tBM\tPB"
+    assert len(lines) - 1 == ncells
+
+    # Cluster-level cases: cells sharing a cluster with the subset but outside
+    # the subset must stay NA (the cluster mapping is restricted to the subset)
+    cols, idents, ncells = get_rds_info(pipen, "CellTypeAnnotationSubsetCluster")
+    assert "Low_CellType" in cols
+    assert "High_CellType" in cols
+    low_cells = "obj$seurat_clusters %in% c('0', '1', '2', '3', '4')"
+    high_cells = f"!({low_cells})"
+    assert_meta_checks(
+        pipen,
+        "CellTypeAnnotationSubsetCluster",
+        [
+            f"stopifnot(all(!is.na(obj@meta.data[['Low_CellType']][{low_cells}])))",
+            f"stopifnot(all(is.na(obj@meta.data[['Low_CellType']][!({low_cells})])))",
+            f"stopifnot(all(!is.na(obj@meta.data[['High_CellType']][{high_cells}])))",
+            f"stopifnot(all(is.na(obj@meta.data[['High_CellType']][!({high_cells})])))",
+        ],
+    )
 
 
 if __name__ == "__main__":

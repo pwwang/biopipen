@@ -1,5 +1,6 @@
 library(rlang)
 library(dplyr)
+library(tidyr)
 library(plotthis)
 library(biopipen.utils)
 
@@ -64,15 +65,57 @@ if (is.null(metrics)) {
     stop("No samples found, check the input directories.")
 }
 
-percent_columns <- sapply(colnames(metrics), function(x) {
-    is.character(metrics[[x]]) && grepl("%", metrics[[x]][1]) && x != "Sample"
-})
-percent_columns <- colnames(metrics)[percent_columns]
-# Remove %
+# cellranger "multi" writes metrics_summary.csv in long format (one row per metric) and each per-sample
+# file also repeats the run/library-level rows (Grouped By = "Physical library ID", "Fastq ID",
+# "Probe barcode ID", ...). Only the Category == "Cells" rows describe the sample itself. Pivot them into
+# the one-row-per-sample / one-column-per-metric layout the rest of this script expects (the layout a
+# CellRangerCount metrics_summary.csv already has).
 metrics <- metrics %>%
-    mutate(across(all_of(percent_columns), ~as.numeric(gsub("%", "", .x)))) %>%
-    rename_with(.fn = function(x) { paste0(x, " (%)") }, .cols = percent_columns) %>%
+    filter(Category == "Cells") %>%
+    dplyr::select(Sample, MetricName = `Metric Name`, MetricValue = `Metric Value`) %>%
+    pivot_wider(names_from = MetricName, values_from = MetricValue, values_fn = first)
+
+# Percent columns come in two forms: "40.8%" (count pipelines) and plain fractions such as 0.408
+# (cellranger 10 "multi" metrics_summary.csv). Detect whichever form this file uses; a file with any
+# "%" value keeps the original handling exactly, so count summaries are unaffected.
+pct_symbol <- function(v) is.character(v) && any(grepl("%", v[!is.na(v)]))
+pct_fraction <- function(v) {
+    if (!is.character(v)) return(FALSE)
+    v <- v[!is.na(v) & v != ""]
+    if (length(v) == 0 || any(grepl("%", v))) return(FALSE)
+    nums <- suppressWarnings(as.numeric(v))
+    !any(is.na(nums)) && all(nums >= 0 & nums <= 1)
+}
+has_symbols <- any(sapply(metrics, pct_symbol))
+detect <- if (has_symbols) pct_symbol else pct_fraction
+percent_columns <- setdiff(colnames(metrics)[sapply(metrics, detect)], "Sample")
+percent_symbol <- if (has_symbols) percent_columns else character(0)
+percent_fraction <- if (has_symbols) character(0) else percent_columns
+# Remove % / scale fractions, then label those columns as (%). Guard the empty case: rename_with()
+# aborts when the selection is empty (metrics with no percent-like column at all).
+if (length(percent_columns) > 0) {
+    metrics <- metrics %>%
+        mutate(across(all_of(percent_symbol), ~as.numeric(gsub("%", "", .x)))) %>%
+        mutate(across(all_of(percent_fraction), ~as.numeric(.x) * 100)) %>%
+        rename_with(.fn = function(x) { paste0(x, " (%)") }, .cols = all_of(percent_columns))
+}
+metrics <- metrics %>%
     mutate(across(-Sample, ~as.numeric(gsub(",", "", .x))))
+
+# Sample labels: with a single run the "<run id>/" prefix adds nothing, and it disagrees with the
+# per_sample_outs/<sample>/ directories. Strip it from the metrics and from the group keys, so group
+# entries are valid either with or without the run prefix. With several runs the prefix stays, because
+# it is what disambiguates same-named samples across runs.
+if (length(indirs) == 1) {
+    metrics$Sample <- sub("^[^/]+/", "", metrics$Sample)
+    if (!is.null(group)) {
+        group$Sample <- sub("^[^/]+/", "", group$Sample)
+        missing_samples <- setdiff(group$Sample, metrics$Sample)
+        if (length(missing_samples) > 0) {
+            logger$warn("Group samples not found in metrics: ", paste0(missing_samples, collapse = ", "))
+        }
+    }
+}
 
 # Save metrics
 write.table(

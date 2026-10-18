@@ -7,7 +7,7 @@ from pathlib import Path, PosixPath  # noqa: F401
 from panpath import LocalPath  # noqa: F401
 from biopipen.utils.misc import run_command
 
-csv: Path = Path({{in.csv | quote}})  # pyright: ignore
+csv: Path = Path({{in.csv | quote}})  # pyright: ignore  # noqa
 outdir: Path = Path({{out.outdir | quote}})  # pyright: ignore
 id: str = {{out.outdir | basename | quote}}  # pyright: ignore
 

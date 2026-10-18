@@ -166,9 +166,9 @@ class CellRangerMultiPipeline(ProcGroup):
     @ProcGroup.add_proc  # type: ignore
     def p_cellranger_multi_summary(self) -> Type[Proc]:
         """Build CellRangerMultiSummary process"""
-        from .cellranger import CellRangerMultiSummary
+        from .cellranger import CellRangerMultiSummary as _CellRangerMultiSummary
 
-        class CellRangerMultiSummary(CellRangerMultiSummary):
+        class CellRangerMultiSummary(_CellRangerMultiSummary):
             requires = self.p_cellranger_multi
             input_data = lambda ch: [list(ch.iloc[:, 0])]
 

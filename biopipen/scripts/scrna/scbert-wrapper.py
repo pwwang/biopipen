@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""scBERT wrapper for CellTypeAnnotation — runs inference and saves per-cell predictions."""
+"""scBERT wrapper for CellTypeAnnotation — runs inference and saves per-cell
+predictions.
+"""
 from argparse import ArgumentParser
-import os
+# import os
 import sys
 import pickle
 import numpy as np
