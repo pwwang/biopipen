@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>biopipen.ns.splitpipe - biopipen</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/v4-shims.css" rel="stylesheet" />
+        <link href="../../../css/mkapi-common.css" rel="stylesheet" />
+        <link href="../../../style.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "biopipen.ns.splitpipe";
+        var mkdocs_page_input_path = "api/source/biopipen.ns.splitpipe.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.configure({ ignoreUnescapedHTML: true }); hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../..">
+          <img src="../../../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="nav-scrollable-wrapper">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Pipelines</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cnvkit_pipeline/">CNVkit Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cellranger_pipeline/">CellRanger Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/pipseeker_pipeline/">Pipseeker Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/splitpipe_pipeline/">SplitPipe Pipeline</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.utils</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils/">biopipen.utils</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.reference/">biopipen.utils.reference</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.vcf/">biopipen.utils.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.misc/">biopipen.utils.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.gene/">biopipen.utils.gene</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.core</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core/">biopipen.core</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.filters/">biopipen.core.filters</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.config/">biopipen.core.config</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.testing/">biopipen.core.testing</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.proc/">biopipen.core.proc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.defaults/">biopipen.core.defaults</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.ns</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns/">biopipen.ns</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.splitpipe/">biopipen.ns.splitpipe</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.web/">biopipen.ns.web</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna/">biopipen.ns.scrna</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bam/">biopipen.ns.bam</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.pipseeker/">biopipen.ns.pipseeker</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit/">biopipen.ns.cnvkit</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcgamaf/">biopipen.ns.tcgamaf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.splitpipe_pipeline/">biopipen.ns.splitpipe_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.vcf/">biopipen.ns.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.rnaseq/">biopipen.ns.rnaseq</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnv/">biopipen.ns.cnv</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.snp/">biopipen.ns.snp</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.protein/">biopipen.ns.protein</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna_metabolic_landscape/">biopipen.ns.scrna_metabolic_landscape</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gsea/">biopipen.ns.gsea</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcr/">biopipen.ns.tcr</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger_pipeline/">biopipen.ns.cellranger_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.regulatory/">biopipen.ns.regulatory</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.plot/">biopipen.ns.plot</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.delim/">biopipen.ns.delim</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bed/">biopipen.ns.bed</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit_pipeline/">biopipen.ns.cnvkit_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.misc/">biopipen.ns.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gene/">biopipen.ns.gene</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger/">biopipen.ns.cellranger</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.stats/">biopipen.ns.stats</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG/">Change log</a>
+                </li>
+              </ul>
+      </div>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">biopipen</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">biopipen.ns.splitpipe</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pwwang/biopipen/edit/master/docs/api/source/biopipen.ns.splitpipe.md">Edit on pwwang/biopipen</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <div class="mkapi-node">
+<h1 id="" class="mkapi-object mkapi-object-code plain">
+<span class="mkapi-object-kind mkapi-object-kind-code">SOURCE CODE</span>
+<span class="mkapi-object-prefix">biopipen.ns.</span><span class="mkapi-object-name">splitpipe</span>
+<span id="biopipen.ns.splitpipe"></span><a class="mkapi-docs-link" href="../../biopipen.ns.splitpipe">DOCS</a>
+</h1>
+
+<div class="mkapi-code">
+<div class="codehilite"><pre><span></span><code><span class="sd">"""Split-pipe processes for Parse Biosciences split-pool data"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.proc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Proc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeRef</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.splitpipe.SplitPipeRef"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe.SplitPipeRef" href="../../biopipen.ns.splitpipe/#biopipen.ns.splitpipe.SplitPipeRef">DOCS</a>
+<span class="w">    </span><span class="sd">"""Build an indexed reference genome for split-pipe</span>
+
+<span class="sd">    Runs `split-pipe --mode mkref`, which is required before any data can be</span>
+<span class="sd">    processed. The output of this process is used by `SplitPipeCount` with</span>
+<span class="sd">    `envs.genome_dir`.</span>
+<span class="sd">    Requires the Parse Biosciences Pipeline (split-pipe) v1.9.0+.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        fasta: The input reference sequence file(s) in fasta format</span>
+<span class="sd">            Multiple files are allowed, e.g. for a species-mix reference. They</span>
+<span class="sd">            should correspond to `envs.genome_name` and `in.genes` in the same</span>
+<span class="sd">            order.</span>
+<span class="sd">        genes: The input reference gene annotation file(s) in GTF format</span>
+<span class="sd">            Should correspond to `envs.genome_name` and `in.fasta` in the same</span>
+<span class="sd">            order.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory, named by `envs.genome_name`</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        splitpipe: Path to the split-pipe executable</span>
+<span class="sd">        nthreads: Number of threads to use</span>
+<span class="sd">        ncores: Alias for `nthreads`. Takes precedence when both are given.</span>
+<span class="sd">        genome_name (type=list): The name(s) of the genome(s), e.g. `hg38`, or</span>
+<span class="sd">            `["hg38", "GRCm39"]` for a species-mix reference. When multiple</span>
+<span class="sd">            names are given, the output directory is named after them joined</span>
+<span class="sd">            by `_`.</span>
+<span class="sd">        parfile: Path to the parameter file with one `NAME VALUE` entry per</span>
+<span class="sd">            line. Required for small genomes, for which STAR rejects its</span>
+<span class="sd">            default `genomeSAindexNbases` (14): STAR's options are passed</span>
+<span class="sd">            through the `mkref_star_args` parameter as a comma-separated</span>
+<span class="sd">            list, e.g.</span>
+<span class="sd">            `mkref_star_args  --genomeSAindexNbases,8,--genomeSAsparseD,2`.</span>
+<span class="sd">        &lt;more&gt;: Other environment variables required by `split-pipe --mode mkref`</span>
+<span class="sd">            See &lt;https://support.parsebiosciences.com/hc/en-us/articles/23060102930580&gt;</span>
+<span class="sd">            for more details.</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"fasta:files, genes:files"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"""outdir:dir:</span>
+<span class="s2">        {</span><span class="si">%- i</span><span class="s2">f envs.genome_name is string -%}</span>
+<span class="s2">            {{- envs.genome_name -}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">lse -%}</span>
+<span class="s2">            {{- envs.genome_name | join: "_" -}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">ndif -%}</span>
+<span class="s2">    """</span>
+    <span class="n">output_flatten</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"splitpipe"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">splitpipe</span><span class="p">,</span>
+        <span class="s2">"nthreads"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"genome_name"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"parfile"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/splitpipe/SplitPipeRef.py"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCount</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.splitpipe.SplitPipeCount"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe.SplitPipeCount" href="../../biopipen.ns.splitpipe/#biopipen.ns.splitpipe.SplitPipeCount">DOCS</a>
+<span class="w">    </span><span class="sd">"""Run split-pipe on one sublibrary</span>
+
+<span class="sd">    Runs `split-pipe --mode all` to pre-process, align and post-process the</span>
+<span class="sd">    sequencing data of a single sublibrary, and to generate the expression</span>
+<span class="sd">    matrices and the report for it.</span>
+<span class="sd">    Requires the Parse Biosciences Pipeline (split-pipe) v1.9.0+.</span>
+
+<span class="sd">    Terminology: a "sublibrary" is one well-pool of a kit processed by</span>
+<span class="sd">    `--mode all` (i.e. the fastq files of one sample well-pool of one</span>
+<span class="sd">    sequencing run). Sublibraries are always processed independently and must</span>
+<span class="sd">    never be merged at this step: fastq files from multiple sequencing lanes</span>
+<span class="sd">    of the SAME sublibrary are passed together as a list to `in.fq1`, while</span>
+<span class="sd">    fastq files of DIFFERENT sublibraries belong in different jobs of this</span>
+<span class="sd">    process. Sublibraries are merged into a single dataset afterwards, using</span>
+<span class="sd">    `SplitPipeCombine` (`--mode comb`).</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        fq1: The input fastq (R1) file(s) of one sublibrary</span>
+<span class="sd">            Multiple files are allowed when the sublibrary was sequenced over</span>
+<span class="sd">            multiple lanes, and they are passed together to `--fq1`.</span>
+<span class="sd">        fq2: The input fastq (R2) file(s) of the sublibrary</span>
+<span class="sd">            Multiple files are allowed when the sublibrary was sequenced over</span>
+<span class="sd">            multiple lanes, and they are passed together to `--fq2`. If not</span>
+<span class="sd">            given, the R2 file names are derived from the R1 ones by</span>
+<span class="sd">            split-pipe, which requires the R1 and R2 files to differ only by</span>
+<span class="sd">            `R1`/`R2` in their names.</span>
+<span class="sd">        id: The id defining the output directory. If not provided, it is</span>
+<span class="sd">            inferred from the fq1 file names, e.g. `s1_S1_R1_001.fastq.gz`</span>
+<span class="sd">            gives `s1`.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        splitpipe: Path to the split-pipe executable</span>
+<span class="sd">        nthreads: Number of threads to use</span>
+<span class="sd">        ncores: Alias for `nthreads`. Takes precedence when both are given.</span>
+<span class="sd">        chemistry: The chemistry version of the kit, e.g. `v1`, `v2`, `v3` or</span>
+<span class="sd">            `v4`. Required by split-pipe.</span>
+<span class="sd">        kit: The kit name, e.g. `WT`, `WT_mini`, `WT_mega`, `WT_mega_384`,</span>
+<span class="sd">            `WT_penta`, `WT_penta_384`, `MAX_WT_S`, `MAX_WT_M`, `MAX_WT_L` or</span>
+<span class="sd">            `MAX_WT_L_384`. Required by split-pipe.</span>
+<span class="sd">        genome_dir: Path to the indexed genome directory built by</span>
+<span class="sd">            `SplitPipeRef` (`--mode mkref`). It can also be passed by the</span>
+<span class="sd">            input channel, see `SplitPipePipeline`.</span>
+<span class="sd">        samples (type=list): The sample definitions, as a list of `NAME WELLS`</span>
+<span class="sd">            entries, e.g. `["xcond_1 A1-A6", "xcond_2 C1-C6"]`. Each entry is</span>
+<span class="sd">            passed to split-pipe as one `--sample NAME WELLS` argument.</span>
+<span class="sd">            If omitted, the pipeline processes all samples (`all-sample`).</span>
+<span class="sd">        samp_sltab: Path to the SampleLoadingTable (excel) file from the</span>
+<span class="sd">            Support Suite.</span>
+<span class="sd">        samp_slt: Alias of `samp_sltab` in Parse's own documentation, where</span>
+<span class="sd">            both spellings are used for the SampleLoadingTable.</span>
+<span class="sd">            Don't set both of them.</span>
+<span class="sd">        samp_list: Path to the sample specification list (text) file, with one</span>
+<span class="sd">            `NAME WELLS` entry per line.</span>
+<span class="sd">        parfile: Path to the parameter file with one `NAME VALUE` entry per</span>
+<span class="sd">            line, e.g. `post_min_map_frac 0.01`.</span>
+<span class="sd">        targeted_list: Path to the target gene list (csv) for Gene Select data.</span>
+<span class="sd">        crispr (flag): Whether this is a CRISPR Detect sublibrary. It must be</span>
+<span class="sd">            used together with `envs.crsp_guides` and `envs.parent_dir`.</span>
+<span class="sd">        crsp_guides: Path to the csv file with the guide RNA sequences for</span>
+<span class="sd">            CRISPR Detect data.</span>
+<span class="sd">        crsp_read_thresh (type=int): The `guide_read_cutoff` for CRISPR Detect</span>
+<span class="sd">            data. The default is 3.</span>
+<span class="sd">        crsp_tscp_thresh (type=int): The `guide_tscp_cutoff` for CRISPR Detect</span>
+<span class="sd">            data. The default is 5.</span>
+<span class="sd">        ffpe (flag): Whether this is an Evercode WT FFPE sublibrary.</span>
+<span class="sd">            Only v4 chemistry is supported for FFPE data.</span>
+<span class="sd">        tcr_analysis (flag): Whether to run TCR analysis. Immune databases must</span>
+<span class="sd">            have been installed with the pipeline, see `split-pipe --immune_check`.</span>
+<span class="sd">        bcr_analysis (flag): Whether to run BCR analysis.</span>
+<span class="sd">        immune_genome: The immune genome to align to for TCR/BCR analysis.</span>
+<span class="sd">            `human` and `mouse` are supported for TCR, and `human`, `mouse`</span>
+<span class="sd">            and `transgenic_mouse` for BCR analysis.</span>
+<span class="sd">        parent_dir: Path to the whole transcriptome (parent) output directory</span>
+<span class="sd">            of the sublibrary. If provided, the parent results are used to</span>
+<span class="sd">            filter the cells of the TCR/BCR/CRISPR analysis.</span>
+<span class="sd">        use_imgt_db (flag): Whether to use the IMGT reference for the</span>
+<span class="sd">            TCR/BCR analysis. The IMGT database must have been installed with</span>
+<span class="sd">            `bash install_immune_dbs.sh -I -y` and followed by</span>
+<span class="sd">            `pip install --no-cache-dir .` in the pipeline directory.</span>
+<span class="sd">        min_map_fraction (type=float): The minimum mapping fraction of the</span>
+<span class="sd">            reads to be retained as transcripts. Parse documents this</span>
+<span class="sd">            parameter as `post_min_map_frac` in the `--parfile` parameter</span>
+<span class="sd">            file, so a parameter file is generated for this run; it cannot be</span>
+<span class="sd">            used together with `envs.parfile`.</span>
+<span class="sd">        &lt;more&gt;: Other environment variables required by `split-pipe --mode all`</span>
+<span class="sd">            See &lt;https://support.parsebiosciences.com/hc/en-us/articles/23060220494228&gt;</span>
+<span class="sd">            for more details.</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"fq1:files, fq2:files, id"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"""outdir:dir:</span>
+<span class="s2">        {</span><span class="si">%- i</span><span class="s2">f in.id -%}</span>
+<span class="s2">            {{in.id}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">lse -%}</span>
+<span class="s2">            {</span><span class="si">%- s</span><span class="s2">et id = in.fq1 | first | basename |</span>
+<span class="s2">                regex_replace: "(_L</span><span class="se">\\</span><span class="s2">d+)?(_R</span><span class="se">\\</span><span class="s2">d+)?(_</span><span class="se">\\</span><span class="s2">d+)?</span><span class="se">\\</span><span class="s2">.f(ast)?q(</span><span class="se">\\</span><span class="s2">.gz)?$", "" |</span>
+<span class="s2">                regex_replace: "_S</span><span class="se">\\</span><span class="s2">d+$", "" -%}</span>
+<span class="s2">            {{- id -}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">ndif -%}</span>
+<span class="s2">    """</span>
+    <span class="n">output_flatten</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"splitpipe"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">splitpipe</span><span class="p">,</span>
+        <span class="s2">"nthreads"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"chemistry"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"kit"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"genome_dir"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"samples"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"samp_sltab"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"samp_slt"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"samp_list"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"parfile"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"targeted_list"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"crispr"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"crsp_guides"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"crsp_read_thresh"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"crsp_tscp_thresh"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"ffpe"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"tcr_analysis"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"bcr_analysis"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"immune_genome"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"parent_dir"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"use_imgt_db"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"min_map_fraction"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/splitpipe/SplitPipeCount.py"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/splitpipe/SplitPipeCount.svelte"</span><span class="p">,</span>
+        <span class="s2">"report_paging"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCombine</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.splitpipe.SplitPipeCombine"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe.SplitPipeCombine" href="../../biopipen.ns.splitpipe/#biopipen.ns.splitpipe.SplitPipeCombine">DOCS</a>
+<span class="w">    </span><span class="sd">"""Combine sublibraries into a single dataset</span>
+
+<span class="sd">    Runs `split-pipe --mode comb` to merge the outputs of the sublibrary</span>
+<span class="sd">    (one well-pool processed by `--mode all`) directories of one sequencing</span>
+<span class="sd">    run into a single dataset with a new report.</span>
+<span class="sd">    Requires the Parse Biosciences Pipeline (split-pipe) v1.9.0+.</span>
+
+<span class="sd">    Terminology: each sublibrary is one well-pool processed by</span>
+<span class="sd">    `SplitPipeCount` (`--mode all`). Only sublibraries of the same library</span>
+<span class="sd">    preparation can be combined (for example multiple WT sublibraries), and</span>
+<span class="sd">    sublibraries must have been processed with the same version of the</span>
+<span class="sd">    pipeline as the one used here. Chemistry, kit and sample definitions are</span>
+<span class="sd">    parsed from the sublibrary directories, so they are not passed to</span>
+<span class="sd">    `--mode comb`.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        sublibs: The output directories of the sublibraries to combine, from</span>
+<span class="sd">            `SplitPipeCount`.</span>
+<span class="sd">        id: The id defining the output directory. If not provided, it is</span>
+<span class="sd">            inferred from the sublibrary directories (see `SplitPipePipeline`).</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        splitpipe: Path to the split-pipe executable</span>
+<span class="sd">        nthreads: Number of threads to use</span>
+<span class="sd">        ncores: Alias for `nthreads`. Takes precedence when both are given.</span>
+<span class="sd">        sublib_list: Path to a file with one sublibrary directory per line.</span>
+<span class="sd">            If provided, it is passed as `--sublib_list` instead of passing</span>
+<span class="sd">            `in.sublibs` as `--sublibraries`.</span>
+<span class="sd">        immune_genome: The immune genome to align to for the TCR/BCR analysis</span>
+<span class="sd">            combined here, either `human` or `mouse`.</span>
+<span class="sd">        parent_dir: Path to the combined whole transcriptome (parent) output</span>
+<span class="sd">            directory. The parent outputs must be combined before the</span>
+<span class="sd">            corresponding TCR/BCR/CRISPR ones, and both must combine the same</span>
+<span class="sd">            set of sublibraries.</span>
+<span class="sd">        use_imgt_db (flag): Whether to use the IMGT reference for the</span>
+<span class="sd">            TCR/BCR analysis. The IMGT database must have been installed with</span>
+<span class="sd">            `bash install_immune_dbs.sh -I -y` and followed by</span>
+<span class="sd">            `pip install --no-cache-dir .` in the pipeline directory.</span>
+<span class="sd">        &lt;more&gt;: Other environment variables required by `split-pipe --mode comb`.</span>
+<span class="sd">            Note that `--tcr_analysis`/`--bcr_analysis`/`--crispr` are not</span>
+<span class="sd">            documented for `--mode comb`; any other option can be passed</span>
+<span class="sd">            through here if the installed version of split-pipe supports it.</span>
+<span class="sd">            See &lt;https://support.parsebiosciences.com/hc/en-us/articles/23060220494228&gt;</span>
+<span class="sd">            for more details.</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"sublibs:dirs, id"</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">"""outdir:dir:</span>
+<span class="s2">        {</span><span class="si">%- i</span><span class="s2">f in.id -%}</span>
+<span class="s2">            {{in.id}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">lse -%}</span>
+<span class="s2">            {{- in.sublibs | first | basename | append: "-comb" -}}</span>
+<span class="s2">        {</span><span class="si">%- e</span><span class="s2">ndif -%}</span>
+<span class="s2">    """</span>
+    <span class="n">output_flatten</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">python</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"splitpipe"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span><span class="n">splitpipe</span><span class="p">,</span>
+        <span class="s2">"nthreads"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">ncores</span><span class="p">,</span>
+        <span class="s2">"ncores"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"sublib_list"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"immune_genome"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"parent_dir"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"use_imgt_db"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/splitpipe/SplitPipeCombine.py"</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/splitpipe/SplitPipeCombine.svelte"</span><span class="p">,</span>
+        <span class="s2">"report_paging"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeSummary</span><span class="p">(</span><span class="n">Proc</span><span class="p">):</span><span id="biopipen.ns.splitpipe.SplitPipeSummary"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe.SplitPipeSummary" href="../../biopipen.ns.splitpipe/#biopipen.ns.splitpipe.SplitPipeSummary">DOCS</a>
+<span class="w">    </span><span class="sd">"""Summarize split-pipe metrics</span>
+
+<span class="sd">    Merges the metrics files of the sublibrary (or combined) output</span>
+<span class="sd">    directories of `SplitPipeCount`/`SplitPipeCombine` into one table. The</span>
+<span class="sd">    names of the metrics files are version-dependent, so they are discovered</span>
+<span class="sd">    with `envs.metrics_glob` and the process fails if nothing matches.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">        indirs: The directories containing split-pipe results, from</span>
+<span class="sd">            `SplitPipeCount`/`SplitPipeCombine`.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">        outdir: The output directory</span>
+
+<span class="sd">    Envs:</span>
+<span class="sd">        metrics_glob (type=str): The glob pattern of the metrics file names.</span>
+<span class="sd">            split-pipe 1.9.0 writes `agg_sample_summary.csv` at the top level</span>
+<span class="sd">            of each output directory (the older `metrics_summary.csv` name is</span>
+<span class="sd">            not written by this version),</span>
+<span class="sd">            relative to each input directory, e.g. `*metrics_summary.csv`.</span>
+<span class="sd">            The directories are searched recursively, so metrics files nested</span>
+<span class="sd">            in per-sample subdirectories are found as well.</span>
+<span class="sd">    """</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="s2">"indirs:dirs"</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ch</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"outdir:dir:{{in.indirs | first | stem | append: '-etc.splitpipe_summary'}}"</span>
+    <span class="p">)</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">rscript</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s2">"file://../scripts/splitpipe/SplitPipeSummary.R"</span>
+    <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"metrics_glob"</span><span class="p">:</span> <span class="s2">"*agg_sample_summary.csv"</span><span class="p">}</span>
+    <span class="n">plugin_opts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"report"</span><span class="p">:</span> <span class="s2">"file://../reports/splitpipe/SplitPipeSummary.svelte"</span><span class="p">,</span>
+        <span class="s2">"report_paging"</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  <div class="footer-notes">
+    <a href="https://github.com/pwwang/biopipen" title="Open repository in GitHub">Github Repo</a>
+    <div class="footer-sep"></div>Built with <a href="https://www.mkdocs.org/">MkDocs</a> using theme <a href="https://github.com/pwwang/mkdocs-rtd">mkdocs-rtd</a>.
+  </div>
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+    <script src="../../../js/version-select.js"></script>
+      <script src="../../../js/mkapi.js"></script>
+      <script src="../../../extra.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
