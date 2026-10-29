@@ -20,7 +20,8 @@ do_one_stats <- function(name) {
     groupings <- unique(c(case$group_by, case$rows_by, case$columns_by, case$pie_group_by, ident))
     if (length(groupings) > 0) {
         for (g in groupings) {
-            case$object <- filter(case$object, !is.na(!!sym(g)))
+            # "group:expand" used for sankey/alluvial plots
+            case$object <- filter(case$object, !is.na(!!sym(sub(":expand", "", g))))
         }
     }
     if (identical(case$plot_type, "pies")) {
