@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.3
+
+- chore: bump up dependencies
+- fix(scrna.SeuratClusterStats): fix :expand modifier for group_by for stats sankey/alluvial plots
+
 ## 1.5.2
 
 - feat(scrna.CellTypeAnnotation): add support for cell subsetting and post-mutation processing
