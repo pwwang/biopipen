@@ -1393,6 +1393,9 @@ class ModuleScoreCalculator(Proc):
         gene signature scoring. *Comput Struct Biotechnol J* 19:3796-3798.
         <https://doi.org/10.1016/j.csbj.2021.06.043>). Missing genes are
         imputed with expression 0 (with a warning).
+    - `mean`: the per-cell mean of the module's features on the given layer,
+        without control subtraction. Use it when the score should be the
+        expression level itself (e.g. a transgene with `slot: counts`).
     - `aucell`: [`AUCell::AUCell_calcAUC()`](https://bioconductor.org/packages/release/bioc/html/AUCell.html)
         (Aibar S, et al. 2017. SCENIC: single-cell regulatory network inference
         and clustering. *Nat Methods* 14:1083-1086.
@@ -1422,8 +1425,8 @@ class ModuleScoreCalculator(Proc):
     Envs:
         defaults (ns): The default parameters for `modules`.
             - method (choice): The scoring method to use, one of `seurat`,
-                `ucell`, `aucell`, `ssgsea`, `jasmine`, `scse` or `scps`.
-                Can be overridden per module.
+                `ucell`, `mean`, `aucell`, `ssgsea`, `jasmine`, `scse` or
+                `scps`. Can be overridden per module.
             - features: The features (genes) to calculate the scores.
                 A comma-separated string of genes, e.g.
                 `"HAVCR2,ENTPD1,LAYN,LAG3"`, yields one score column named by
@@ -1457,7 +1460,9 @@ class ModuleScoreCalculator(Proc):
                 <https://satijalab.org/seurat/reference/addmodulescore> and
                 <https://satijalab.org/seurat/reference/cellcyclescoring>).
                 For `ucell`: `maxRank`, `w_neg` and `slot` (default
-                `"counts"`, not `layer`). For `aucell`: `aucMaxRank`,
+                `"counts"`, not `layer`). For `mean`: `layer` (alias `slot`,
+                default `"counts"`) selects the layer, and `assay` the assay.
+                For `aucell`: `aucMaxRank`,
                 `plotStats`. For `ssgsea`: `kcdf`, `verbose`, `min.sz`,
                 `max.sz`, `tau`, etc. For `scse`/`scps`: `layer` (default
                 `"data"`). `scps` uses the bundled scPS implementation, which
