@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.4
+
+- feat(scrna.SeuratPreparing): handle degenerate counts layers after QC
+- feat(scrna.ModuleScoreCalculator): add method mean
+
 ## 1.5.3
 
 - chore: bump up dependencies
