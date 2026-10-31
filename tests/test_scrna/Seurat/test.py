@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from pipen import Proc  # type: ignore
 from biopipen.core.config import config
@@ -405,6 +406,9 @@ class ModuleScoreCalculator(ModuleScoreCalculator_):
             "CC": {"kind": "cc", "ctrl": 4, "nbin": 10},
             "DC": {"kind": "dm"},
             "Stale": {"features": "CD3D,GZMM", "agg": "mean", "keep": False},
+            # `mean` reports the expression level itself (raw counts), with
+            # `slot` accepted as an alias of `layer`
+            "CAR": {"features": "CD3D", "method": "mean", "slot": "counts", "assay": "RNA"},
         }
     }
 
@@ -651,8 +655,24 @@ def pipeline():
 
 
 def testing(pipen):
-    # assert pipen._succeeded
-    ...
+    # `mean` method: the metadata column is the raw counts of the gene
+    proc = [proc for proc in pipen.procs if proc.name == "ModuleScoreCalculator"][0]
+    rds = next(proc.workdir.joinpath("0", "output").glob("*.qs"))
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- qs2::qs_read({str(rds)!r})
+        counts <- GetAssayData(obj, assay = "RNA", layer = "counts")
+        cells <- colnames(obj)[1:5]
+        stopifnot(identical(
+            as.numeric(obj$CAR[cells]),
+            as.numeric(counts["CD3D", cells])
+        ))
+        cat("MEAN_CHECK_OK\\n")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+    assert "MEAN_CHECK_OK" in result.stdout
 
 
 if __name__ == "__main__":
