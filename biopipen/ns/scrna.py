@@ -195,6 +195,15 @@ class SeuratPreparing(Proc):
             * [`SCTransform`](https://satijalab.org/seurat/reference/sctransform).
             See <https://satijalab.org/seurat/articles/seurat5_integration#perform-streamlined-one-line-integrative-analysis>
 
+        min_cells_layer (type=int): A counts layer (one per sample) with fewer cells than this after QC
+            counts as degenerate. `on_degenerate` decides what happens to it.
+            Set to `0` to disable the check.
+            Default: `3`
+        on_degenerate (choice): What to do with degenerate counts layers.
+            - error: Fail with a message naming the degenerate samples.
+            - drop: Remove those samples with a warning and let the preparation continue.
+            Default: `error`
+
         no_integration (flag): Whether to skip integration or not.
             By default, if there are multiple samples, integration will be performed. If `no_integration` is `True`, the samples will be merged without integration.
             If there is only one sample, integration will be skipped regardless of the value of `no_integration`.
@@ -353,6 +362,8 @@ class SeuratPreparing(Proc):
             },
         },
         "use_sct": False,
+        "min_cells_layer": 3,
+        "on_degenerate": "error",
         "no_integration": None,
         "NormalizeData": {},
         "FindVariableFeatures": {},

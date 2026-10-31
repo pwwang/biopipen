@@ -233,9 +233,27 @@ sobj <- RunSeuratTransformation(
     FindVariableFeaturesArgs = envs$FindVariableFeatures,
     ScaleDataArgs = envs$ScaleData,
     RunPCAArgs = envs$RunPCA,
+    min_cells_layer = {{envs.min_cells_layer | int}},
+    on_degenerate = "{{envs.on_degenerate}}",
+    cell_qc = {{envs.cell_qc | r}},
     log = log,
     cache = envs$cache
 )
+if (!is.null(sobj@misc$degenerate_layers)) {
+    deg <- sobj@misc$degenerate_layers
+    write.table(
+        deg,
+        file = file.path(joboutdir, "degenerate_layers.txt"),
+        sep = "\t", quote = FALSE, row.names = FALSE
+    )
+    log$warn(paste0(
+        "Dropped ", nrow(deg), " degenerate counts layer(s) with fewer than ",
+        envs$min_cells_layer, " cells: ",
+        paste0(deg$sample, " (", deg$cells,
+               ifelse(deg$cells == 1, " cell", " cells"), ")",
+               collapse = ", ")
+    ))
+}
 sobj <- RunSeuratIntegration(
     sobj,
     no_integration = envs$no_integration,
