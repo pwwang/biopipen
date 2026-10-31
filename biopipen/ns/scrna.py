@@ -5074,6 +5074,9 @@ class CellCellCommunication(Proc):
             The arguments are passed to the method directly.
             See the method documentation for more details and also
             `help(liana.mt.<method>.__call__)` in Python.
+            `use_raw` defaults to `True` when the input h5ad carries a `raw` matrix, because
+            `liana` >= 2.0 rejects the scaled matrix that `Seurat2AnnData` writes to `X`.
+            Set `use_raw = False` (or `layer = "..."`) in a case to override the default.
     """  # noqa: E501
 
     input = "sobjfile:file"
