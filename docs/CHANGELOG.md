@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.5
+
+- feat(scrna.CellCellCommunication): add use_raw to fix for liana v2.1.0
+
 ## 1.5.4
 
 - feat(scrna.SeuratPreparing): handle degenerate counts layers after QC
