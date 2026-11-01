@@ -210,6 +210,13 @@ def do_case(name):
     case["verbose"] = True
     case["key_added"] = "liana_ccc"
 
+    # liana >= 2.0 rejects scaled/centred expression ("mat contains negative
+    # values"). The h5ad from Seurat2AnnData keeps scale.data in X (HVGs only)
+    # and the log-normalized matrix in raw, so prefer raw unless the case
+    # already picked a matrix explicitly.
+    if "use_raw" not in case and "layer" not in case and case_adata.raw is not None:
+        case["use_raw"] = True
+
     split_by = case.pop("split_by", None)
     if split_by:
         if isinstance(split_by, str):
