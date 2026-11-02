@@ -382,6 +382,24 @@ if (ncores > 1 && length(cases) > 1) {
     results <- lapply(names(cases), run_case)
 }
 
+# forked cases swallow their error into a "try-error" string; surface it here,
+# naming the case, instead of failing later on a cryptic `$` on an atomic vector
+failed <- vapply(results, inherits, logical(1), what = "try-error")
+if (any(failed)) {
+    stop(paste0(
+        "[CellTypeAnnotation] case(s) failed: ",
+        paste0(
+            names(cases)[failed], ": ",
+            vapply(
+                results[failed],
+                function(x) trimws(as.character(x)),
+                character(1)
+            ),
+            collapse = "; "
+        )
+    ), call. = FALSE)
+}
+
 # Apply results to Seurat object in order
 case_anno_cols <- list()
 set_ident_cases <- list()
