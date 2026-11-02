@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.6
+
+- feat(scrna.CellTypeAnnotation): improve error handling for failed cases
+
 ## 1.5.5
 
 - feat(scrna.CellCellCommunication): add use_raw to fix for liana v2.1.0
