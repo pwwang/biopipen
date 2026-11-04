@@ -142,4 +142,5 @@ debug.ipynb
 tests/test_scrna/HdWGCNA/data/*.rds
 tests/test_scrna/HdWGCNA/data/*.pkl
 tests/test_scrna/CellTypeAnnotationGarnett/data/*.RDS
+tests/test_scrna/CellTypeAnnotation/data/mapquery_ref.rds
 logs/

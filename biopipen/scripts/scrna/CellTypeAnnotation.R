@@ -296,6 +296,24 @@ cases <- lapply(cases, function(case) {
     case
 })
 
+# With several mapquery cases, each case's reference projection would be
+# written under the same name (ref.umap by default); keep them all by giving
+# each case its own reduction name, unless the case set one explicitly
+mapquery_cases <- names(cases)[vapply(
+    cases, function(case) identical(case$tool, "mapquery"), logical(1)
+)]
+if (length(mapquery_cases) > 1) {
+    for (case_name in mapquery_cases) {
+        existing <- cases[[case_name]]$mapquery$map_query$projectumap.args$reduction.name
+        cases[[case_name]]$mapquery$map_query$projectumap.args$reduction.name <-
+            existing %||% paste0(case_name, ".ref.umap")
+    }
+    log$info(paste0(
+        "Multiple mapquery cases: keeping per-case projections as ",
+        paste0("'", mapquery_cases, ".ref.umap'", collapse = ", ")
+    ))
+}
+
 # Run each case
 run_case <- function(case_name) {
     case <- cases[[case_name]]
@@ -340,10 +358,26 @@ run_case <- function(case_name) {
         sobj_case <- subobj
     }
 
-    record <- RunCellTypeAnnotation(
-        sobj_case, tool_name,
-        args = tool_cfg, ident = case$ident, cache = cache_dir, log = log
-    )
+    if (identical(tool_name, "mapquery")) {
+        # The mapped object carries the reference projection (ref.umap by
+        # default); hand back only its compact payload -- the whole object
+        # dies with the fork
+        existing <- Reductions(sobj_case)
+        res <- RunCellTypeAnnotation(
+            sobj_case, tool_name,
+            args = tool_cfg, ident = case$ident, cache = cache_dir, log = log,
+            return_object = TRUE
+        )
+        payload <- SeuratProjectionPayload(res$object, exclude = existing)
+        record <- res$record
+        reductions <- payload
+    } else {
+        record <- RunCellTypeAnnotation(
+            sobj_case, tool_name,
+            args = tool_cfg, ident = case$ident, cache = cache_dir, log = log
+        )
+        reductions <- list()
+    }
 
     # For celltypist, the cluster mapping is keyed on the over_clustering column
     result_ident <- case$ident
@@ -364,7 +398,8 @@ run_case <- function(case_name) {
         set_ident = isTRUE(case$set_ident),
         merge = case$merge,
         subset_cells = subset_cells,
-        is_cluster_based = !is.null(record$mapping)
+        is_cluster_based = !is.null(record$mapping),
+        reductions = reductions
     )
 }
 
@@ -429,6 +464,44 @@ for (res in results) {
         log = log
     )
     case_anno_cols[[res$name]] <- paste0(prefix, res$anno_col)
+
+    # Embed the projections the case's tool produced (mapquery: the reference
+    # projection, e.g. ref.umap); cells outside the case's subset keep NA
+    for (proj in res$reductions) {
+        # With several mapquery cases every reduction a case adds is scoped to
+        # that case (`<case>.<reduction>`, the SeuratSubClustering convention),
+        # so two cases cannot collide; a name the case already qualified itself
+        # (e.g. `CaseA.ref.umap`) is left alone
+        name <- proj$name
+        if (length(mapquery_cases) > 1 &&
+                !startsWith(name, paste0(res$name, "."))) {
+            name <- paste0(res$name, ".", name)
+        }
+        if (name %in% Reductions(sobj)) {
+            log$warn(paste0(
+                "Skipping projection '", name, "': a reduction of that ",
+                "name already exists in the object"
+            ))
+            next
+        }
+        emb <- matrix(NA_real_, nrow = ncol(sobj), ncol = ncol(proj$embeddings),
+                      dimnames = list(colnames(sobj), colnames(proj$embeddings)))
+        cells <- if (is.null(res$subset_cells)) colnames(proj$embeddings) else res$subset_cells
+        emb[cells, ] <- proj$embeddings[cells, , drop = FALSE]
+        # Keys must stay unique across the object, or two projections would
+        # share embedding column names; fall back to a key built from the
+        # (already case-qualified) reduction name
+        key <- proj$key
+        if (key %in% vapply(
+            Reductions(sobj), function(r) Key(sobj[[r]]), character(1)
+        )) {
+            key <- paste0(gsub("[^A-Za-z0-9]", "", toupper(name)), "_")
+        }
+        sobj[[name]] <- CreateDimReducObject(
+            embeddings = emb, key = key, assay = proj$assay
+        )
+        log$info("Added projection '{name}' ({ncol(sobj)} cells, {sum(!is.na(emb[, 1]))} with coordinates)")
+    }
 
     if (isTRUE(res$set_ident)) {
         set_ident_cases[[length(set_ident_cases) + 1]] <- res$name

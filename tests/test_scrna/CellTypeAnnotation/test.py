@@ -412,6 +412,36 @@ class CellTypeAnnotationSubsetCluster(CellTypeAnnotation_):
     }
 
 
+# class CellTypeAnnotationMapQuerySubsets(CellTypeAnnotation_):
+#     """Two mapquery cases on disjoint subsets: each case's reference projection
+#     is kept under <case>.ref.umap with coordinates only for its subset, and the
+#     query's own umap reduction is not overwritten"""
+
+#     requires = PrepData
+#     envs = {
+#         "mapquery": {
+#             "db": str(Path(__file__).parent / "data/mapquery_ref.rds"),
+#             "use": "celltype.l2",
+#             "map_query": {
+#                 "reference.reduction": "refDR",
+#                 "reduction.model": "refUMAP",
+#             },
+#         },
+#         "cases": {
+#             "CaseA": {
+#                 "tool": "mapquery",
+#                 "subset": "seurat_clusters %in% c('0', '1', '2', '3', '4')",
+#                 "set_ident": False,
+#             },
+#             "CaseB": {
+#                 "tool": "mapquery",
+#                 "subset": "!seurat_clusters %in% c('0', '1', '2', '3', '4')",
+#                 "set_ident": False,
+#             },
+#         },
+#     }
+
+
 def pipeline():
     return get_pipeline(__file__).set_starts(PrepData)
 
@@ -480,6 +510,44 @@ def assert_meta_checks(pipen, procname, checks):
         ["Rscript", "-e", script], capture_output=True, text=True, check=True
     )
     assert "META_CHECKS_OK" in result.stdout
+
+
+def assert_mapquery_case_projections(pipen, procname):
+    """Assert each mapquery case kept its reference projection under
+    <case>.ref.umap with coordinates exactly for its subset (NA elsewhere),
+    and the query's own umap reduction was not overwritten"""
+    proc = get_proc(pipen, procname)
+    rds = proc.workdir.joinpath("0", "output", "pbmc3k.annotated.RDS")
+    # the query object comes from the prep class; the harness does not materialise
+    # a per-job input directory
+    inp_rds = proc.workdir.parent.joinpath("PrepData", "0", "output", "pbmc3k.RDS")
+    assert inp_rds.exists(), f"missing prep output: {inp_rds}"
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- readRDS({str(rds)!r})
+        inp <- readRDS({str(inp_rds)!r})
+        stopifnot(all(c("CaseA.ref.umap", "CaseB.ref.umap") %in% Reductions(obj)))
+        # the query's own umap reduction is untouched
+        stopifnot("umap" %in% Reductions(obj))
+        stopifnot(identical(Embeddings(obj, "umap"), Embeddings(inp, "umap")))
+        # every reduction the cases added is scoped by its case name
+        new_reds <- setdiff(Reductions(obj), Reductions(inp))
+        stopifnot(length(new_reds) > 0)
+        stopifnot(all(startsWith(new_reds, "CaseA.") | startsWith(new_reds, "CaseB.")))
+        # each case's projection holds coordinates exactly for its subset
+        embA <- Embeddings(obj, "CaseA.ref.umap")
+        embB <- Embeddings(obj, "CaseB.ref.umap")
+        subA <- as.character(obj$seurat_clusters) %in% c("0", "1", "2", "3", "4")
+        stopifnot(all(!is.na(embA[subA, 1])))
+        stopifnot(all(is.na(embA[!subA, 1])))
+        stopifnot(all(!is.na(embB[!subA, 1])))
+        stopifnot(all(is.na(embB[subA, 1])))
+        cat("MAPQUERY_PROJECTIONS_OK\\n")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+    assert "MAPQUERY_PROJECTIONS_OK" in result.stdout
 
 
 def check_marker_filters_r():
@@ -742,6 +810,10 @@ def testing(pipen):
             f"stopifnot(all(is.na(obj@meta.data[['High_CellType']][!({high_cells})])))",
         ],
     )
+
+    # Two mapquery cases on disjoint subsets: each keeps its reference
+    # projection under <case>.ref.umap, with coordinates only for its subset
+    assert_mapquery_case_projections(pipen, "CellTypeAnnotationMapQuerySubsets")
 
 
 if __name__ == "__main__":

@@ -3490,6 +3490,13 @@ class CellTypeAnnotation(Proc):
             - find_transfer_anchors (ns): The arguments for `Seurat::FindTransferAnchors()`.
             - sctransform (ns): The arguments for `Seurat::SCTransform()`.
             - normalize_data (ns): The arguments for `Seurat::NormalizeData()`.
+            The reference projection (`ref.umap` by default, or the name given by
+            `map_query.projectumap.args.reduction.name`) is kept in the output
+            object's reductions; with several `mapquery` cases each projection is
+            prefixed with its case name (`<case>.ref.umap`, matching the
+            `<case>.<reduction>` convention of `SeuratSubClustering`) unless the case
+            sets `map_query.projectumap.args.reduction.name` explicitly. The
+            coordinates are `NA` for the cells outside the case's `subset`.
         scinfer (ns): The arguments for `ScInfeR::predict_celltype_scRNA_seurat()`
             if `tool` is `scinfer`. ScInfeR is a graph-based annotator (GPL-3,
             GitHub-only, not on CRAN): it scores the cell types of the marker table
