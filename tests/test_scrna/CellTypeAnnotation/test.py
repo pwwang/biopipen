@@ -7,6 +7,20 @@ from biopipen.ns.scrna import CellTypeAnnotation as CellTypeAnnotation_
 from biopipen.core.testing import get_pipeline
 
 
+MAPQUERY_REF = Path(__file__).parent / "data/mapquery_ref.rds"
+# The toy mapquery reference is gitignored (a ~350 KB binary fixture is not
+# shipped), so build it on demand from Seurat's bundled pbmc_small.
+if not MAPQUERY_REF.exists():
+    subprocess.run(
+        [
+            "Rscript",
+            str(MAPQUERY_REF.parent / "make_mapquery_ref.R"),
+            str(MAPQUERY_REF),
+        ],
+        check=True,
+    )
+
+
 class PrepData(Proc):
     """Download pbmc3k, normalize, and cluster"""
 
@@ -420,7 +434,7 @@ class CellTypeAnnotationMapQuerySubsets(CellTypeAnnotation_):
     requires = PrepData
     envs = {
         "mapquery": {
-            "db": str(Path(__file__).parent / "data/mapquery_ref.rds"),
+            "db": str(MAPQUERY_REF),
             "use": "celltype.l2",
             "map_query": {
                 "reference.reduction": "refDR",
