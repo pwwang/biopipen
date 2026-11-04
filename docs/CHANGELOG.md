@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.5.7
+
+- test(scrna.CellTypeAnnotation): build the mapquery reference at test time
+- fix(scrna.CellTypeAnnotation): read cell names from projection rows
+- fix(make-examples.sh): add retry logic for downloading refFlat data for cnvkit_pipeline docker image building
+- feat(scrna.CellTypeAnnotation): enhance handling of multiple mapquery cases and reference projections
+
 ## 1.5.6
 
 - feat(scrna.CellTypeAnnotation): improve error handling for failed cases

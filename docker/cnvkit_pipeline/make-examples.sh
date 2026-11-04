@@ -31,7 +31,7 @@ echo "| Donwloading refFlat                    |"
 echo "+----------------------------------------+"
 echo ""
 if [[ ! -f $WORKDIR/refFlat.txt ]]; then
-    wget -q https://hgdownload.cse.ucsc.edu/goldenpath/hg19/database/refFlat.txt.gz -O $WORKDIR/refFlat.txt.gz
+    wget -q --tries=3 https://hgdownload.soe.ucsc.edu/goldenpath/hg19/database/refFlat.txt.gz -O $WORKDIR/refFlat.txt.gz
     gunzip $WORKDIR/refFlat.txt.gz
 fi
 
