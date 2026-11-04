@@ -486,8 +486,25 @@ for (res in results) {
         }
         emb <- matrix(NA_real_, nrow = ncol(sobj), ncol = ncol(proj$embeddings),
                       dimnames = list(colnames(sobj), colnames(proj$embeddings)))
-        cells <- if (is.null(res$subset_cells)) colnames(proj$embeddings) else res$subset_cells
-        emb[cells, ] <- proj$embeddings[cells, , drop = FALSE]
+        # cell names are the ROWS of a projection (columns are the dimensions);
+        # a case with no `subset` covers every cell of the payload
+        cells <- if (is.null(res$subset_cells)) rownames(proj$embeddings) else res$subset_cells
+        if (is.null(cells)) {
+            log$warn(paste0(
+                "Skipping projection '", name, "': it carries no cell names"
+            ))
+            next
+        }
+        idx <- match(cells, rownames(proj$embeddings))
+        if (anyNA(idx)) {
+            log$warn(paste0(
+                "Projection '", name, "': ", sum(is.na(idx)), " of ", length(cells),
+                " cell(s) of case '", res$name, "' have no coordinates (left NA)"
+            ))
+            cells <- cells[!is.na(idx)]
+            idx <- idx[!is.na(idx)]
+        }
+        emb[cells, ] <- proj$embeddings[idx, , drop = FALSE]
         # Keys must stay unique across the object, or two projections would
         # share embedding column names; fall back to a key built from the
         # (already case-qualified) reduction name

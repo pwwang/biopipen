@@ -412,34 +412,34 @@ class CellTypeAnnotationSubsetCluster(CellTypeAnnotation_):
     }
 
 
-# class CellTypeAnnotationMapQuerySubsets(CellTypeAnnotation_):
-#     """Two mapquery cases on disjoint subsets: each case's reference projection
-#     is kept under <case>.ref.umap with coordinates only for its subset, and the
-#     query's own umap reduction is not overwritten"""
+class CellTypeAnnotationMapQuerySubsets(CellTypeAnnotation_):
+    """Two mapquery cases on disjoint subsets: each case's reference projection
+    is kept under <case>.ref.umap with coordinates only for its subset, and the
+    query's own umap reduction is not overwritten"""
 
-#     requires = PrepData
-#     envs = {
-#         "mapquery": {
-#             "db": str(Path(__file__).parent / "data/mapquery_ref.rds"),
-#             "use": "celltype.l2",
-#             "map_query": {
-#                 "reference.reduction": "refDR",
-#                 "reduction.model": "refUMAP",
-#             },
-#         },
-#         "cases": {
-#             "CaseA": {
-#                 "tool": "mapquery",
-#                 "subset": "seurat_clusters %in% c('0', '1', '2', '3', '4')",
-#                 "set_ident": False,
-#             },
-#             "CaseB": {
-#                 "tool": "mapquery",
-#                 "subset": "!seurat_clusters %in% c('0', '1', '2', '3', '4')",
-#                 "set_ident": False,
-#             },
-#         },
-#     }
+    requires = PrepData
+    envs = {
+        "mapquery": {
+            "db": str(Path(__file__).parent / "data/mapquery_ref.rds"),
+            "use": "celltype.l2",
+            "map_query": {
+                "reference.reduction": "refDR",
+                "reduction.model": "refUMAP",
+            },
+        },
+        "cases": {
+            "CaseA": {
+                "tool": "mapquery",
+                "subset": "seurat_clusters %in% c('0', '1', '2', '3', '4')",
+                "set_ident": False,
+            },
+            "CaseB": {
+                "tool": "mapquery",
+                "subset": "!seurat_clusters %in% c('0', '1', '2', '3', '4')",
+                "set_ident": False,
+            },
+        },
+    }
 
 
 def pipeline():
@@ -447,7 +447,12 @@ def pipeline():
 
 
 def get_proc(pipen, name):
-    return [proc for proc in pipen.procs if proc.name == name][0]
+    procs = [proc for proc in pipen.procs if proc.name == name]
+    assert procs, (
+        f"proc {name!r} was not created (a failing proc earlier in the run stops "
+        f"pipen from creating the rest); existing: {[p.name for p in pipen.procs]}"
+    )
+    return procs[0]
 
 
 def get_rds_info(pipen, procname):
