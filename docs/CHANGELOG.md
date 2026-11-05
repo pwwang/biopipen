@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.8
+
+- chore: bump pipen-board==1.2.2 and pipen-report==1.3.0
+- feat(scrna.ModuleScoreCalculator): support `:ident` in post_mutaters
+
 ## 1.5.7
 
 - test(scrna.CellTypeAnnotation): build the mapquery reference at test time

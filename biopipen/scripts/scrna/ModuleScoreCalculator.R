@@ -22,8 +22,11 @@ sobj <- do_call(RunModuleScoring, c(list(object = sobj, modules = modules), defa
 
 if (!is.null(post_mutaters) && length(post_mutaters) > 0) {
     log$info("Applying post mutaters ...")
-    sobj@meta.data <- sobj@meta.data %>%
-        mutate(!!!lapply(post_mutaters, parse_expr))
+    # MutateSeuratMeta() applies the same dplyr::mutate() but also understands
+    # the `<column>:ident` key, so a "<column>" can become the object identity.
+    # It has to happen here rather than in CellTypeAnnotation when the expression
+    # reads a module score: this process runs AFTER CellTypeAnnotation.
+    sobj <- MutateSeuratMeta(sobj, post_mutaters, log = log)
 }
 
 # save seurat object

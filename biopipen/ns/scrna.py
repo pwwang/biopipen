@@ -1528,9 +1528,14 @@ class ModuleScoreCalculator(Proc):
             and [`destiny`](https://bioconductor.org/packages/release/bioc/html/destiny.html) R packages.
         post_mutaters (type=json): The mutaters to mutate the metadata after
             calculating the module scores.
-            The mutaters will be applied in the order specified.
+            The mutaters will be applied in the order specified, so an entry may
+            use a column an earlier entry created.
             This is useful when you want to create new scores based on the
-            calculated module scores.
+            calculated module scores, or when a label has to be refined by a
+            module score computed here (this process runs after
+            `CellTypeAnnotation`).
+            A `<column>:ident` key sets `<column>` as the object identity after
+            the mutation.
     """  # noqa: E501
 
     input = "srtobj:file"
