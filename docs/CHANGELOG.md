@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.5.9
+
+- chore(scrna.MarkersFinder): use 'tabs:5' for all markers and all enrich reporting, which tabs turn into dropdown when there are more than 5 tabs
+- chore: bump pipen-report to 1.3.1
+
 ## 1.5.8
 
 - chore: bump pipen-board==1.2.2 and pipen-report==1.3.0
