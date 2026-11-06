@@ -516,7 +516,7 @@ process_allmarkers <- function(
                 contents = contents
             ),
             hs = c(info$section, info$name),
-            ui = "tabs"
+            ui = "tabs:5"
         )
     }
 }
@@ -555,7 +555,7 @@ process_allenriches <- function(enriches, plotcases, casename, groupname) {
             list(name = db, contents = plots),
             hs = c(info$section, info$name),
             hs2 = plotname,
-            ui = "tabs"
+            ui = "tabs:5"
         )
     }
 }
