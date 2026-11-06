@@ -1,7 +1,7 @@
 {% from "utils/misc.liq" import report_jobs, table_of_images -%}
 <script>
     import { Image, DataTable, Descr, Plotly } from "$libs";
-    import { Tabs, Tab, TabContent, UnorderedList, ListItem, InlineNotification } from "$ccs";
+    import { Tabs, Tab, TabContent, UnorderedList, ListItem, InlineNotification, Dropdown } from "$ccs";
 </script>
 
 {%- macro report_job(job, h=1) -%}
