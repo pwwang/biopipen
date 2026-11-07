@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.5.10
+
+- fix: add Dropdown component to common.svelte imports
+
 ## 1.5.9
 
 - chore(scrna.MarkersFinder): use 'tabs:5' for all markers and all enrich reporting, which tabs turn into dropdown when there are more than 5 tabs
