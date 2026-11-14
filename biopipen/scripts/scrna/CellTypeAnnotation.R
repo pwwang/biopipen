@@ -18,6 +18,8 @@ anno_col <- {{envs.anno_col | r}}
 set_ident <- {{envs.set_ident | r}}
 subset <- {{envs.subset | r}}
 post_mutaters <- {{envs.post_mutaters | r}}
+report <- {{envs.report | r}}
+joboutdir <- {{job.outdir | r}}
 
 assay <- {{envs.assay | r}}
 layer <- {{envs.layer | r}}
@@ -269,6 +271,10 @@ if (length(cases) == 1 &&
 log$info("Reading Seurat object...")
 sobj <- read_obj(sobjfile)
 
+# The identity of the input object; the purity of a cell-level annotation is
+# computed against it (`seurat_clusters` from SeuratClustering, for example)
+default_ident <- GetIdentityColumn(sobj)
+
 outdir <- dirname(outfile)
 outprefix <- file.path(outdir, tools::file_path_sans_ext(basename(outfile)))
 
@@ -387,6 +393,25 @@ run_case <- function(case_name) {
         result_ident <- tool_cfg$over_clustering
     }
 
+    # The per-cell scores the tool returned (`record$scores`), when it reports
+    # one: a data.frame of numeric columns with cell row names. Anything else
+    # is ignored with a warning, so a lagging runner cannot break the run.
+    scores <- record$scores
+    if (!is.null(scores)) {
+        valid_scores <- is.data.frame(scores) &&
+            nrow(scores) > 0 &&
+            ncol(scores) > 0 &&
+            .row_names_info(scores) > 0 &&
+            all(vapply(scores, is.numeric, logical(1)))
+        if (!valid_scores) {
+            log$warn(paste0(
+                "Ignoring `scores` of case '", case_name, "': expected a ",
+                "data.frame of numeric columns with cell row names"
+            ))
+            scores <- NULL
+        }
+    }
+
     list(
         name = case_name,
         record = record,
@@ -399,7 +424,8 @@ run_case <- function(case_name) {
         merge = case$merge,
         subset_cells = subset_cells,
         is_cluster_based = !is.null(record$mapping),
-        reductions = reductions
+        reductions = reductions,
+        scores = scores
     )
 }
 
@@ -435,8 +461,51 @@ if (any(failed)) {
     ), call. = FALSE)
 }
 
+### --- scores: start ---
+# Carry a case's per-cell tool scores (`record$scores`) into the metadata,
+# mirroring its label columns: the same prefix, and NA for the cells without a
+# score or outside the case's subset. `scores` must be a data.frame of numeric
+# columns with cell row names; anything else is ignored with a single warning,
+# and an existing metadata column is never overwritten.
+add_case_scores <- function(sobj, scores, prefix, subset_cells, log) {
+    if (is.null(scores) || NCOL(scores) == 0 || NROW(scores) == 0) {
+        return(sobj)
+    }
+    if (!is.data.frame(scores) ||
+            .row_names_info(scores) <= 0 ||
+            !all(vapply(scores, is.numeric, logical(1)))) {
+        log$warn(paste0(
+            "Ignoring the scores: expected a data.frame of numeric columns ",
+            "with cell row names"
+        ))
+        return(sobj)
+    }
+    cells <- colnames(sobj)
+    for (col in colnames(scores)) {
+        meta_col <- paste0(prefix, col)
+        if (meta_col %in% colnames(sobj@meta.data)) {
+            log$warn(paste0(
+                "Skipping score column '", meta_col,
+                "': a metadata column of that name already exists"
+            ))
+            next
+        }
+        idx <- match(rownames(scores), cells)
+        if (!is.null(subset_cells)) {
+            idx[!rownames(scores) %in% subset_cells] <- NA_integer_
+        }
+        values <- rep(NA_real_, length(cells))
+        values[idx[!is.na(idx)]] <- scores[[col]][!is.na(idx)]
+        values[!is.finite(values)] <- NA_real_
+        sobj@meta.data[[meta_col]] <- values
+    }
+    sobj
+}
+### --- scores: end ---
+
 # Apply results to Seurat object in order
 case_anno_cols <- list()
+case_added_cols <- list()
 set_ident_cases <- list()
 for (res in results) {
     if (is.null(res)) next
@@ -449,6 +518,7 @@ for (res in results) {
         prefix <- paste0(res$name, "_")
     }
 
+    cols_before <- colnames(sobj@meta.data)
     sobj <- EmbedSeuratCellTypeAnnotation(
         sobj,
         record = res$record,
@@ -462,6 +532,15 @@ for (res in results) {
         merge = res$merge,
         subset = res$subset_cells,
         log = log
+    )
+    # The tool's per-cell scores ride along with the label columns (same
+    # prefix, same subset); keep them in the added columns so the report can
+    # find the score panel's column
+    sobj <- add_case_scores(
+        sobj, res$scores, prefix, res$subset_cells, log
+    )
+    case_added_cols[[res$name]] <- setdiff(
+        colnames(sobj@meta.data), cols_before
     )
     case_anno_cols[[res$name]] <- paste0(prefix, res$anno_col)
 
@@ -634,3 +713,248 @@ if (!is.null(post_mutaters) && length(post_mutaters) > 0) {
 
 log$info("Saving Seurat object...")
 save_obj(sobj, outfile)
+
+# Merge the report options over the defaults so a partially-specified env
+# still works
+report <- list_update(
+    list(
+        reduction = "dim",
+        score_col = NULL,
+        purity = TRUE,
+        devpars = list(width = 1200, height = 720, res = 100),
+        more_formats = "pdf"
+    ),
+    report
+)
+
+# The prefix of the metadata columns a case added
+case_prefix <- function(case_name) {
+    if (identical(case_name, "DEFAULT") || isFALSE(add_prefix)) {
+        return("")
+    }
+    paste0(case_name, "_")
+}
+
+# The per-cell annotation column of a case; NULL when the case only labels
+# clusters and carries no per-cell labels
+case_label_col <- function(res) {
+    if (identical(res$type, "cell")) {
+        return(paste0(case_prefix(res$name), res$anno_col))
+    }
+    if (!is.null(res$cells)) {
+        return(paste0(case_prefix(res$name), colnames(res$cells)[1]))
+    }
+    NULL
+}
+
+# The numeric score column a case added: `report$score_col` when given, else
+# the first added numeric column (preferring one whose name ends with `.score`)
+case_score_col <- function(res) {
+    if (!is.null(report$score_col)) {
+        if (report$score_col %in% colnames(sobj@meta.data)) {
+            return(report$score_col)
+        }
+        log$warn(paste0(
+            "Score column '", report$score_col,
+            "' is not a metadata column; detecting the score column instead"
+        ))
+    }
+    added <- setdiff(
+        case_added_cols[[res$name]] %||% character(0),
+        case_anno_cols[[res$name]]
+    )
+    added <- intersect(added, colnames(sobj@meta.data))
+    numeric_cols <- added[vapply(
+        sobj@meta.data[added], is.numeric, logical(1)
+    )]
+    if (length(numeric_cols) == 0) {
+        return(NULL)
+    }
+    score_cols <- numeric_cols[endsWith(numeric_cols, ".score")]
+    if (length(score_cols) > 0) score_cols[[1]] else numeric_cols[[1]]
+}
+
+# The purity of a per-cell annotation against the clusters of the identity
+# column: the modal label and its share per cluster, with the clusters ordered
+# by the factor levels of the identity column (or by first appearance)
+compute_purity <- function(labels, clusters) {
+    keep <- !is.na(labels) & !is.na(clusters)
+    labels <- as.character(labels[keep])
+    clusters <- clusters[keep]
+    if (length(labels) == 0) {
+        return(NULL)
+    }
+    cluster_levels <- if (is.factor(clusters)) {
+        levels(droplevels(clusters))
+    } else {
+        unique(as.character(clusters))
+    }
+    rows <- lapply(cluster_levels, function(cluster) {
+        in_cluster <- as.character(clusters) == cluster
+        counts <- sort(table(labels[in_cluster]), decreasing = TRUE)
+        data.frame(
+            Cluster = cluster,
+            NCells = sum(in_cluster),
+            MajorCellType = names(counts)[1],
+            NMajor = as.integer(counts[[1]]),
+            Purity = as.numeric(counts[[1]]) / sum(in_cluster),
+            stringsAsFactors = FALSE
+        )
+    })
+    do.call(rbind, rows)
+}
+
+reporter <- get_reporter()
+combine_plots <- getFromNamespace("combine_plots", "plotthis")
+report_devpars <- list_update(
+    list(width = 1200, height = 720, res = 100),
+    report$devpars
+)
+
+for (res in results) {
+    if (is.null(res)) next
+
+    anno_col <- case_anno_cols[[res$name]]
+    if (is.null(anno_col) || !anno_col %in% colnames(sobj@meta.data)) {
+        log$warn(paste0(
+            "Skipping the report of case '", res$name,
+            "': annotation column '", anno_col %||% "<none>",
+            "' is not in the metadata"
+        ))
+        next
+    }
+    if (all(is.na(sobj@meta.data[[anno_col]]))) {
+        log$warn(paste0(
+            "Skipping the report of case '", res$name,
+            "': annotation column '", anno_col, "' is entirely NA"
+        ))
+        next
+    }
+
+    reduction <- report$reduction
+    if (is.null(reduction) || reduction %in% c("dim", "auto")) {
+        reduction <- tryCatch(
+            SeuratObject::DefaultDimReduc(sobj),
+            error = function(e) NULL
+        )
+    }
+    has_reduction <- !is.null(reduction) &&
+        isTRUE(reduction %in% Reductions(sobj))
+    if (!has_reduction) {
+        log$warn(paste0(
+            "Skipping the plots of case '", res$name,
+            "': reduction '", reduction %||% "<none>",
+            "' is not in the object"
+        ))
+    } else {
+        score_col <- case_score_col(res)
+        plot_prefix <- file.path(
+            outdir, paste0(slugify(res$name), ".annot.umap")
+        )
+        p_annotation <- scplotter::CellDimPlot(
+            sobj,
+            group_by = anno_col,
+            reduction = reduction,
+            title = paste0(res$name, ": annotation")
+        )
+        if (is.null(score_col)) {
+            p <- p_annotation
+        } else {
+            p_score <- scplotter::FeatureStatPlot(
+                sobj,
+                features = score_col,
+                plot_type = "dim",
+                reduction = reduction,
+                title = paste0(res$name, ": ", score_col)
+            )
+            p <- combine_plots(
+                list(p_annotation, p_score), combine = TRUE, nrow = 1
+            )
+        }
+        save_plot(
+            p, plot_prefix, report_devpars,
+            formats = c("png", report$more_formats)
+        )
+
+        anno_descr <- paste0(
+            "Case `", res$name, "`: the `",
+            cases[[res$name]]$tool %||% "unknown",
+            "` tool annotated `", anno_col, "`"
+        )
+        if (!is.null(score_col)) {
+            anno_descr <- paste0(
+                anno_descr, "; the second panel is coloured by the ",
+                "score column `", score_col, "`"
+            )
+        }
+        do.call(
+            reporter$add,
+            c(
+                list(
+                    list(kind = "descr", content = paste0(anno_descr, ".")),
+                    reporter$image(
+                        plot_prefix, report$more_formats, FALSE,
+                        kind = "image"
+                    )
+                ),
+                list(h1 = res$name, h2 = "Annotation")
+            )
+        )
+    }
+
+    label_col <- case_label_col(res)
+    if (!isTRUE(report$purity) ||
+            is.null(label_col) ||
+            identical(label_col, default_ident) ||
+            is.null(default_ident) ||
+            !default_ident %in% colnames(sobj@meta.data)) {
+        next
+    }
+    if (!label_col %in% colnames(sobj@meta.data)) {
+        log$warn(paste0(
+            "Skipping the purity of case '", res$name,
+            "': label column '", label_col,
+            "' is not in the metadata (identity column '",
+            default_ident, "')"
+        ))
+        next
+    }
+
+    purity <- compute_purity(
+        sobj@meta.data[[label_col]],
+        sobj@meta.data[[default_ident]]
+    )
+    if (is.null(purity)) next
+
+    purity_file <- paste0(
+        outprefix, ".", slugify(res$name), ".purity.tsv"
+    )
+    write_table(
+        purity, purity_file,
+        sep = "\t", quote = FALSE, row.names = FALSE
+    )
+    overall_purity <- sum(purity$NMajor) / sum(purity$NCells)
+    log$info(paste0(
+        "Purity of case '", res$name, "' against '", default_ident,
+        "': ", sprintf("%.3f", overall_purity)
+    ))
+    reporter$add(
+        list(
+            kind = "descr",
+            content = paste0(
+                "Overall purity: ", sprintf("%.3f", overall_purity),
+                " (", sum(purity$NCells), " cells, identity column `",
+                default_ident, "`)."
+            )
+        ),
+        list(
+            kind = "table",
+            src = purity_file,
+            data = list(nrows = 100)
+        ),
+        h1 = res$name,
+        h2 = "Purity"
+    )
+}
+
+reporter$save(joboutdir)

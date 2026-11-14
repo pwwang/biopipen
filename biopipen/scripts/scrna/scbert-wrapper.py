@@ -151,6 +151,7 @@ def main():
     # Predict cell by cell (matching predict.py logic)
     num_cells = data.shape[0]
     pred_list = ["Unassigned"] * num_cells
+    pred_scores = [0.0] * num_cells
 
     with torch.no_grad():
         for index in range(num_cells):
@@ -165,6 +166,7 @@ def main():
             logits = model(full_seq)
             pred_prob = nn.Softmax(dim=-1)(logits)
             pred_final = pred_prob.argmax(dim=-1).item()
+            pred_scores[index] = pred_prob.max().item()
 
             if pred_prob.max().item() < UNASSIGN_THRES:
                 pred_list[index] = "Unassigned"
@@ -175,6 +177,7 @@ def main():
     results = pd.DataFrame({
         "barcode": barcodes,
         "scbert_celltype": pred_list,
+        "scbert_score": pred_scores,
     })
     results.to_csv(args.output, sep="\t", index=False)
 
