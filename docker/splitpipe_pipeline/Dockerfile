@@ -41,7 +41,7 @@ RUN conda create -y -n spipe -c conda-forge python==${PYTHON_VERSION} && \
 # A newer python resolves a quart release (> 0.22) whose API the released
 # pipen-board cannot import yet; see the pipen-board fix for quart >= 0.23.
 RUN conda install -y -n base -c conda-forge -c bioconda -c pwwang \
-        python=3.11 nodejs=22 r-base=4.4 r-biopipen.utils && \
+        python=3.11 nodejs=22 r-base=4.5 r-biopipen.utils && \
     conda clean --all --yes
 
 # Accept Anaconda's channel terms of service non-interactively: Parse's own

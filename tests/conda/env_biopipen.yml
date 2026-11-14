@@ -8,13 +8,13 @@ channels:
   - pytorch  # for ClusTCR
   - svalkiers  # for ClusTCR
 dependencies:
-  - conda-forge::python=3.11  # truvari on bioconda not avai for python3.12 yet
+  - conda-forge::python=3.12  # truvari on bioconda not avai for python3.12 yet
   - conda-forge::nodejs=22  # for pipen-report
   - conda-forge::curl
   - conda-forge::time  # pipen-runinfo
   - conda-forge::openssl
   - conda-forge::aria2
-  - conda-forge::r-base=4.4
+  - conda-forge::r-base=4.5
   - conda-forge::r-mediation
   - conda-forge::r-enrichr
   - conda-forge::r-future
@@ -50,7 +50,7 @@ dependencies:
   - bioconda::cellsnp-lite
   - bioconda::r-presto
   - bioconda::r-scimpute
-  - bioconda::r-loomr
+  - pwwang::r-loomr
   - bioconda::bioconductor-deseq2
   - bioconda::bioconductor-splatter
   - bioconda::bioconductor-glmgampoi
@@ -74,7 +74,7 @@ dependencies:
   - bioconda::bioconductor-scmap
   - bioconda::bioconductor-chetah
   # - bioconda::maxit
-  - bioconda::truvari
+  # - bioconda::truvari
   - bioconda::mquad
   - bioconda::samplot
   - pwwang::r-doubletfinder
@@ -93,10 +93,10 @@ dependencies:
   - pwwang::bioconductor-data-packages
   - pwwang::clustcr=2025
   # package to specify version to avoid old versions
-  - pwwang::bioconductor-ggmanh=1.12
+  - bioconda::bioconductor-ggmanh
   - conda-forge::mscorefonts
   # unable to load shared object: stringfish.so for the one from r channel
-  - pwwang::r-stringfish
+  # - pwwang::r-stringfish
   - pip:
     - magic-impute
     # For GIANA
@@ -110,3 +110,6 @@ dependencies:
     - filelock
     - cyvcf2==0.31.1  # works with numpy v2+
     - umap-learn  # for Seurat's RunUMAP with umap.method="umap-learn"
+    - python-igraph  # scanpy's leiden clustering (maca-wrapper.py)
+    - leidenalg  # scanpy's leiden clustering (maca-wrapper.py)
+    - truvari
