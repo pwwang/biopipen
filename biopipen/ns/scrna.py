@@ -2001,7 +2001,7 @@ class MarkersFinder(Proc):
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/MarkersFinder.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 
