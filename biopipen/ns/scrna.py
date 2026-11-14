@@ -2001,7 +2001,7 @@ class MarkersFinder(Proc):
     order = 5
     script = "file://../scripts/scrna/MarkersFinder.R"
     plugin_opts = {
-        "report": "file://../reports/scrna/MarkersFinder.svelte",
+        "report": "file://../reports/common.svelte",
         "report_paging": 8,
     }
 
@@ -3557,6 +3557,19 @@ class CellTypeAnnotation(Proc):
             identity, e.g. `CellType:ident = "coalesce(BM_CellType, PB_CellType)"`
             merges two per-case columns into `CellType` and makes it the identity.
             Not inherited by the cases.
+        report (ns): Options for the report of the annotation results (plots and purity).
+            The report is generated after the Seurat object is saved, so a failing plot does not lose the object.
+            A case whose tool returns a numeric score per cell (mapping probability, AUC,
+            enrichment, ...) gets its UMAP coloured by that score next to the annotation
+            panel; use `score_col` to override the column.
+            - reduction (type=str): The dimensional reduction used for the UMAP plots. `dim` means the default reduction of the object. Default: `dim`
+            - score_col (type=str): The metadata column to colour the score UMAP by. By default the numeric column the tool added for the case is used (a column ending with `.score` is preferred); when the tool returned no score, only the annotation UMAP is plotted. Default: `None`
+            - purity (flag): Whether to compute the purity of the cell-level annotations against the identity column of the input object, `seurat_clusters` from `SeuratClustering` for example. Default: `True`
+            - devpars (ns): The device parameters for the plots.
+                - width (type=int): Width of the plots. Default: `1200`
+                - height (type=int): Height of the plots. Default: `720`
+                - res (type=int): Resolution of the plots. Default: `100`
+            - more_formats (list): More formats to save the plots in, besides `png`. Default: `["pdf"]`
         add_prefix (flag): Whether to add a prefix to the new column names in metadata.
             Only used when in non-default cases. The prefix will be the case name followed by `_`.
         cases (type=json): Run multiple cases of cell type annotation on the same Seurat object.
@@ -3852,11 +3865,23 @@ class CellTypeAnnotation(Proc):
         "add_prefix": None,
         "merge": False,
         "post_mutaters": {},
+        "report": {
+            "reduction": "dim",
+            "score_col": None,
+            "purity": True,
+            "devpars": {
+                "width": 1200,
+                "height": 720,
+                "res": 100,
+            },
+            "more_formats": ["pdf"],
+        },
         "cases": {},
         "ncores": 1,
         "outtype": "input",
     }
     script = "file://../scripts/scrna/CellTypeAnnotation.R"
+    plugin_opts = {"report": "file://../reports/common.svelte"}
 
 
 class GarnettClassifierTrainer(Proc):

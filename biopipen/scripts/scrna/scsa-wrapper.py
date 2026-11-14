@@ -115,6 +115,7 @@ def scsa_labels(markers, deg, foldchange=FOLDCHANGE, pvalue=PVALUE):
     deg = deg[(deg["avg_logFC"] >= foldchange) & (deg["p_val_adj"] <= pvalue)]
 
     labels = {}
+    cluster_scores = {}
     for cluster, cluster_deg in deg.groupby("cluster", observed=True):
         genes = sorted(set(cluster_deg["gene"]) & set(markers["gene"]))
         if not genes:
@@ -128,6 +129,8 @@ def scsa_labels(markers, deg, foldchange=FOLDCHANGE, pvalue=PVALUE):
             pd.crosstab(shared["cellName"], shared["gene"])
             .reindex(index=cell_types, columns=genes, fill_value=0)
             .to_numpy(dtype=float)
+            # pandas 3 returns a read-only view; the log2 below is in-place
+            .copy()
         )
         cell_matrix[cell_matrix > 0] = np.log2(cell_matrix[cell_matrix > 0] + 0.05)
         # the genes are weighted by their fold change, scaled by the mean fold
@@ -140,7 +143,10 @@ def scsa_labels(markers, deg, foldchange=FOLDCHANGE, pvalue=PVALUE):
         if len(scores) > 1 and scores.std(ddof=1) > 0:
             scores = (scores - scores.mean()) / scores.std(ddof=1)
         labels[str(cluster)] = scores.index[0]
-    return labels
+        # the z-score of the label chosen above (`scores` is sorted, so it is
+        # also the first score)
+        cluster_scores[str(cluster)] = scores.iloc[0]
+    return labels, cluster_scores
 
 
 def main():
@@ -186,7 +192,7 @@ def main():
     )
 
     clusters = adata.obs[ident].astype(str)
-    labels = scsa_labels(
+    labels, cluster_scores = scsa_labels(
         markers, deg_table(adata, ident), args.foldchange, args.pvalue
     )
     if not labels:
@@ -204,6 +210,8 @@ def main():
     pd.DataFrame({
         "cell": adata.obs_names,
         "scsa_celltype": clusters.map(labels).fillna("unassigned").to_numpy(),
+        # the clusters without a label stay NaN (Series.map gives NaN there)
+        "scsa_score": clusters.map(cluster_scores).to_numpy(),
     }).to_csv(args.output, sep="\t", index=False)
 
 

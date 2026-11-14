@@ -287,13 +287,19 @@ def singleMACA(
     ensemble = np.array(ensemble)
 
     annotations = []
-    for e in ensemble:
+    scores = []
+    # the entry of the (filtered) score frame at the label that won
+    col_of = {name: j for j, name in enumerate(new_labels.columns)}
+    values = new_labels.values
+    for i, e in enumerate(ensemble):
         if int(e) >= 0:
             annotations.append(celltype_names[int(e)])
+            scores.append(values[i, col_of[celltype_names[int(e)]]])
         else:
             annotations.append("unassigned")
+            scores.append(np.nan)
 
-    return ad, np.array(annotations)
+    return ad, np.array(annotations), np.array(scores, dtype=float)
 
 
 def gene2cell(ad=None, cell_markers=None, use_weight=False):
@@ -594,7 +600,9 @@ def main():
     kwargs = {key: value for key, value in kwargs.items() if value is not None}
 
     try:
-        _, labels = singleMACA(ad=adata, cell_markers=cell_markers, **kwargs)
+        _, labels, scores = singleMACA(
+            ad=adata, cell_markers=cell_markers, **kwargs
+        )
     except ValueError as exc:
         if "argmax" not in str(exc):
             raise
@@ -621,9 +629,11 @@ def main():
             "and install the modernized fork with:\n"
             "  pip install -e ~/github/MACA"
         )
-    pd.DataFrame({"cell": adata.obs_names, "maca_celltype": labels}).to_csv(
-        args.output, sep="\t", index=False
-    )
+    pd.DataFrame({
+        "cell": adata.obs_names,
+        "maca_celltype": labels,
+        "maca_score": scores,
+    }).to_csv(args.output, sep="\t", index=False)
 
 
 if __name__ == "__main__":

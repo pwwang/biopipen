@@ -1,3 +1,5 @@
+import json
+import struct
 import subprocess
 from pathlib import Path
 
@@ -73,6 +75,19 @@ class CellTypeAnnotationCell(CellTypeAnnotation_):
         "tool": "cell",
         "set_ident": False,
         "cell_types": str(Path(__file__).parent / "data/celltype_annotation.tsv#1,2,3"),
+    }
+
+
+class CellTypeAnnotationCellScore(CellTypeAnnotation_):
+    # `cell` with a numeric score column in the TSV: the report must colour a
+    # second UMAP panel by the score, next to the annotation panel
+    requires = PrepData
+    envs = {
+        "tool": "cell",
+        "set_ident": False,
+        "cell_types": str(
+            Path(__file__).parent / "data/celltype_annotation_score.tsv#1,2,3"
+        ),
     }
 
 
@@ -457,7 +472,7 @@ class CellTypeAnnotationMapQuerySubsets(CellTypeAnnotation_):
 
 
 def pipeline():
-    return get_pipeline(__file__).set_starts(PrepData)
+    return get_pipeline(__file__, enable_report=False).set_starts(PrepData)
 
 
 def get_proc(pipen, name):
@@ -467,6 +482,51 @@ def get_proc(pipen, name):
         f"pipen from creating the rest); existing: {[p.name for p in pipen.procs]}"
     )
     return procs[0]
+
+
+def assert_png_size(path, min_width=800, min_height=600):
+    """Multi-panel plots must not be squeezed into degenerate devices."""
+    with open(path, "rb") as fh:
+        assert fh.read(8) == b"\x89PNG\r\n\x1a\n", f"Not a PNG: {path}"
+        fh.seek(16)
+        width, height = struct.unpack(">II", fh.read(8))
+    assert width >= min_width and height >= min_height, (
+        f"PNG too small ({width}x{height}): {path}"
+    )
+
+
+def get_report_contents(pipen, procname, case, section):
+    """Contents of a report section, e.g. proc/case/Annotation/flat"""
+    report = json.loads(
+        (Path(pipen.outdir) / procname / "report.json").read_text()
+    )
+    return report[case][section]["#"]["flat"]
+
+
+def assert_score_report(pipen, procname, score_col):
+    """A case whose tool returns a score reports one figure carrying the
+    annotation and the score panels, and names the score column."""
+    outdir = get_proc(pipen, procname).workdir.joinpath("0", "output")
+    assert_png_size(outdir / "DEFAULT.annot.umap.png")
+    anno_items = get_report_contents(pipen, procname, "DEFAULT", "Annotation")
+    images = [item for item in anno_items if item.get("kind") == "image"]
+    assert len(images) == 1, (
+        f"{procname}: expected one combined figure, got {images}"
+    )
+    descr = " ".join(
+        item.get("content", "")
+        for item in anno_items if item.get("kind") == "descr"
+    )
+    assert score_col in descr, (
+        f"{procname}: the score column {score_col!r} is not named in the "
+        f"description: {descr!r}"
+    )
+    report = json.loads(
+        (Path(pipen.outdir) / procname / "report.json").read_text()
+    )
+    assert score_col in json.dumps(report), (
+        f"{procname}: the score column {score_col!r} is not named in report.json"
+    )
 
 
 def get_rds_info(pipen, procname):
@@ -640,6 +700,71 @@ def testing(pipen):
     assert "CellType" in cols
     assert_idents_equal(pipen, "CellTypeAnnotationCell", "seurat_clusters")
 
+    # Report of the cell-level case: the annotation UMAP and the purity of
+    # the annotation against the input identity
+    proc = get_proc(pipen, "CellTypeAnnotationCell")
+    outdir = proc.workdir.joinpath("0", "output")
+    assert_png_size(outdir / "DEFAULT.annot.umap.png")
+    anno_items = get_report_contents(
+        pipen, "CellTypeAnnotationCell", "DEFAULT", "Annotation"
+    )
+    assert any(
+        item.get("kind") == "descr" and "CellType" in item.get("content", "")
+        for item in anno_items
+    )
+    purity_items = get_report_contents(
+        pipen, "CellTypeAnnotationCell", "DEFAULT", "Purity"
+    )
+    assert any(item.get("kind") == "table" for item in purity_items)
+    purity_descr = next(
+        item["content"] for item in purity_items if item.get("kind") == "descr"
+    )
+    purity_tsv = outdir / "pbmc3k.annotated.DEFAULT.purity.tsv"
+    assert purity_tsv.is_file()
+    lines = purity_tsv.read_text().splitlines()
+    assert lines[0] == "Cluster\tNCells\tMajorCellType\tNMajor\tPurity"
+    rows = [line.split("\t") for line in lines[1:]]
+    # the fixture annotates only a subset of the cells; the unannotated ones
+    # are NA and dropped from the purity counts
+    cell_tsv = outdir / "pbmc3k.annotated.cell2celltype.tsv"
+    labeled = sum(
+        1
+        for line in cell_tsv.read_text().splitlines()[1:]
+        if line.split("\t")[1] != "NA"
+    )
+    assert labeled <= ncells
+    assert sum(int(row[1]) for row in rows) == labeled
+    assert all(0 < float(row[4]) <= 1 for row in rows)
+    overall_purity = sum(int(row[3]) for row in rows) / sum(
+        int(row[1]) for row in rows
+    )
+    assert f"{overall_purity:.3f}" in purity_descr
+
+    # cell tool with a numeric score column: a second UMAP panel coloured by
+    # the score, and the score column named in the report
+    proc = get_proc(pipen, "CellTypeAnnotationCellScore")
+    outdir = proc.workdir.joinpath("0", "output")
+    assert_png_size(outdir / "DEFAULT.annot.umap.png")
+    anno_items = get_report_contents(
+        pipen, "CellTypeAnnotationCellScore", "DEFAULT", "Annotation"
+    )
+    anno_descr = next(
+        item["content"] for item in anno_items if item.get("kind") == "descr"
+    )
+    assert "score" in anno_descr
+    assert_score_report(pipen, "CellTypeAnnotationCellScore", "score")
+
+    # cluster-level case: annotation plot but no purity (no per-cell labels)
+    proc = get_proc(pipen, "CellTypeAnnotation")
+    outdir = proc.workdir.joinpath("0", "output")
+    assert_png_size(outdir / "DEFAULT.annot.umap.png")
+    report = json.loads(
+        (Path(pipen.outdir) / "CellTypeAnnotation" / "report.json").read_text()
+    )
+    assert "Annotation" in report["DEFAULT"]
+    assert "Purity" not in report["DEFAULT"]
+    assert not (outdir / "pbmc3k.annotated.DEFAULT.purity.tsv").exists()
+
     # SCINA (cell-level with ident): both cell and cluster outputs
     proc = get_proc(pipen, "CellTypeAnnotationSCINA")
     outfile = proc.workdir.joinpath("0", "output", "pbmc3k.annotated")
@@ -717,6 +842,11 @@ def testing(pipen):
         assert lines[0] == "Cell\tDEFAULT"
         assert len(lines) - 1 == ncells
         assert all(line.split("\t")[1] for line in lines[1:])
+
+    # The scorer tools return the score of the label they assigned: the report
+    # carries one figure combining the annotation and the score panels and
+    # names the score column
+    assert_score_report(pipen, "CellTypeAnnotationAUCell", "aucell.score")
 
     # Universal marker table: SCSA (cluster-level, with per-cell labels)
     proc = get_proc(pipen, "CellTypeAnnotationSCSA")
