@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.6.0
+
+- feat(scrna.CellTypeAnnotation): report the annotations, the tool score UMAPs and the cluster purity
+- chore: update r-base version to 4.5 in environment files
+- fix(tests): install binutils so the pip-built pywfa of truvari finds ar
+- chore(scrna.MarkersFinder): update MarkersFinder report path to use common report structure
+
 ## 1.5.10
 
 - fix: add Dropdown component to common.svelte imports
