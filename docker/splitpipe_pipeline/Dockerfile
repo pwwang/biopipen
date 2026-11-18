@@ -33,6 +33,13 @@ RUN test -f /opt/parse/setup.py && test -f /opt/parse/install_dependencies_conda
         exit 1; \
     }
 
+# conda.anaconda.org occasionally drops a package download mid-solve (seen on
+# r-scpred from bioconda, HTTP 000). Retry a few times instead of failing the
+# whole build; this applies to the base env below and the Parse env above.
+RUN conda config --set remote_max_retries 10 && \
+    conda config --set remote_connect_timeout_secs 30 && \
+    conda config --set remote_read_timeout_secs 120
+
 RUN conda create -y -n spipe -c conda-forge python==${PYTHON_VERSION} && \
     conda clean --all --yes
 
@@ -87,10 +94,42 @@ COPY docker/ /biopipen/docker/
 RUN cd /biopipen && pip install --no-cache-dir --upgrade -e ".[runinfo,log2file]" && \
     pipen report update
 
-# Optional TCR/BCR support (downloads the immune references, a few GB):
-# RUN conda run -n spipe bash ./install_immune_dbs.sh -i -y && \
-#     conda run -n spipe pip install --no-cache-dir ./ && \
-#     conda clean --all --yes
+# TCR/BCR support: the immune references. Measured 121 MB in total: the IgBlast
+# 1.22.0 binaries (116 MB) plus the human and mouse TCR/BCR germline databases
+# (1.9 MB, 200 files, families human_tcr, human_bcr, mouse_tcr, mouse_bcr,
+# transgenic_mouse). `-i` installs the default germline databases; `-I` would also
+# fetch IMGT (larger, and its site is frequently down), so it stays out.
+# The installer writes immune_dir into the source tree, while split-pipe reads it
+# from the installed package (`os.path.dirname(splitpipe.__file__)`), so the IgBlast
+# tree is copied into site-packages. A second `pip install ./` would do the same,
+# but it rebuilds the Cython extension and that link fails in this image
+# (`x86_64-conda-linux-gnu-ld: cannot find -lgcc`). Do not probe with
+# `import splitpipe` here: the WORKDIR is /opt/parse, so that imports the source tree,
+# whose Cython extension is not built (`cy_utils C-extension not found`). The shell
+# check fails the build if no BLAST index landed in site-packages. The site-packages
+# path comes from the env's own interpreter: globbing `lib/python3.*/site-packages`
+# also matches a stray `python3.1` directory, which yields two paths.
+# The builder stage lacks wget (tarball fetch) and unzip (germline archives);
+# without unzip the installer prints "Problem installing IgBlast" and STILL exits 0,
+# which is why the log check below is required.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN conda run -n spipe bash ./install_immune_dbs.sh -i -y && \
+    echo "STEP 1 installer exited 0" && \
+    grep -q "Finished successfully" splitpipe/immune_dir/install_IgBlast.log && \
+    echo "STEP 2 installer log confirms success" && \
+    SP=$(/opt/conda/envs/spipe/bin/python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])") && \
+    echo "STEP 3 site-packages: $SP" && \
+    mkdir -p "$SP/splitpipe/immune_dir" && \
+    echo "STEP 4 installed package has immune_dir" && \
+    cp -a /opt/parse/splitpipe/immune_dir/IgBlast "$SP/splitpipe/immune_dir/" && \
+    echo "STEP 5 IgBlast copied" && \
+    echo "STEP 6 BLAST indexes: $(ls "$SP/splitpipe/immune_dir/IgBlast/tr_database"/*.ndb 2>/dev/null | wc -l)" && \
+    test "$(ls "$SP/splitpipe/immune_dir/IgBlast/tr_database"/*.ndb 2>/dev/null | wc -l)" -gt 0
+
+RUN conda clean --all --yes || true
 
 
 # ---------------------------------------------------------------------------
