@@ -171,7 +171,7 @@ A sequencing run may contain a TCR or BCR library for the same well-pools as
 the GEX sublibraries. Pass it as the `tcr`/`bcr` block of `SplitPipePipeline`.
 The block accepts the same list-of-lists fastq format as the top-level
 `fq1`/`fq2`/`ids`, plus the immune options `immune_genome`, `use_imgt_db`,
-`combine` and `parent_dir`:
+`combine`, `parent_dir` and `parent_dir_comb`:
 
 ```toml
 [SplitPipePipeline]
@@ -228,12 +228,44 @@ Set the block's `parent_dir` when the GEX parent was processed by a different
 run: the immune ids are then not matched against the GEX ids, and the block
 `combine` does not depend on the pipeline `combine`.
 
+**Existing GEX analysis.** `parent_dir` may be a list aligned with the block
+`ids`, with one GEX `--mode all` output directory per immune sublibrary. When
+`parent_dir` is a list, `parent_dir_comb` supplies the GEX `--mode comb`
+parent: a scalar for one combined output, or a list aligned with `ids` for one
+combined GEX directory per sublibrary. `parent_dir_comb` is required when the
+block combines. With list-valued parents, the immune combination runs one
+job per immune sublibrary.
+
+An empty top-level `fq1` is allowed when every immune block sets
+`parent_dir`. The GEX branch was already counted elsewhere and is not built
+in this run:
+
+```toml
+[SplitPipePipeline]
+fq1 = []              # no GEX fastq in this run
+ids = ["s1", "s2"]
+genome_dir = "/genomes/GRCh38"
+combine = false
+
+[SplitPipePipeline.tcr]
+fq1 = [
+    ["/data/tcr_s1_S1_L001_R1_001.fastq.gz"],
+    ["/data/tcr_s2_S1_L001_R1_001.fastq.gz"],
+]
+ids = ["s1", "s2"]
+parent_dir = ["/gex/s1", "/gex/s2"]
+parent_dir_comb = ["/gex/Sublibrary_1-comb", "/gex/Sublibrary_2-comb"]
+combine = true
+```
+
 **Output directories.** The immune sublibraries are written to
 `<id>-tcr` (resp. `<id>-bcr`), and the combined immune dataset to
 `<first id>-tcr-comb` (resp. `<first id>-bcr-comb`), so they never collide
-with the GEX `<id>`/`<id>-comb` directories. `summary = true` summarizes the
-GEX final directories and every immune final directory (the combined one when
-the block combined, otherwise the immune sublibrary directories) in one job.
+with the GEX `<id>`/`<id>-comb` directories. With list-valued parents, each
+immune combine job writes `<id>-tcr-comb` for its own sublibrary.
+`summary = true` summarizes the GEX final directories and every immune final
+directory (the combined one when the block combined, otherwise the immune
+sublibrary directories) in one job.
 
 TCR/BCR analysis requires the immune references in the split-pipe
 environment: run `bash ./install_immune_dbs.sh -i -y` in the Parse package

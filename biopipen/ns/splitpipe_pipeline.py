@@ -58,11 +58,15 @@ class SplitPipePipeline(ProcGroup):
     parent processed by another run), the immune ids are not matched against
     the GEX ids and `combine` does not depend on the pipeline `combine`.
 
+    An empty `fq1` is allowed when every immune block sets `parent_dir`: the
+    GEX branch was already counted elsewhere and is not built here.
+
     Args:
         fq1 (list): The list of lists of fastq (R1) files, one list per
             sublibrary, or the list of comma-separated strings of fastq files.
             Fastq files of multiple sequencing lanes of the same sublibrary
-            belong in the same list.
+            belong in the same list. It may be empty when every immune block
+            sets `parent_dir` (see `tcr`/`bcr`).
         fq2 (list): The list of lists of fastq (R2) files, one list per
             sublibrary, or the list of comma-separated strings of fastq files.
             Fastq files of multiple sequencing lanes of the same sublibrary
@@ -82,10 +86,15 @@ class SplitPipePipeline(ProcGroup):
             TCR library. The block accepts `fq1`, `fq2` and `ids` in the same
             list-of-lists format as the top-level options, plus
             `immune_genome` (`human` by default, or `mouse`), `use_imgt_db`
-            (default `False`), `combine` (default `True`) and `parent_dir`
-            (the GEX parent directory, when it was produced by a different
-            run). Unless `parent_dir` is given, each immune id must equal a
-            GEX sublibrary id.
+            (default `False`), `combine` (default `True`), `parent_dir` and
+            `parent_dir_comb`. `parent_dir` is the GEX `--mode all` parent
+            directory, either one path for all sublibraries or a list aligned
+            with `ids` (one GEX output per immune sublibrary, when the GEX
+            branch was counted elsewhere). Unless `parent_dir` is given, each
+            immune id must equal a GEX sublibrary id. When `parent_dir` is a
+            list, `parent_dir_comb` supplies the GEX `--mode comb` parent
+            directory, as one path for all sublibraries or a list aligned
+            with `ids`; it is required when the block combines.
         bcr (dict): The BCR sublibrary block, in the same format as `tcr`,
             except that `immune_genome` can also be `transgenic_mouse`.
     """
@@ -105,10 +114,28 @@ class SplitPipePipeline(ProcGroup):
         """Check the input and the genome"""
         loading = is_loading_pipeline("-h", "-h+", "--help", "--help+")
         if not loading:
-            if not isinstance(self.opts.fq1, (list, tuple)) or len(self.opts.fq1) == 0:
+            immune_blocks = [
+                self.opts.get(kind)
+                for kind in ("tcr", "bcr")
+                if self.opts.get(kind) is not None
+            ]
+            has_all_immune_parents = bool(immune_blocks) and all(
+                isinstance(block, (Namespace, dict))
+                and self._has_parent_dir(
+                    vars(block).get("parent_dir")
+                    if isinstance(block, Namespace)
+                    else block.get("parent_dir")
+                )
+                for block in immune_blocks
+            )
+            fq1_nonempty = isinstance(self.opts.fq1, (list, tuple)) and bool(
+                self.opts.fq1
+            )
+            if not fq1_nonempty and not has_all_immune_parents:
                 raise TypeError(
                     "The input of `SplitPipePipeline` should be a list of lists of "
-                    "fastq files, one per sublibrary."
+                    "fastq files, one per sublibrary; empty `fq1` requires every "
+                    "immune block to set `parent_dir`."
                 )
             if not self.opts.genome_dir:
                 raise TypeError(
@@ -116,7 +143,7 @@ class SplitPipePipeline(ProcGroup):
                     "the genome first with the `SplitPipeRef` process (see "
                     "`docs/pipelines/splitpipe_pipeline.md`)."
                 )
-            if self.opts.fq2 and (
+            if fq1_nonempty and self.opts.fq2 and (
                 not isinstance(self.opts.fq2, (list, tuple))
                 or len(self.opts.fq2) != len(self.opts.fq1)
             ):
@@ -139,6 +166,34 @@ class SplitPipePipeline(ProcGroup):
         for kind in ("tcr", "bcr"):
             if self.opts.get(kind) is not None:
                 self._check_immune_block(kind, loading)
+
+    @staticmethod
+    def _has_parent_dir(value) -> bool:
+        """Whether a `parent_dir` value is non-empty"""
+        if isinstance(value, str):
+            return bool(value)
+        if isinstance(value, (list, tuple)):
+            return bool(value) and all(bool(parent) for parent in value)
+        return False
+
+    def _check_parent_dir(self, kind: str, name: str, value, ids) -> None:
+        """Validate a scalar or per-id `parent_dir`/`parent_dir_comb` value"""
+        if isinstance(value, str):
+            return
+        if not isinstance(value, (list, tuple)):
+            raise TypeError(
+                f"`{kind}.{name}` should be a string or a list of strings, one "
+                "per sublibrary id."
+            )
+        if len(value) != len(ids):
+            raise ValueError(
+                f"`{kind}` has {len(ids)} ids but {len(value)} {name} values."
+            )
+        if not all(isinstance(parent, str) and parent for parent in value):
+            raise TypeError(
+                f"`{kind}.{name}` should be a string or a list of non-empty "
+                "strings, one per sublibrary id."
+            )
 
     def _check_immune_block(self, kind: str, loading: bool) -> None:
         """Normalize and validate a `tcr`/`bcr` block"""
@@ -168,6 +223,7 @@ class SplitPipePipeline(ProcGroup):
         block.setdefault("fq2", None)
         block.setdefault("ids", None)
         block.setdefault("parent_dir", None)
+        block.setdefault("parent_dir_comb", None)
         block.setdefault("combine", True)
         block.setdefault("use_imgt_db", False)
         block.setdefault("immune_genome", "human")
@@ -209,6 +265,23 @@ class SplitPipePipeline(ProcGroup):
             )
 
         if block.parent_dir is not None:
+            self._check_parent_dir(kind, "parent_dir", block.parent_dir, block.ids)
+        if block.parent_dir_comb is not None:
+            self._check_parent_dir(
+                kind, "parent_dir_comb", block.parent_dir_comb, block.ids
+            )
+        if (
+            block.parent_dir is not None
+            and isinstance(block.parent_dir, (list, tuple))
+            and block.combine
+            and not block.parent_dir_comb
+        ):
+            raise ValueError(
+                f"`{kind}.parent_dir_comb` is required when combining immune "
+                f"sublibraries with list-valued `{kind}.parent_dir`."
+            )
+
+        if block.parent_dir is not None:
             return
 
         if not self.opts.ids:
@@ -237,13 +310,16 @@ class SplitPipePipeline(ProcGroup):
             )
 
     @ProcGroup.add_proc  # type: ignore
-    def p_splitpipe_count(self) -> Type[Proc]:
+    def p_splitpipe_count(self) -> Type[Proc] | None:
         """Build SplitPipeCount process"""
+        inputs_ = self.opts.fq1 or []  # empty when loading the pipeline (--help)
+        if not inputs_:
+            return None
+
         from .splitpipe import SplitPipeCount as _SplitPipeCount
 
         # `fq2` may be absent (the R2 names are then derived from R1 by
         # split-pipe), in which case `None` is passed as the input
-        inputs_ = self.opts.fq1 or []  # empty when loading the pipeline (--help)
         fq2_ = self.opts.fq2 or [None] * len(inputs_)
         input_ = (
             list(zip(inputs_, fq2_, self.opts.ids))
@@ -264,9 +340,16 @@ class SplitPipePipeline(ProcGroup):
         fq2_ = block.fq2 or [None] * len(block.fq1)
 
         if block.parent_dir is not None:
+            parent_dirs = (
+                block.parent_dir
+                if isinstance(block.parent_dir, (list, tuple))
+                else [block.parent_dir] * len(block.ids)
+            )
             rows = [
-                (fq1, fq2, id_, self.opts.genome_dir, block.parent_dir)
-                for fq1, fq2, id_ in zip(block.fq1, fq2_, block.ids)
+                (fq1, fq2, id_, self.opts.genome_dir, parent_dir)
+                for fq1, fq2, id_, parent_dir in zip(
+                    block.fq1, fq2_, block.ids, parent_dirs
+                )
             ]
 
             def input_data(ch):
@@ -306,7 +389,7 @@ class SplitPipePipeline(ProcGroup):
             "immune_genome": block.immune_genome,
             "use_imgt_db": block.use_imgt_db,
         }
-        if block.parent_dir is not None:
+        if isinstance(block.parent_dir, str):
             envs_["parent_dir"] = block.parent_dir
 
         class SplitPipeCount(_SplitPipeCount):
@@ -332,7 +415,7 @@ class SplitPipePipeline(ProcGroup):
     @ProcGroup.add_proc  # type: ignore
     def p_splitpipe_combine(self) -> Type[Proc] | None:
         """Build SplitPipeCombine process"""
-        if not self.opts.combine:
+        if not self.opts.combine or not self.opts.fq1:
             return None
 
         from .splitpipe import SplitPipeCombine as _SplitPipeCombine
@@ -359,10 +442,35 @@ class SplitPipePipeline(ProcGroup):
 
         if block.parent_dir is not None:
             requires_ = immune_count
-            envs_["parent_dir"] = block.parent_dir
+            if isinstance(block.parent_dir, (list, tuple)):
+                parent_dirs = block.parent_dir_comb
+                if isinstance(parent_dirs, (list, tuple)):
 
-            def input_data_(ch):
-                return [(list(ch.iloc[:, 0]), None, str(block.parent_dir))]
+                    def input_data_(ch):
+                        if ch.shape[0] != len(parent_dirs):
+                            raise ValueError(
+                                f"Cannot combine the {kind.upper()} "
+                                f"sublibraries: expected {len(parent_dirs)} "
+                                f"immune outputs for `parent_dir_comb`, got "
+                                f"{ch.shape[0]}."
+                            )
+                        return [
+                            ([sublib], None, str(parent_dir))
+                            for sublib, parent_dir in zip(ch.iloc[:, 0], parent_dirs)
+                        ]
+
+                else:
+
+                    def input_data_(ch):
+                        return [
+                            (list(ch.iloc[:, 0]), None, str(block.parent_dir_comb))
+                        ]
+
+            else:
+                envs_["parent_dir"] = block.parent_dir
+
+                def input_data_(ch):
+                    return [(list(ch.iloc[:, 0]), None, str(block.parent_dir))]
 
         else:
             requires_ = [immune_count, self.p_splitpipe_combine]
@@ -428,6 +536,7 @@ class SplitPipePipeline(ProcGroup):
                     f"p_splitpipe_{kind}_{'combine' if block.combine else 'count'}",
                 )
             )
+        requires_ = [proc for proc in requires_ if proc is not None]
 
         if len(requires_) == 1:
             requires_ = requires_[0]

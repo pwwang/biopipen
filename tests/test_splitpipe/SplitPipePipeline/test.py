@@ -290,6 +290,134 @@ def test_explicit_parent_dir():
     print("PASS: explicit tcr.parent_dir -> ids unpaired, parent used verbatim")
 
 
+def test_existing_gex_parent_lists():
+    """An empty GEX branch uses one existing parent per immune id"""
+    group = build(
+        fq1=[],
+        combine=False,
+        summary=False,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"], ["t2_R1.fastq.gz"]],
+            ids=["s1", "s2"],
+            parent_dir=["/parents/s1", "/parents/s2"],
+            combine=False,
+        ),
+    )
+    assert "SplitPipeTCRCount" in group.procs
+    assert "SplitPipeCount" not in group.procs
+    assert "SplitPipeCombine" not in group.procs
+    count = group.p_splitpipe_tcr_count
+    assert count.envs["parent_dir"] is None
+    assert count.input_data(pd.DataFrame()) == [
+        (["t1_R1.fastq.gz"], None, "s1", "/genomes/test", "/parents/s1"),
+        (
+            ["t2_R1.fastq.gz"],
+            None,
+            "s2",
+            "/genomes/test",
+            "/parents/s2",
+        ),
+    ]
+    print("PASS: empty GEX branch -> immune counts use per-id parent dirs")
+
+
+def test_immune_only_with_gex_combine():
+    """An immune-only run does not build a GEX combine process"""
+    group = build(
+        fq1=[],
+        combine=True,
+        summary=True,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"]],
+            ids=["s1"],
+            parent_dir="/parents/s1",
+            parent_dir_comb="/combined/s1",
+        ),
+    )
+    assert "SplitPipeCombine" not in group.procs
+    assert group.p_splitpipe_combine is None
+    assert group.p_splitpipe_summary.requires == [group.p_splitpipe_tcr_combine]
+    print("PASS: immune-only run -> no GEX count/combine, summary over immune")
+
+
+def test_per_id_parent_dir_comb():
+    """A combined GEX parent list creates one immune combine row per id"""
+    group = build(
+        fq1=[],
+        combine=False,
+        summary=False,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"], ["t2_R1.fastq.gz"]],
+            ids=["s1", "s2"],
+            parent_dir=["/parents/s1", "/parents/s2"],
+            parent_dir_comb=["/combined/s1", "/combined/s2"],
+        ),
+    )
+    count = group.p_splitpipe_tcr_count
+    combine = group.p_splitpipe_tcr_combine
+    immune_ch = pd.DataFrame(
+        {"outdir": ["/out/s1-tcr", "/out/s2-tcr"]}
+    )
+    assert combine.input_data(immune_ch) == [
+        (["/out/s1-tcr"], None, "/combined/s1"),
+        (["/out/s2-tcr"], None, "/combined/s2"),
+    ]
+    assert combine.envs["parent_dir"] is None
+    assert combine.requires == [count]
+    print("PASS: list parent_dir_comb -> one combine row per id")
+
+
+def test_immune_parent_list_validation():
+    """Parent directory lists must match the immune ids"""
+    expect_error(
+        ValueError,
+        "2 ids but 1 parent_dir",
+        fq1=[],
+        combine=False,
+        summary=False,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"], ["t2_R1.fastq.gz"]],
+            ids=["s1", "s2"],
+            parent_dir=["/parents/s1"],
+            combine=False,
+        ),
+    )
+    expect_error(
+        ValueError,
+        "2 ids but 1 parent_dir_comb",
+        fq1=[],
+        combine=False,
+        summary=False,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"], ["t2_R1.fastq.gz"]],
+            ids=["s1", "s2"],
+            parent_dir=["/parents/s1", "/parents/s2"],
+            parent_dir_comb=["/combined/s1"],
+        ),
+    )
+    expect_error(
+        ValueError,
+        "parent_dir_comb",
+        fq1=[],
+        combine=False,
+        summary=False,
+        tcr=dict(
+            fq1=[["t1_R1.fastq.gz"], ["t2_R1.fastq.gz"]],
+            ids=["s1", "s2"],
+            parent_dir=["/parents/s1", "/parents/s2"],
+        ),
+    )
+
+
+def test_empty_fq1_without_immune():
+    """An empty top-level fq1 still requires an immune parent branch"""
+    expect_error(
+        TypeError,
+        "empty `fq1` requires every immune block to set `parent_dir`",
+        fq1=[],
+    )
+
+
 def test_immune_combine_disabled():
     """combine = false on a block summarizes the immune count dirs"""
     group = build(
@@ -348,6 +476,11 @@ if __name__ == "__main__":
     test_tcr()
     test_bcr()
     test_explicit_parent_dir()
+    test_existing_gex_parent_lists()
+    test_immune_only_with_gex_combine()
+    test_per_id_parent_dir_comb()
+    test_immune_parent_list_validation()
+    test_empty_fq1_without_immune()
     test_immune_combine_disabled()
     test_validation()
     print("ALL PASS")
