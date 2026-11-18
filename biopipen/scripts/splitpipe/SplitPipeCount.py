@@ -29,7 +29,7 @@ bcr_analysis: bool = {{envs.bcr_analysis | repr}}  # pyright: ignore
 immune_genome = {{envs.immune_genome | repr}}  # pyright: ignore
 # `parent_dir` may arrive per sublibrary through the input channel (a TCR/BCR
 # sublibrary paired with its GEX parent) or once for all jobs through the envs
-parent_dir = {{in.parent_dir | default: None | repr}} or {{envs.parent_dir | repr}}  # pyright: ignore
+parent_dir = {{in.parent_dir | default: None | quote}} or {{envs.parent_dir | quote}}  # pyright: ignore
 use_imgt_db: bool = {{envs.use_imgt_db | repr}}  # pyright: ignore
 min_map_fraction = {{envs.min_map_fraction | repr}}  # pyright: ignore
 

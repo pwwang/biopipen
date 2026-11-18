@@ -220,7 +220,13 @@ def test_tcr():
     assert 'command += ["--immune_genome", immune_genome]' in rendered
     # the per-sublibrary parent arrives through the input channel, so it must
     # survive into the rendered command (envs alone would drop it)
-    assert "parent_dir = '/out/SplitPipeCount/s1'" in rendered, rendered
+    # a `dir`-typed input arrives as xqute's MountedLocalPath; the rendered line must
+    # carry the plain path, never the class expression (which nothing imports)
+    parent_line = next(
+        line for line in rendered.splitlines() if line.startswith("parent_dir = ")
+    )
+    assert "/out/SplitPipeCount/s1" in parent_line, parent_line
+    assert "MountedLocalPath" not in rendered, parent_line
     assert 'command += ["--parent_dir", str(parent_dir)]' in rendered
 
     combine_script = (
