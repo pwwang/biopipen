@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>biopipen.ns.splitpipe_pipeline - biopipen</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet" />
+        <link href="//use.fontawesome.com/releases/v5.8.1/css/v4-shims.css" rel="stylesheet" />
+        <link href="../../../css/mkapi-common.css" rel="stylesheet" />
+        <link href="../../../style.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "biopipen.ns.splitpipe_pipeline";
+        var mkdocs_page_input_path = "api/source/biopipen.ns.splitpipe_pipeline.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.configure({ ignoreUnescapedHTML: true }); hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../..">
+          <img src="../../../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="nav-scrollable-wrapper">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Pipelines</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cnvkit_pipeline/">CNVkit Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/cellranger_pipeline/">CellRanger Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/pipseeker_pipeline/">Pipseeker Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../pipelines/splitpipe_pipeline/">SplitPipe Pipeline</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.utils</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils/">biopipen.utils</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.vcf/">biopipen.utils.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.misc/">biopipen.utils.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.gene/">biopipen.utils.gene</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.utils.reference/">biopipen.utils.reference</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.core</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core/">biopipen.core</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.defaults/">biopipen.core.defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.proc/">biopipen.core.proc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.filters/">biopipen.core.filters</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.config/">biopipen.core.config</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.core.testing/">biopipen.core.testing</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="#">biopipen.ns</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns/">biopipen.ns</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.web/">biopipen.ns.web</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gsea/">biopipen.ns.gsea</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit_pipeline/">biopipen.ns.cnvkit_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.delim/">biopipen.ns.delim</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger/">biopipen.ns.cellranger</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.pipseeker/">biopipen.ns.pipseeker</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.splitpipe_pipeline/">biopipen.ns.splitpipe_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cellranger_pipeline/">biopipen.ns.cellranger_pipeline</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcr/">biopipen.ns.tcr</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.plot/">biopipen.ns.plot</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna/">biopipen.ns.scrna</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.splitpipe/">biopipen.ns.splitpipe</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnv/">biopipen.ns.cnv</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.tcgamaf/">biopipen.ns.tcgamaf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.stats/">biopipen.ns.stats</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.protein/">biopipen.ns.protein</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.scrna_metabolic_landscape/">biopipen.ns.scrna_metabolic_landscape</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.cnvkit/">biopipen.ns.cnvkit</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.regulatory/">biopipen.ns.regulatory</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bam/">biopipen.ns.bam</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.vcf/">biopipen.ns.vcf</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.snp/">biopipen.ns.snp</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.bed/">biopipen.ns.bed</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.misc/">biopipen.ns.misc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.gene/">biopipen.ns.gene</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../biopipen.ns.rnaseq/">biopipen.ns.rnaseq</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG/">Change log</a>
+                </li>
+              </ul>
+      </div>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">biopipen</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">biopipen.ns.splitpipe_pipeline</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pwwang/biopipen/edit/master/docs/api/source/biopipen.ns.splitpipe_pipeline.md">Edit on pwwang/biopipen</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <div class="mkapi-node">
+<h1 id="" class="mkapi-object mkapi-object-code plain">
+<span class="mkapi-object-kind mkapi-object-kind-code">SOURCE CODE</span>
+<span class="mkapi-object-prefix">biopipen.ns.</span><span class="mkapi-object-name">splitpipe_pipeline</span>
+<span id="biopipen.ns.splitpipe_pipeline"></span><a class="mkapi-docs-link" href="../../biopipen.ns.splitpipe_pipeline">DOCS</a>
+</h1>
+
+<div class="mkapi-code">
+<div class="codehilite"><pre><span></span><code><span class="sd">"""The splitpipe pipeline</span>
+
+<span class="sd">Parse Biosciences pipeline (split-pipe) processes plus a combine process to</span>
+<span class="sd">merge the sublibraries of a sequencing run and a summary process to summarize</span>
+<span class="sd">the metrics of multiple (combined) runs.</span>
+
+<span class="sd">A sequencing run may also contain a TCR or BCR library for the same</span>
+<span class="sd">well-pools as the GEX libraries. Pass them as the `tcr`/`bcr` blocks and they</span>
+<span class="sd">are processed next to the GEX sublibraries (see `SplitPipePipeline`).</span>
+
+<span class="sd">The reference genome is not built by this pipeline: build it once with the</span>
+<span class="sd">`SplitPipeRef` process and pass its output directory as `genome_dir`.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Type</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">argx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Namespace</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">diot</span><span class="w"> </span><span class="kn">import</span> <span class="n">Diot</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pipen.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_loading_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pipen_args.procgroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcGroup</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pipen</span><span class="w"> </span><span class="kn">import</span> <span class="n">Proc</span>  <span class="c1"># type: ignore</span>
+
+
+<span class="c1"># The immune genomes supported by split-pipe for each analysis</span>
+<span class="n">IMMUNE_GENOMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"tcr"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"mouse"</span><span class="p">),</span>
+    <span class="s2">"bcr"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"mouse"</span><span class="p">,</span> <span class="s2">"transgenic_mouse"</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitPipePipeline</span><span class="p">(</span><span class="n">ProcGroup</span><span class="p">):</span><span id="biopipen.ns.splitpipe_pipeline.SplitPipePipeline"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe_pipeline.SplitPipePipeline" href="../../biopipen.ns.splitpipe_pipeline/#biopipen.ns.splitpipe_pipeline.SplitPipePipeline">DOCS</a>
+<span class="w">    </span><span class="sd">"""The splitpipe pipeline</span>
+
+<span class="sd">    Run split-pipe for the sublibraries of one sequencing run, combine them</span>
+<span class="sd">    into a single dataset and summarize the metrics.</span>
+
+<span class="sd">    The reference genome must be built beforehand with the `SplitPipeRef`</span>
+<span class="sd">    process (`split-pipe --mode mkref`), and its output directory passed as</span>
+<span class="sd">    `genome_dir`.</span>
+
+<span class="sd">    A sequencing run may also contain a TCR or BCR library for the same</span>
+<span class="sd">    well-pools as the GEX sublibraries. Pass it as the `tcr`/`bcr` block: its</span>
+<span class="sd">    sublibraries are processed by dedicated `SplitPipeTCRCount`/</span>
+<span class="sd">    `SplitPipeTCRCombine` (resp. `SplitPipeBCRCount`/`SplitPipeBCRCombine`)</span>
+<span class="sd">    processes. The immune output directories are suffixed with `-tcr`/`-bcr`</span>
+<span class="sd">    (and `-tcr-comb`/`-bcr-comb` when combined) so they never collide with the</span>
+<span class="sd">    GEX ones.</span>
+
+<span class="sd">    Pairing rule: unless the block sets `parent_dir`, each immune sublibrary</span>
+<span class="sd">    id must equal the id of a GEX sublibrary, and that GEX output directory</span>
+<span class="sd">    is used as the immune parent. The immune combination then uses this run's</span>
+<span class="sd">    combined GEX output as parent, so `combine = true` on the block requires</span>
+<span class="sd">    `combine = true` on the pipeline. With an explicit `parent_dir` (a GEX</span>
+<span class="sd">    parent processed by another run), the immune ids are not matched against</span>
+<span class="sd">    the GEX ids and `combine` does not depend on the pipeline `combine`.</span>
+
+<span class="sd">    An empty `fq1` is allowed when every immune block sets `parent_dir`: the</span>
+<span class="sd">    GEX branch was already counted elsewhere and is not built here.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fq1 (list): The list of lists of fastq (R1) files, one list per</span>
+<span class="sd">            sublibrary, or the list of comma-separated strings of fastq files.</span>
+<span class="sd">            Fastq files of multiple sequencing lanes of the same sublibrary</span>
+<span class="sd">            belong in the same list. It may be empty when every immune block</span>
+<span class="sd">            sets `parent_dir` (see `tcr`/`bcr`).</span>
+<span class="sd">        fq2 (list): The list of lists of fastq (R2) files, one list per</span>
+<span class="sd">            sublibrary, or the list of comma-separated strings of fastq files.</span>
+<span class="sd">            Fastq files of multiple sequencing lanes of the same sublibrary</span>
+<span class="sd">            belong in the same list. If not given, the R2 file names are</span>
+<span class="sd">            derived from the R1 ones by split-pipe, which requires the R1 and</span>
+<span class="sd">            R2 files to differ only by `R1`/`R2` in their names.</span>
+<span class="sd">        ids (list): The list of ids for the sublibraries.</span>
+<span class="sd">        genome_dir: The directory of a genome built by `SplitPipeRef`</span>
+<span class="sd">            (`split-pipe --mode mkref`). Required: run the `SplitPipeRef`</span>
+<span class="sd">            process once beforehand (see</span>
+<span class="sd">            `docs/pipelines/splitpipe_pipeline.md`).</span>
+<span class="sd">        combine (flag): Whether to combine the sublibraries into a single</span>
+<span class="sd">            dataset with `SplitPipeCombine` (`--mode comb`).</span>
+<span class="sd">        summary (flag): Whether to summarize the metrics of the sublibrary</span>
+<span class="sd">            (or combined) output directories with `SplitPipeSummary`.</span>
+<span class="sd">        tcr (dict): The TCR sublibrary block, or `None` when the run has no</span>
+<span class="sd">            TCR library. The block accepts `fq1`, `fq2` and `ids` in the same</span>
+<span class="sd">            list-of-lists format as the top-level options, plus</span>
+<span class="sd">            `immune_genome` (`human` by default, or `mouse`), `use_imgt_db`</span>
+<span class="sd">            (default `False`), `combine` (default `True`), `parent_dir` and</span>
+<span class="sd">            `parent_dir_comb`. `parent_dir` is the GEX `--mode all` parent</span>
+<span class="sd">            directory, either one path for all sublibraries or a list aligned</span>
+<span class="sd">            with `ids` (one GEX output per immune sublibrary, when the GEX</span>
+<span class="sd">            branch was counted elsewhere). Unless `parent_dir` is given, each</span>
+<span class="sd">            immune id must equal a GEX sublibrary id. When `parent_dir` is a</span>
+<span class="sd">            list, `parent_dir_comb` supplies the GEX `--mode comb` parent</span>
+<span class="sd">            directory, as one path for all sublibraries or a list aligned</span>
+<span class="sd">            with `ids`; it is required when the block combines.</span>
+<span class="sd">        bcr (dict): The BCR sublibrary block, in the same format as `tcr`,</span>
+<span class="sd">            except that `immune_genome` can also be `transgenic_mouse`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">DEFAULTS</span> <span class="o">=</span> <span class="n">Diot</span><span class="p">(</span>
+        <span class="n">fq1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">fq2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">combine</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">tcr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">bcr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span><span id="biopipen.ns.splitpipe_pipeline.SplitPipePipeline.post_init"></span><a class="mkapi-docs-link" title="biopipen.ns.splitpipe_pipeline.SplitPipePipeline.post_init" href="../../biopipen.ns.splitpipe_pipeline/#biopipen.ns.splitpipe_pipeline.SplitPipePipeline.post_init">DOCS</a>
+<span class="w">        </span><span class="sd">"""Check the input and the genome"""</span>
+        <span class="n">loading</span> <span class="o">=</span> <span class="n">is_loading_pipeline</span><span class="p">(</span><span class="s2">"-h"</span><span class="p">,</span> <span class="s2">"-h+"</span><span class="p">,</span> <span class="s2">"--help"</span><span class="p">,</span> <span class="s2">"--help+"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">loading</span><span class="p">:</span>
+            <span class="n">immune_blocks</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"tcr"</span><span class="p">,</span> <span class="s2">"bcr"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">]</span>
+            <span class="n">has_all_immune_parents</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">immune_blocks</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="p">(</span><span class="n">Namespace</span><span class="p">,</span> <span class="nb">dict</span><span class="p">))</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_parent_dir</span><span class="p">(</span>
+                    <span class="nb">vars</span><span class="p">(</span><span class="n">block</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parent_dir"</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">Namespace</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parent_dir"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">immune_blocks</span>
+            <span class="p">)</span>
+            <span class="n">fq1_nonempty</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fq1_nonempty</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_all_immune_parents</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">"The input of `SplitPipePipeline` should be a list of lists of "</span>
+                    <span class="s2">"fastq files, one per sublibrary; empty `fq1` requires every "</span>
+                    <span class="s2">"immune block to set `parent_dir`."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">genome_dir</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">"The `genome_dir` of `SplitPipePipeline` is required: build "</span>
+                    <span class="s2">"the genome first with the `SplitPipeRef` process (see "</span>
+                    <span class="s2">"`docs/pipelines/splitpipe_pipeline.md`)."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">fq1_nonempty</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">"The `fq2` of `SplitPipePipeline` should be a list of lists "</span>
+                    <span class="s2">"of fastq files, one per sublibrary (same length as `fq1`)."</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span>
+            <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"tcr"</span><span class="p">,</span> <span class="s2">"bcr"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_check_immune_block</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">loading</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_parent_dir</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether a `parent_dir` value is non-empty"""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_parent_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate a scalar or per-id `parent_dir`/`parent_dir_comb` value"""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` should be a string or a list of strings, one "</span>
+                <span class="s2">"per sublibrary id."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">` has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> ids but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> values."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parent</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">value</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` should be a string or a list of non-empty "</span>
+                <span class="s2">"strings, one per sublibrary id."</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_immune_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loading</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Normalize and validate a `tcr`/`bcr` block"""</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">Namespace</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">` of `SplitPipePipeline` should be a dict with the "</span>
+                <span class="sa">f</span><span class="s2">"fastq files, ids and immune options of the </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"sublibraries."</span>
+            <span class="p">)</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">Diot</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fq1"</span><span class="p">),</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">block</span><span class="p">[</span><span class="s2">"fq1"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">"fq1"</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fq2"</span><span class="p">),</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">block</span><span class="p">[</span><span class="s2">"fq2"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">"fq2"</span><span class="p">]</span>
+            <span class="p">]</span>
+
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"fq2"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"ids"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"parent_dir"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"parent_dir_comb"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"combine"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"use_imgt_db"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"immune_genome"</span><span class="p">,</span> <span class="s2">"human"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">loading</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="n">block</span><span class="o">.</span><span class="n">fq1</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">fq1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">for</span> <span class="n">fq1</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.fq1` of `SplitPipePipeline` should be a non-empty "</span>
+                <span class="sa">f</span><span class="s2">"list of lists of fastq files, one per </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"sublibrary."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">fq2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq2</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq2</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.fq2` of `SplitPipePipeline` should be a list of "</span>
+                <span class="sa">f</span><span class="s2">"lists of fastq files, one per </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibrary "</span>
+                <span class="sa">f</span><span class="s2">"(same length as `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.fq1`)."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">fq1</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.ids` of `SplitPipePipeline` should be a list of "</span>
+                <span class="sa">f</span><span class="s2">"ids, one per </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibrary (same length as "</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.fq1`)."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">immune_genome</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">IMMUNE_GENOMES</span><span class="p">[</span><span class="n">kind</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.immune_genome` should be one of "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">IMMUNE_GENOMES</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span><span class="si">}</span><span class="s2">; got </span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">immune_genome</span><span class="si">!r}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_parent_dir</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="s2">"parent_dir"</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir_comb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_parent_dir</span><span class="p">(</span>
+                <span class="n">kind</span><span class="p">,</span> <span class="s2">"parent_dir_comb"</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir_comb</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="n">block</span><span class="o">.</span><span class="n">combine</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir_comb</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir_comb` is required when combining immune "</span>
+                <span class="sa">f</span><span class="s2">"sublibraries with list-valued `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir`."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">ids</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`ids` of `SplitPipePipeline` is required to pair the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibraries with the GEX ones. Set it, or "</span>
+                <span class="sa">f</span><span class="s2">"set `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir` when the GEX parent was processed "</span>
+                <span class="sa">f</span><span class="s2">"by another run."</span>
+            <span class="p">)</span>
+        <span class="n">unmatched</span> <span class="o">=</span> <span class="p">[</span><span class="n">id_</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span> <span class="k">if</span> <span class="n">id_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">ids</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">unmatched</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"The </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibrary ids </span><span class="si">{</span><span class="n">unmatched</span><span class="si">}</span><span class="s2"> are not GEX "</span>
+                <span class="sa">f</span><span class="s2">"sublibrary ids </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span><span class="si">}</span><span class="s2">. The </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> id "</span>
+                <span class="sa">f</span><span class="s2">"must equal its GEX sublibrary id, or set `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir` "</span>
+                <span class="sa">f</span><span class="s2">"when the GEX parent was processed by another run."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">combine</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">combine</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.combine = true` requires `combine = true` on "</span>
+                <span class="sa">f</span><span class="s2">"`SplitPipePipeline`, so the </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibraries can "</span>
+                <span class="sa">f</span><span class="s2">"be combined against the combined GEX output. Set "</span>
+                <span class="sa">f</span><span class="s2">"`combine = true`, or `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.combine = false`, or set "</span>
+                <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir` when the GEX parent was processed by "</span>
+                <span class="sa">f</span><span class="s2">"another run."</span>
+            <span class="p">)</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build SplitPipeCount process"""</span>
+        <span class="n">inputs_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span> <span class="ow">or</span> <span class="p">[]</span>  <span class="c1"># empty when loading the pipeline (--help)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs_</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.splitpipe</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitPipeCount</span> <span class="k">as</span> <span class="n">_SplitPipeCount</span>
+
+        <span class="c1"># `fq2` may be absent (the R2 names are then derived from R1 by</span>
+        <span class="c1"># split-pipe), in which case `None` is passed as the input</span>
+        <span class="n">fq2_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq2</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs_</span><span class="p">)</span>
+        <span class="n">input_</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">inputs_</span><span class="p">,</span> <span class="n">fq2_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">ids</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">ids</span>
+            <span class="k">else</span> <span class="p">[(</span><span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs_</span><span class="p">,</span> <span class="n">fq2_</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCount</span><span class="p">(</span><span class="n">_SplitPipeCount</span><span class="p">):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="s2">"fq1:files, fq2:files, id, genome_dir:dir"</span>
+            <span class="n">input_data</span> <span class="o">=</span> <span class="n">input_</span>
+            <span class="n">envs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"genome_dir"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">genome_dir</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">SplitPipeCount</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_immune_input_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">needs_channel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the input_data of the immune count process</span>
+
+<span class="sd">        pipen invokes `input_data` as a callable only when the process waits on</span>
+<span class="sd">        another process. With an explicit `parent_dir` and an empty GEX branch</span>
+<span class="sd">        nothing is awaited, so the rows are returned as a plain list there.</span>
+<span class="sd">        """</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span>
+        <span class="n">fq2_</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">fq2</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parent_dirs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+                <span class="k">else</span> <span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">genome_dir</span><span class="p">,</span> <span class="n">parent_dir</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="n">parent_dir</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">,</span> <span class="n">fq2_</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span> <span class="n">parent_dirs</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">needs_channel</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">rows</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">input_data</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">rows</span>
+
+            <span class="k">return</span> <span class="n">input_data</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">input_data</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+            <span class="n">gex_dirs</span> <span class="o">=</span> <span class="p">{</span><span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">outdir</span><span class="p">))</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">outdir</span> <span class="k">for</span> <span class="n">outdir</span> <span class="ow">in</span> <span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]}</span>
+            <span class="n">unmatched</span> <span class="o">=</span> <span class="p">[</span><span class="n">id_</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span> <span class="k">if</span> <span class="n">id_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gex_dirs</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">unmatched</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"The </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibrary ids </span><span class="si">{</span><span class="n">unmatched</span><span class="si">}</span><span class="s2"> do not "</span>
+                    <span class="sa">f</span><span class="s2">"match any GEX sublibrary output directory. The "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> id must equal its GEX sublibrary id, or "</span>
+                    <span class="sa">f</span><span class="s2">"set `</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">.parent_dir`."</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">genome_dir</span><span class="p">,</span> <span class="n">gex_dirs</span><span class="p">[</span><span class="n">id_</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">fq1</span><span class="p">,</span> <span class="n">fq2</span><span class="p">,</span> <span class="n">id_</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">fq1</span><span class="p">,</span> <span class="n">fq2_</span><span class="p">,</span> <span class="n">block</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+            <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">input_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_immune_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCount process of a `tcr`/`bcr` block"""</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.splitpipe</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitPipeCount</span> <span class="k">as</span> <span class="n">_SplitPipeCount</span>
+
+        <span class="n">envs_</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"genome_dir"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">genome_dir</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">_analysis"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"immune_genome"</span><span class="p">:</span> <span class="n">block</span><span class="o">.</span><span class="n">immune_genome</span><span class="p">,</span>
+            <span class="s2">"use_imgt_db"</span><span class="p">:</span> <span class="n">block</span><span class="o">.</span><span class="n">use_imgt_db</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">envs_</span><span class="p">[</span><span class="s2">"parent_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span>
+
+        <span class="n">gex_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_splitpipe_count</span>  <span class="c1"># None when the GEX branch is empty</span>
+        <span class="n">input_data_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_immune_input_data</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">gex_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCount</span><span class="p">(</span><span class="n">_SplitPipeCount</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"SplitPipe</span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">Count"</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="s2">"fq1:files, fq2:files, id, genome_dir:dir, parent_dir:dir"</span>
+            <span class="n">input_data</span> <span class="o">=</span> <span class="n">input_data_</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"outdir:dir:</span><span class="se">{{{{</span><span class="s2">in.id</span><span class="se">}}}}</span><span class="s2">-</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">envs</span> <span class="o">=</span> <span class="n">envs_</span>
+            <span class="n">requires</span> <span class="o">=</span> <span class="n">gex_count</span>
+
+        <span class="k">return</span> <span class="n">SplitPipeCount</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_tcr_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCount process for the TCR sublibraries"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_immune_count</span><span class="p">(</span><span class="s2">"tcr"</span><span class="p">)</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_bcr_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCount process for the BCR sublibraries"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_immune_count</span><span class="p">(</span><span class="s2">"bcr"</span><span class="p">)</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build SplitPipeCombine process"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">combine</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fq1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.splitpipe</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitPipeCombine</span> <span class="k">as</span> <span class="n">_SplitPipeCombine</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCombine</span><span class="p">(</span><span class="n">_SplitPipeCombine</span><span class="p">):</span>
+            <span class="n">requires</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_splitpipe_count</span>
+            <span class="n">input_data</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ch</span><span class="p">:</span> <span class="p">[(</span><span class="nb">list</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="kc">None</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">SplitPipeCombine</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_immune_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCombine process of a `tcr`/`bcr` block"""</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">block</span><span class="o">.</span><span class="n">combine</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.splitpipe</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitPipeCombine</span> <span class="k">as</span> <span class="n">_SplitPipeCombine</span>
+
+        <span class="n">immune_count</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"p_splitpipe_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">_count"</span><span class="p">)</span>
+        <span class="n">envs_</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"immune_genome"</span><span class="p">:</span> <span class="n">block</span><span class="o">.</span><span class="n">immune_genome</span><span class="p">,</span>
+            <span class="s2">"use_imgt_db"</span><span class="p">:</span> <span class="n">block</span><span class="o">.</span><span class="n">use_imgt_db</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">requires_</span> <span class="o">=</span> <span class="n">immune_count</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">parent_dirs</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir_comb</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_dirs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+
+                    <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_dirs</span><span class="p">):</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"Cannot combine the </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                                <span class="sa">f</span><span class="s2">"sublibraries: expected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parent_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                                <span class="sa">f</span><span class="s2">"immune outputs for `parent_dir_comb`, got "</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+                            <span class="p">)</span>
+                        <span class="k">return</span> <span class="p">[</span>
+                            <span class="p">([</span><span class="n">sublib</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">parent_dir</span><span class="p">))</span>
+                            <span class="k">for</span> <span class="n">sublib</span><span class="p">,</span> <span class="n">parent_dir</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">parent_dirs</span><span class="p">)</span>
+                        <span class="p">]</span>
+
+                <span class="k">else</span><span class="p">:</span>
+
+                    <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="p">[</span>
+                            <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir_comb</span><span class="p">))</span>
+                        <span class="p">]</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">envs_</span><span class="p">[</span><span class="s2">"parent_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="p">[(</span><span class="nb">list</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parent_dir</span><span class="p">))]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">requires_</span> <span class="o">=</span> <span class="p">[</span><span class="n">immune_count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_splitpipe_combine</span><span class="p">]</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="n">ch_immune</span><span class="p">,</span> <span class="n">ch_gex</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">ch_immune</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span>
+                    <span class="ow">or</span> <span class="n">ch_immune</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span>
+                    <span class="ow">or</span> <span class="n">ch_gex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span>
+                    <span class="ow">or</span> <span class="n">ch_gex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Cannot combine the </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> sublibraries: "</span>
+                        <span class="sa">f</span><span class="s2">"expected the immune and GEX combine channels, got "</span>
+                        <span class="sa">f</span><span class="s2">"shapes </span><span class="si">{</span><span class="n">ch_immune</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">ch_gex</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="p">)</span>
+                <span class="n">gex_comb_dir</span> <span class="o">=</span> <span class="n">ch_gex</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gex_comb_dir</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"The combined GEX output directory is missing; "</span>
+                        <span class="sa">f</span><span class="s2">"cannot set `parent_dir` for the </span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"combination."</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="p">[(</span><span class="nb">list</span><span class="p">(</span><span class="n">ch_immune</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">gex_comb_dir</span><span class="p">))]</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeCombine</span><span class="p">(</span><span class="n">_SplitPipeCombine</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"SplitPipe</span><span class="si">{</span><span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">Combine"</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="s2">"sublibs:dirs, id, parent_dir:dir"</span>
+            <span class="n">requires</span> <span class="o">=</span> <span class="n">requires_</span>
+            <span class="n">envs</span> <span class="o">=</span> <span class="n">envs_</span>
+            <span class="n">input_data</span> <span class="o">=</span> <span class="n">input_data_</span>
+
+        <span class="k">return</span> <span class="n">SplitPipeCombine</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_tcr_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCombine process for the TCR sublibraries"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_immune_combine</span><span class="p">(</span><span class="s2">"tcr"</span><span class="p">)</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_bcr_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the SplitPipeCombine process for the BCR sublibraries"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_immune_combine</span><span class="p">(</span><span class="s2">"bcr"</span><span class="p">)</span>
+
+    <span class="nd">@ProcGroup</span><span class="o">.</span><span class="n">add_proc</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_splitpipe_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build SplitPipeSummary process"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">summary</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.splitpipe</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitPipeSummary</span> <span class="k">as</span> <span class="n">_SplitPipeSummary</span>
+
+        <span class="n">requires_</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p_splitpipe_combine</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">combine</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_splitpipe_count</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"tcr"</span><span class="p">,</span> <span class="s2">"bcr"</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">requires_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"p_splitpipe_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">'combine'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">block</span><span class="o">.</span><span class="n">combine</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'count'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">requires_</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">requires_</span> <span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requires_</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">requires_</span> <span class="o">=</span> <span class="n">requires_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                <span class="k">return</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">input_data_</span><span class="p">(</span><span class="o">*</span><span class="n">chs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="p">[[</span><span class="n">x</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">chs</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ch</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]]</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SplitPipeSummary</span><span class="p">(</span><span class="n">_SplitPipeSummary</span><span class="p">):</span>
+            <span class="n">requires</span> <span class="o">=</span> <span class="n">requires_</span>
+            <span class="n">input_data</span> <span class="o">=</span> <span class="n">input_data_</span>
+
+        <span class="k">return</span> <span class="n">SplitPipeSummary</span>
+</code></pre></div>
+</div>
+</div>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  <div class="footer-notes">
+    <a href="https://github.com/pwwang/biopipen" title="Open repository in GitHub">Github Repo</a>
+    <div class="footer-sep"></div>Built with <a href="https://www.mkdocs.org/">MkDocs</a> using theme <a href="https://github.com/pwwang/mkdocs-rtd">mkdocs-rtd</a>.
+  </div>
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+    <script src="../../../js/version-select.js"></script>
+      <script src="../../../js/mkapi.js"></script>
+      <script src="../../../extra.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
