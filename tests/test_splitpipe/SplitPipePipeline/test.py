@@ -308,7 +308,7 @@ def test_existing_gex_parent_lists():
     assert "SplitPipeCombine" not in group.procs
     count = group.p_splitpipe_tcr_count
     assert count.envs["parent_dir"] is None
-    assert count.input_data(pd.DataFrame()) == [
+    assert count.input_data == [
         (["t1_R1.fastq.gz"], None, "s1", "/genomes/test", "/parents/s1"),
         (
             ["t2_R1.fastq.gz"],

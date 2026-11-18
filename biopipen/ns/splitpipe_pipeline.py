@@ -334,8 +334,13 @@ class SplitPipePipeline(ProcGroup):
 
         return SplitPipeCount
 
-    def _immune_input_data(self, kind: str):
-        """Build the input_data of the immune count process"""
+    def _immune_input_data(self, kind: str, needs_channel: bool = True):
+        """Build the input_data of the immune count process
+
+        pipen invokes `input_data` as a callable only when the process waits on
+        another process. With an explicit `parent_dir` and an empty GEX branch
+        nothing is awaited, so the rows are returned as a plain list there.
+        """
         block = self.opts[kind]
         fq2_ = block.fq2 or [None] * len(block.fq1)
 
@@ -351,6 +356,8 @@ class SplitPipePipeline(ProcGroup):
                     block.fq1, fq2_, block.ids, parent_dirs
                 )
             ]
+            if not needs_channel:
+                return rows
 
             def input_data(ch):
                 return rows
@@ -382,7 +389,6 @@ class SplitPipePipeline(ProcGroup):
 
         from .splitpipe import SplitPipeCount as _SplitPipeCount
 
-        input_data_ = self._immune_input_data(kind)
         envs_ = {
             "genome_dir": self.opts.genome_dir,
             f"{kind}_analysis": True,
@@ -392,13 +398,16 @@ class SplitPipePipeline(ProcGroup):
         if isinstance(block.parent_dir, str):
             envs_["parent_dir"] = block.parent_dir
 
+        gex_count = self.p_splitpipe_count  # None when the GEX branch is empty
+        input_data_ = self._immune_input_data(kind, gex_count is not None)
+
         class SplitPipeCount(_SplitPipeCount):
             name = f"SplitPipe{kind.upper()}Count"
             input = "fq1:files, fq2:files, id, genome_dir:dir, parent_dir:dir"
             input_data = input_data_
             output = f"outdir:dir:{{{{in.id}}}}-{kind}"
             envs = envs_
-            requires = self.p_splitpipe_count
+            requires = gex_count
 
         return SplitPipeCount
 
