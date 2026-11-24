@@ -12,6 +12,7 @@ RunPCAArgs <- {{envs.RunPCA | r: todot="-"}}
 FindNeighborsArgs <- {{envs.FindNeighbors | r: todot="-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot="-"}}
 RunUMAPArgs <- {{envs.RunUMAP | r: todot="-"}}
+RunTSNEArgs <- {{envs.RunTSNE | r: todot="-"}}
 ident <- {{envs.ident | r }}
 cache <- {{envs.cache | r}}
 ncores <- {{envs.ncores | r}}
@@ -34,10 +35,14 @@ sobj <- read_obj(srtfile)
 
 if (isTRUE(cache)) { cache <- joboutdir }
 
+# an empty TOML table means "do not run t-SNE"
+RunTSNEArgs <- if (length(RunTSNEArgs) == 0) NULL else RunTSNEArgs
+
 sobj <- RunSeuratClustering(
     sobj,
     RunPCAArgs = RunPCAArgs,
     RunUMAPArgs = RunUMAPArgs,
+    RunTSNEArgs = RunTSNEArgs,
     FindNeighborsArgs = FindNeighborsArgs,
     FindClustersArgs = FindClustersArgs,
     log = log,
