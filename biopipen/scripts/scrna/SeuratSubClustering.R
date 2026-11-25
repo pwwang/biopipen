@@ -13,6 +13,7 @@ subset <- {{envs.subset | r}}
 cache <- {{envs.cache | r}}
 RunPCAArgs <- {{envs.RunPCA | r: todot = "-"}}
 RunUMAPArgs <- {{envs.RunUMAP | r: todot = "-"}}
+RunTSNEArgs <- {{envs.RunTSNE | r: todot = "-"}}
 FindNeighborsArgs <- {{envs.FindNeighbors | r: todot = "-"}}
 FindClustersArgs <- {{envs.FindClusters | r: todot = "-"}}
 cases <- {{envs.cases | r}}
@@ -30,6 +31,7 @@ log <- get_logger()
 cases <- expand_cases(cases, defaults = list(
     RunPCA = RunPCAArgs,
     RunUMAP = RunUMAPArgs,
+    RunTSNE = RunTSNEArgs,
     FindNeighbors = FindNeighborsArgs,
     FindClusters = FindClustersArgs,
     subset = subset
@@ -47,6 +49,9 @@ if (!is.null(mutaters) && length(mutaters) > 0) {
 
 for (name in names(cases)) {
     case <- cases[[name]]
+    RunTSNEArgsCase <- case$RunTSNE
+    # an empty (unset) case value must reach R as NULL, not list()
+    if (length(RunTSNEArgsCase) == 0) RunTSNEArgsCase <- NULL
     log$info("Processing case '{name}' ...")
 
     object <- RunSeuratSubClustering(
@@ -55,6 +60,7 @@ for (name in names(cases)) {
         name = name,
         RunPCAArgs = case$RunPCA,
         RunUMAPArgs = case$RunUMAP,
+        RunTSNEArgs = RunTSNEArgsCase,
         FindNeighborsArgs = case$FindNeighbors,
         FindClustersArgs = case$FindClusters,
         log = log,

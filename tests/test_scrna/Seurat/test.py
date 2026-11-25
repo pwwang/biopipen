@@ -208,6 +208,7 @@ class SeuratClustering(SeuratClustering_):
             # "umap.method": "umap-learn",
             "n.components": 3,
         },
+        "RunTSNE": {"dims": 10, "perplexity": 10},
         "FindNeighbors": {"dims": 5},
         "FindClusters": {"resolution": "0.1:1,.8"},
     }
@@ -248,6 +249,7 @@ class SeuratSubClustering(SeuratSubClustering_):
         "cases": {
             "mono_subcluster": {
                 "subset": "seurat_clusters == 'c1'",
+                "RunTSNE": {"dims": 5, "perplexity": 5},
                 "FindClusters": {"resolution": "0.1:0.8,0.1"},
             },
             "dc_subcluster": {
@@ -473,6 +475,7 @@ class SeuratClusterStats(SeuratClusterStats_):
         "dimplots": {
             "3d": {"dims": [1, 2, 3], "label": True},
             "3d_2": {"dims": [1, 2, 3], "label": False},
+            "tSNE plot": {"reduction": "tsne", "label": True},
             "seurat_clusters": {"group_by": "seurat_clusters"},
             "nk_subcluster": {
                 "group_by": "mono_subcluster",
@@ -673,6 +676,42 @@ def testing(pipen):
         ["Rscript", "-e", script], capture_output=True, text=True, check=True
     )
     assert "MEAN_CHECK_OK" in result.stdout
+
+    # t-SNE is wired through SeuratClustering, SeuratSubClustering (per case)
+    # and read by SeuratClusterStats for a dimplot.
+    clustering = [p for p in pipen.procs if p.name == "SeuratClustering"][0]
+    clustering_rds = next(clustering.workdir.joinpath("0", "output").glob("*.qs"))
+    subclustering = [p for p in pipen.procs if p.name == "SeuratSubClustering"][0]
+    subclustering_rds = next(
+        subclustering.workdir.joinpath("0", "output").glob("*.qs")
+    )
+    stats_outdir = [p for p in pipen.procs if p.name == "SeuratClusterStats"][
+        0
+    ].workdir.joinpath("0", "output")
+    script = f"""
+        suppressMessages(library(Seurat))
+        obj <- qs2::qs_read({str(clustering_rds)!r})
+        stopifnot("tsne" %in% Reductions(obj))
+        stopifnot(identical(dim(Embeddings(obj, "tsne")), c(ncol(obj), 2L)))
+        stopifnot("RunSeuratTSNE" %in% names(obj@commands))
+        stopifnot(
+            obj@commands[["RunSeuratTSNE"]]@params$RunTSNEArgs$reduction %in%
+                Reductions(obj)
+        )
+
+        subobj <- qs2::qs_read({str(subclustering_rds)!r})
+        stopifnot("mono_subcluster.tsne" %in% Reductions(subobj))
+        stopifnot(!"dc_subcluster.tsne" %in% Reductions(subobj))
+
+        stopifnot(length(list.files(
+            {str(stats_outdir)!r}, pattern = "tSNE", recursive = TRUE
+        )) > 0)
+        cat("TSNE_CHECK_OK\\n")
+    """
+    result = subprocess.run(
+        ["Rscript", "-e", script], capture_output=True, text=True, check=True
+    )
+    assert "TSNE_CHECK_OK" in result.stdout
 
 
 if __name__ == "__main__":
