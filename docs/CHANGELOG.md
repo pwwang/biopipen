@@ -1,5 +1,16 @@
 # Change Log
 
+## 1.6.1
+
+- fix(tests): add run.env configuration file for SplitPipePipeline test
+- chore: bump pipen-report to 1.3.2
+- feat(scrna): add RunTSNE arguments and configuration to SeuratClustering and SeuratSubClustering
+- fix(splitpipe.SplitPipeCount): render parent_dir as a plain path
+- fix(splitpipe_pipeline): pass pipen a list when no channel is awaited
+- feat(splitpipe_pipeline): immune branch against an existing GEX run
+- build(splitpipe_pipeline): bake the immune references into the image
+- feat(splitpipe_pipeline): run TCR/BCR libraries next to their GEX sublibraries
+
 ## 1.6.0
 
 - feat(scrna.CellTypeAnnotation): report the annotations, the tool score UMAPs and the cluster purity
