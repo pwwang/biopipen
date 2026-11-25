@@ -36,7 +36,7 @@ fi
 echo "- Testing process: $PROCESS ..."
 
 RUNFILE="$PROC_TEST_DIR/run.env"
-ENVNAME="base"
+ENVNAME="biopipen"
 ARGS=""
 LOCAL_ONLY="false"
 if [[ -f $RUNFILE ]]; then

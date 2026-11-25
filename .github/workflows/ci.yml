@@ -115,6 +115,7 @@ jobs:
 
       - name: Run tests
         run: |
+          python tests/conda/test_run_test.py
           make --keep-going all VERBOSE=true
 
       - name: Delete old test intermediate cache
