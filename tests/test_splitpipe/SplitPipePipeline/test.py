@@ -246,7 +246,15 @@ def test_tcr():
             "proc": None,
         },
     )
-    assert "parent_dir = '/out/SplitPipeCombine/s1-comb'" in rendered_combine
+    # same as above: the `quote` filter emits double quotes, so assert the path and
+    # not the quote style; the class expression must never reach the rendered code
+    comb_parent_line = next(
+        line
+        for line in rendered_combine.splitlines()
+        if line.startswith("parent_dir = ")
+    )
+    assert "/out/SplitPipeCombine/s1-comb" in comb_parent_line, comb_parent_line
+    assert "MountedLocalPath" not in rendered_combine, comb_parent_line
     assert 'command += ["--parent_dir", str(parent_dir)]' in rendered_combine
     print("PASS: tcr flags render into the split-pipe command (incl. --parent_dir)")
 
