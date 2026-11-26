@@ -149,6 +149,14 @@ RUN apt-get update && \
 COPY --from=builder /opt/conda /opt/conda
 COPY --from=builder /opt/parse /opt/parse
 
+# The conda `libgomp` 16.2.0 build installs the shared object but not its
+# soname link, so R dies at load time with
+#   libgomp.so.1: cannot open shared object file
+# even though libgomp.so.1.0.0 sits right beside it. Recreate the link the
+# loader asks for; verified to make `Rscript --version` work with no
+# LD_LIBRARY_PATH or conda activation.
+RUN ln -sf /opt/conda/lib/libgomp.so.1.0.0 /opt/conda/lib/libgomp.so.1 && \
+    ls -l /opt/conda/lib/libgomp.so*
 # Login shells rebuild PATH from /etc/profile (Debian's default), which would hide
 # both conda envs: the continuumio base image ships its own conda profile hook that
 # this slim base does not. Put the base env and the Parse tools first explicitly.
